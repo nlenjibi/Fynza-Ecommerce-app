@@ -1,0 +1,48 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Backend (Java/Maven)
+backend/target/
+backend/.classpath
+backend/.project
+backend/.settings/
+backend/*.iml
+backend/.idea/
+backend/out/
+
+# Frontend (Node.js)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/dist/
+frontend/.env.local
+frontend/.env.*.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.iml
+
+# Docker
+.dockerignore
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
