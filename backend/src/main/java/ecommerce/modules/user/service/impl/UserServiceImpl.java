@@ -1,0 +1,333 @@
+package ecommerce.modules.user.service.impl;
+
+import ecommerce.exception.DuplicateResourceException;
+import ecommerce.exception.ResourceNotFoundException;
+import ecommerce.modules.auth.service.SecurityService;
+import ecommerce.modules.notification.entity.Notification;
+import ecommerce.modules.notification.repository.NotificationRepository;
+import ecommerce.modules.user.dto.*;
+import ecommerce.modules.user.entity.Role;
+import ecommerce.modules.user.entity.User;
+import ecommerce.modules.user.mapper.UserMapper;
+import ecommerce.modules.user.repository.UserRepository;
+import ecommerce.modules.user.service.UserService;
+import ecommerce.services.TokenValidationService;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+@Slf4j
+@AllArgsConstructor
+@Service
+public class UserServiceImpl implements UserService {
+
+    private final UserMapper userMapper;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final TokenValidationService tokenValidationService;
+    private final NotificationRepository notificationRepository;
+    private final SecurityService securityService;
+    private static final String USER_NOT_FOUND = "User not found with id: ";
+
+
+    @Override
+    @Transactional
+    @CachePut(value = "users", key = "#result.id")
+    @CacheEvict(value = {
+            "users-page", "users-search", "users-role", "users-active",
+            "users-predicate", "admin-dashboard"
+    }, allEntries = true)
+    public UserDto createUser(UserCreateRequest request) {
+        if (request.getRole() != null && !request.getRole().isBlank()
+                && !request.getRole().equalsIgnoreCase("USER") && !securityService.isAdmin()) {
+            throw new AccessDeniedException("Only admins can assign roles");
+        }
+        if (userRepository.existsByUsernameAndIsActiveTrue(request.getUsername())) {
+            throw new DuplicateResourceException("Username already exists: " + request.getUsername());
+        }
+        if (userRepository.existsByEmailAndIsActiveTrue(request.getEmail())) {
+            throw new DuplicateResourceException("Email already exists: " + request.getEmail());
+        }
+
+        User user = userMapper.toEntity(request);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        if (request.getRole() != null && !request.getRole().isBlank()) {
+            try {
+                user.setRole(Role.valueOf(request.getRole().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid role: " + request.getRole());
+            }
+        } else {
+            user.setRole(Role.CUSTOMER);
+        }
+
+        userRepository.save(user);
+        log.info("User created with id: {}", user.getId());
+        return userMapper.toDto(user);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "users", key = "#id")
+    public Optional<UserDto> getUserById(UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND + id));
+        return Optional.of(userMapper.toDto(user));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "users-page", key = "T(org.springframework.util.DigestUtils).md5DigestAsHex(('#page=' + #pageable.pageNumber + '&size=' + #pageable.pageSize + '&sort=' + #pageable.sort).getBytes())")
+    public Page<UserDto> getAllUsers(Pageable pageable) {
+        return userRepository.findAll(pageable).map(userMapper::toDto);
+    }
+
+    @Override
+    @Transactional
+    @CachePut(value = "users", key = "#userId")
+    @CacheEvict(value = {
+            "users-page", "users-search", "users-role", "users-active",
+            "users-predicate", "admin-dashboard"
+    }, allEntries = true)
+    public UserDto updateUser(UUID userId, UserUpdateRequest request) {
+        securityService.checkSelfOrAdmin(userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND + userId));
+        userMapper.updateEntity(user, request);
+        if (request.getRole() != null && !request.getRole().isBlank()) {
+            try {
+                user.setRole(Role.valueOf(request.getRole().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid role provided for user update: {}", request.getRole());
+            }
+        }
+        userRepository.save(user);
+        tokenValidationService.evictPrincipal(userId);  // profile/role may have changed
+        log.info("User updated with id: {}", userId);
+        return userMapper.toDto(user);
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = {
+            "users",
+            "users-page", "users-search", "users-role", "users-active",
+            "users-predicate", "admin-dashboard"
+    }, allEntries = true)
+    public void deleteUser(UUID id) {
+        checkSelfOrAdmin(id);
+        if (!userRepository.existsById(id)) {
+            throw new ResourceNotFoundException(USER_NOT_FOUND + id);
+        }
+        userRepository.deleteById(id);
+        tokenValidationService.evictPrincipal(id);   // user gone – clear cached principal
+        log.info("User deleted with id: {}", id);
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = {"users", "admin-dashboard"}, allEntries = true)
+    public void changePassword(UUID userId, ChangePasswordRequest request) {
+        securityService.checkSelfOrAdmin(userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND + userId));
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+            throw new ResourceNotFoundException("Password does not match");
+        }
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setLastPasswordChange(LocalDateTime.now());
+        userRepository.save(user);
+        tokenValidationService.evictPrincipal(userId);  // password changed – stale principal must not be served
+        log.info("Password changed for user with id: {}", userId);
+    }
+
+    @Override
+    @Transactional
+    @CachePut(value = "users", key = "#userId")
+    @CacheEvict(value = {
+            "users-page", "users-search", "users-role", "users-active",
+            "users-predicate", "admin-dashboard"
+    }, allEntries = true)
+    public UserDto updateUserRole(UUID userId, UpdateUserRoleRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND + userId));
+        
+        Role oldRole = user.getRole();
+        if (request.getRole() != null && !request.getRole().isBlank()) {
+            try {
+                user.setRole(Role.valueOf(request.getRole().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid role provided for user update: {}", request.getRole());
+            }
+        }
+        userRepository.save(user);
+        tokenValidationService.evictPrincipal(userId);  // role changed – authorities in cached principal are stale
+        
+        // Send notification about role change
+        sendRoleChangeNotification(user, oldRole, user.getRole());
+        
+        log.info("User role updated for user with id: {}", userId);
+        return userMapper.toDto(user);
+    }
+
+    @Override
+    @Transactional
+    @CachePut(value = "users", key = "#userId")
+    @CacheEvict(value = {
+            "users-page", "users-search", "users-role", "users-active",
+            "users-predicate", "admin-dashboard"
+    }, allEntries = true)
+    public UserDto updateUserStatus(UUID userId, UserStatusRequest request) {
+        securityService.checkSelfOrAdmin(userId);
+        if (request.getIsActive() == null) {
+            throw new IllegalArgumentException("isActive is required");
+        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND + userId));
+        
+        boolean oldStatus = user.getIsActive();
+        user.setIsActive(request.getIsActive());
+        userRepository.save(user);
+        tokenValidationService.evictPrincipal(userId);  // isActive changed – enabled() in cached principal is stale
+        
+        // Send notification about status change
+        sendStatusChangeNotification(user, oldStatus, request.getIsActive());
+        
+        log.info("User status updated for user with id: {} to isActive={}", userId, request.getIsActive());
+        return userMapper.toDto(user);
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = {
+            "users", "users-page", "users-search", "users-role", "users-active",
+            "users-predicate", "admin-dashboard"
+    }, allEntries = true)
+    public List<UserDto> bulkUpdateUsers(BulkUserUpdateRequest request) {
+        List<UserDto> updatedUsers = new ArrayList<>();
+        
+        for (UUID userId : request.getUserIds()) {
+            try {
+                User user = userRepository.findById(userId).orElse(null);
+                if (user == null) {
+                    log.warn("User not found for bulk update: {}", userId);
+                    continue;
+                }
+                
+                // Update role if provided
+                if (request.getRole() != null && !request.getRole().isBlank()) {
+                    try {
+                        Role oldRole = user.getRole();
+                        user.setRole(Role.valueOf(request.getRole().toUpperCase()));
+                        userRepository.save(user);
+                        
+                        if (Boolean.TRUE.equals(request.getSendNotification())) {
+                            sendRoleChangeNotification(user, oldRole, user.getRole());
+                        }
+                        tokenValidationService.evictPrincipal(userId);
+                    } catch (IllegalArgumentException e) {
+                        log.warn("Invalid role in bulk update: {}", request.getRole());
+                    }
+                }
+                
+                // Update status if provided
+                if (request.getIsActive() != null) {
+                    boolean oldStatus = user.getIsActive();
+                    user.setIsActive(request.getIsActive());
+                    userRepository.save(user);
+                    
+                    if (Boolean.TRUE.equals(request.getSendNotification())) {
+                        sendStatusChangeNotification(user, oldStatus, request.getIsActive());
+                    }
+                    tokenValidationService.evictPrincipal(userId);
+                }
+                
+                updatedUsers.add(userMapper.toDto(user));
+            } catch (Exception e) {
+                log.error("Error updating user {} in bulk update: {}", userId, e.getMessage());
+            }
+        }
+        
+        log.info("Bulk update completed: {} users updated out of {}", 
+                updatedUsers.size(), request.getUserIds().size());
+        return updatedUsers;
+    }
+
+    /**
+     * Send notification to user about role change
+     */
+    private void sendRoleChangeNotification(User user, Role oldRole, Role newRole) {
+        try {
+            String message = String.format(
+                    "Your account role has been changed from %s to %s.",
+                    oldRole != null ? oldRole.name() : "NONE",
+                    newRole != null ? newRole.name() : "NONE");
+            
+            Notification notification = Notification.builder()
+                    .user(user)
+                    .type("ROLE_CHANGE")
+                    .title("Role Updated")
+                    .message(message)
+                    .isRead(false)
+                    .build();
+            
+            notificationRepository.save(notification);
+            log.debug("Role change notification sent to user {}", user.getId());
+        } catch (Exception e) {
+            log.warn("Failed to send role change notification to user {}: {}", 
+                    user.getId(), e.getMessage());
+        }
+    }
+
+    /**
+     * Send notification to user about status change
+     */
+    private void sendStatusChangeNotification(User user, boolean oldStatus, boolean newStatus) {
+        try {
+            String message;
+            if (oldStatus && !newStatus) {
+                message = "Your account has been deactivated. Please contact support for assistance.";
+            } else if (!oldStatus && newStatus) {
+                message = "Your account has been activated. You can now log in to your account.";
+            } else {
+                return; // No meaningful change
+            }
+            
+            Notification notification = Notification.builder()
+                    .user(user)
+                    .type("STATUS_CHANGE")
+                    .title(newStatus ? "Account Activated" : "Account Deactivated")
+                    .message(message)
+                    .isRead(false)
+                    .build();
+            
+            notificationRepository.save(notification);
+            log.debug("Status change notification sent to user {}", user.getId());
+        } catch (Exception e) {
+            log.warn("Failed to send status change notification to user {}: {}", 
+                    user.getId(), e.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "users-predicate", key = "T(org.springframework.util.DigestUtils).md5DigestAsHex(('#predicate=' + #predicate.toString() + '&page=' + #pageable.pageNumber + '&size=' + #pageable.pageSize + '&sort=' + #pageable.sort).getBytes())")
+    public Page<UserDto> findUsersWithPredicate(com.querydsl.core.types.Predicate predicate, Pageable pageable) {
+        return userRepository.findAll(predicate, pageable).map(userMapper::toDto);
+    }
+}
