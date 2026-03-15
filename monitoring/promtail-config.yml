@@ -1,0 +1,36 @@
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+positions:
+  filename: /tmp/positions.yaml
+
+scrape_configs:
+  - job_name: docker
+    docker: {}
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_name']
+        target_label: 'container'
+      - source_labels: ['__meta_docker_container_log_stream']
+        target_label: 'stream'
+
+  - job_name: syslog
+    syslog:
+      listen_address: 0.0.0.0:514
+      idle_timeout: 60s
+      label_structured_data: yes
+    relabel_configs:
+      - source_labels: ['__syslog_message_hostname']
+        target_label: 'hostname'
+      - source_labels: ['__syslog_message_app_name']
+        target_label: 'app'
+
+  - job_name: journal
+    journal:
+      path: /var/log/journal
+      labels:
+        job: systemd-journal
+    relabel_configs:
+      - source_labels: ['__journal__systemd_unit']
+        target_label: 'unit'
+      - source_labels: ['__journal_priority_keyword']
+        target_label: 'level'

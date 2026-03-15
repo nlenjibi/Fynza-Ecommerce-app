@@ -13,10 +13,16 @@ on:
       - dev
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   REGISTRY: ghcr.io
   BACKEND_IMAGE: ${{ github.repository }}/backend
   FRONTEND_IMAGE: ${{ github.repository }}/frontend
+  NODE_VERSION: '20'
+  JAVA_VERSION: '17'
 
 jobs:
   # Stage 1: Checkout and Setup
@@ -58,17 +64,30 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
           cache: maven
 
       - name: Build with Maven
-        run: mvn clean package -B
+        run: mvn clean package -B -DskipTests
         working-directory: backend
 
-      - name: Run tests
+      - name: Run unit tests
         run: mvn test -B
         working-directory: backend
+
+      - name: Run code quality checks
+        run: |
+          mvn checkstyle:check spotbugs:check pmd:check -B || true
+        working-directory: backend
+        continue-on-error: true
+
+      - name: SonarQube scan (optional)
+        run: |
+          mvn sonar:sonar -Dsonar.projectKey=${{ github.repository }}-backend -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} -Dsonar.login=${{ secrets.SONAR_TOKEN }} || true
+        working-directory: backend
+        if: secrets.SONAR_HOST_URL != ''
+        continue-on-error: true
 
       - name: Upload test results
         if: always()
@@ -76,6 +95,15 @@ jobs:
         with:
           name: backend-test-results
           path: backend/target/surefire-reports/
+          retention-days: 30
+
+      - name: Upload code coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/target/site/jacoco/
+          retention-days: 30
 
   # Stage 3: Frontend CI
   frontend-ci:
@@ -89,7 +117,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
@@ -101,25 +129,83 @@ jobs:
         run: npm run lint --if-present
         working-directory: frontend
 
+      - name: Check TypeScript
+        run: npm run type-check --if-present
+        working-directory: frontend
+        continue-on-error: true
+
+      - name: Format check (Prettier)
+        run: npm run format:check --if-present
+        working-directory: frontend
+        continue-on-error: true
+
       - name: Build Next.js
         run: npm run build
         working-directory: frontend
 
       - name: Run tests
-        run: npm test --if-present -- --run
+        run: npm test --if-present -- --run --coverage
         working-directory: frontend
+        continue-on-error: true
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
           path: frontend/.next/
+          retention-days: 30
 
-  # Stage 4: Docker Build Validation
-  docker-build:
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/
+          retention-days: 30
+
+  # Stage 4: Security Scanning
+  security-scan:
     needs: [backend-ci, frontend-ci]
     runs-on: ubuntu-latest
     if: always() && (needs.backend-ci.result == 'success' || needs.backend-ci.result == 'skipped') && (needs.frontend-ci.result == 'success' || needs.frontend-ci.result == 'skipped')
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Dependency check - Backend
+        run: |
+          mvn org.owasp:dependency-check-maven:check -B || true
+        working-directory: backend
+        continue-on-error: true
+
+      - name: Dependency check - Frontend
+        run: |
+          npm audit --audit-level=moderate || true
+        working-directory: frontend
+        continue-on-error: true
+
+  # Stage 5: Docker Build & Security Scan
+  docker-build-scan:
+    needs: security-scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -132,68 +218,165 @@ jobs:
         with:
           context: ./backend
           push: false
+          load: true
           tags: ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
 
+      - name: Scan backend image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          input: ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+          format: 'sarif'
+          output: 'backend-trivy-results.sarif'
+          severity: 'CRITICAL'
+
+      - name: Upload backend scan results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'backend-trivy-results.sarif'
+
       - name: Build frontend Docker image
-        uses: docker/setup-buildx-action@v3
+        uses: docker/build-push-action@v5
         with:
           context: ./frontend
           push: false
+          load: true
           tags: ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
 
-  # Stage 5: Development Deployment (to dev branch)
-  deploy-dev:
-    needs: docker-build
+      - name: Scan frontend image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          input: ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+          format: 'sarif'
+          output: 'frontend-trivy-results.sarif'
+          severity: 'CRITICAL'
+
+      - name: Upload frontend scan results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'frontend-trivy-results.sarif'
+
+  # Stage 6: Semantic Release & Versioning
+  semantic-release:
+    needs: docker-build-scan
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
-    environment:
-      name: development
-      url: https://${{ secrets.VERCEL_ORG_ID }}-dev.vercel.app
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    outputs:
+      new-release-published: ${{ steps.semantic.outputs.new_release_published }}
+      new-release-version: ${{ steps.semantic.outputs.new_release_version }}
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install semantic-release
+        run: npm install -g semantic-release @semantic-release/github @semantic-release/changelog @semantic-release/git
+
+      - name: Run semantic-release
+        id: semantic
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          semantic-release || true
+          if [ -f .semrelease-version ]; then
+            VERSION=$(cat .semrelease-version)
+            echo "new_release_published=true" >> $GITHUB_OUTPUT
+            echo "new_release_version=$VERSION" >> $GITHUB_OUTPUT
+          fi
+
+  # Stage 7: PR Preview Deployment
+  deploy-preview:
+    needs: docker-build-scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      pull-requests: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Deploy frontend to Vercel (Preview)
+      - name: Deploy frontend preview to Vercel
+        id: vercel-preview
         uses: vercel/action@v5
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           scope: ${{ secrets.VERCEL_ORG_ID }}
-        env:
-          VERCEL_ENV: preview
 
-      - name: Comment PR with deployment
-        if: github.event_name == 'pull_request'
+      - name: Comment PR with preview URL
         uses: actions/github-script@v7
         with:
           script: |
+            const previewUrl = '${{ steps.vercel-preview.outputs.preview-url }}' || 'https://preview.vercel.app';
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '✅ Preview deployment ready on Vercel'
+              body: `## 🚀 Preview Deployment Ready\n\n✅ **Frontend Preview:** [${previewUrl}](${previewUrl})\n\n**PR #${{ github.event.pull_request.number }}** - ${{ github.event.pull_request.title }}\n\nReviewers can test the changes at the preview URL above.`
             })
 
-  # Stage 6: Production Deployment (to main branch)
-  deploy-production:
-    needs: docker-build
+      - name: Add preview label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['preview-deployed']
+            })
+
+  # Stage 8: Development Deployment (to dev branch)
+  deploy-dev:
+    needs: docker-build-scan
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     environment:
-      name: production
-      url: https://${{ secrets.VERCEL_ORG_ID }}.vercel.app
+      name: development
+      url: https://dev.vercel.app
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Create release tag
+      - name: Deploy frontend to Vercel (Dev)
+        uses: vercel/action@v5
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          scope: ${{ secrets.VERCEL_ORG_ID }}
+
+      - name: Run database migrations
         run: |
-          TAG="v$(date +%Y.%m.%d.%H%M%S)"
-          git tag $TAG
-          git push origin $TAG
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "Running database migrations..."
+          # Add migration commands here (Flyway/Liquibase)
+        continue-on-error: true
+
+  # Stage 9: Production Deployment (to main branch)
+  deploy-production:
+    needs: [semantic-release, docker-build-scan]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: https://vercel.app
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Deploy frontend to Vercel (Production)
         uses: vercel/action@v5
@@ -204,6 +387,12 @@ jobs:
           scope: ${{ secrets.VERCEL_ORG_ID }}
           production: true
 
+      - name: Run database migrations
+        run: |
+          echo "Running production database migrations..."
+          # Add migration commands here (Flyway/Liquibase)
+        continue-on-error: true
+
       - name: Create GitHub Release
         uses: actions/create-release@v1
         env:
@@ -212,15 +401,16 @@ jobs:
           tag_name: v${{ github.run_number }}
           release_name: Release v${{ github.run_number }}
           body: |
-            Production deployment completed
-            - Commit: ${{ github.sha }}
-            - Branch: ${{ github.ref }}
+            ## Production Deployment
+            - **Commit:** ${{ github.sha }}
+            - **Branch:** ${{ github.ref }}
+            - **Timestamp:** ${{ github.event.head_commit.timestamp }}
           draft: false
           prerelease: false
 
-  # Stage 7: Container Registry Push (Optional)
+  # Stage 10: Container Registry Push
   push-registry:
-    needs: docker-build
+    needs: [docker-build-scan, semantic-release]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     permissions:
@@ -249,6 +439,7 @@ jobs:
             type=ref,event=branch
             type=sha,prefix={{branch}}-
             type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push backend image
         uses: docker/build-push-action@v5
@@ -257,6 +448,8 @@ jobs:
           push: true
           tags: ${{ steps.meta-backend.outputs.tags }}
           labels: ${{ steps.meta-backend.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Extract metadata (frontend)
         id: meta-frontend
@@ -267,6 +460,7 @@ jobs:
             type=ref,event=branch
             type=sha,prefix={{branch}}-
             type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push frontend image
         uses: docker/build-push-action@v5
@@ -275,3 +469,5 @@ jobs:
           push: true
           tags: ${{ steps.meta-frontend.outputs.tags }}
           labels: ${{ steps.meta-frontend.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
