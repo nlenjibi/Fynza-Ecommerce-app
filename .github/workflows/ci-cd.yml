@@ -84,9 +84,12 @@ jobs:
 
       - name: SonarQube scan (optional)
         run: |
+          if [ -z "${{ secrets.SONAR_HOST_URL }}" ]; then
+            echo "SonarQube not configured, skipping scan"
+            exit 0
+          fi
           mvn sonar:sonar -Dsonar.projectKey=${{ github.repository }}-backend -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} -Dsonar.login=${{ secrets.SONAR_TOKEN }} || true
         working-directory: backend
-        if: secrets.SONAR_HOST_URL != ''
         continue-on-error: true
 
       - name: Upload test results
