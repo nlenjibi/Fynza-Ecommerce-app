@@ -81,6 +81,13 @@ class WishlistResolver {
 
     @QueryMapping
     
+    public long wishlistCount(@ContextValue UUID userId) {
+        log.info("GraphQL Query: wishlistCount user={}", userId);
+        return wishlistService.getWishlistCount(userId);
+    }
+
+    @QueryMapping
+    
     public Boolean isInWishlist(@Argument UUID productId, @ContextValue UUID userId) {
         log.info("GraphQL Query: isInWishlist productId={} user={}", productId, userId);
         return wishlistService.isInWishlist(userId, productId);

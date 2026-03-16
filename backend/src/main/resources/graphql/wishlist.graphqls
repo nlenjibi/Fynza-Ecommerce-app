@@ -112,6 +112,7 @@ extend type Query {
     myWishlist:                    [WishlistItem!]!
     myWishlistPaginated(pagination: PageInput): WishlistItemPage!
     wishlistSummary:               WishlistSummary!
+    wishlistCount:                Int!
     isInWishlist(productId: ID!):  Boolean!
     wishlistItemsWithPriceDrops:   [WishlistItem!]!
 }
