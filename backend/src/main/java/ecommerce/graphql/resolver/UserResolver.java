@@ -26,6 +26,8 @@ import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 
+import java.util.UUID;
+
 @Controller
 @RequiredArgsConstructor
 @Slf4j
@@ -36,7 +38,7 @@ public class UserResolver {
 
     @QueryMapping
     
-    public UserDto user(@Argument Long id) {
+    public UserDto user(@Argument UUID id) {
         log.info("GraphQL Query: user(id: {})", id);
         return userService.getUserById(id).orElse(null);
     }
@@ -64,7 +66,7 @@ public class UserResolver {
 
     @QueryMapping
     
-    public UserDto currentUser(@ContextValue Long userId) {
+    public UserDto currentUser(@ContextValue UUID userId) {
         log.info("GraphQL Query: currentUser for user {}", userId);
         return userService.getUserById(userId).orElse(null);
     }
@@ -85,14 +87,14 @@ public class UserResolver {
 
     @MutationMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public UserDto updateUser(@Argument Long id, @Argument UserUpdateRequest input) {
+    public UserDto updateUser(@Argument UUID id, @Argument UserUpdateRequest input) {
         log.info("GraphQL Mutation: updateUser(id: {})", id);
         return userService.updateUser(id, input);
     }
 
     @MutationMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public Boolean deleteUser(@Argument Long id) {
+    public Boolean deleteUser(@Argument UUID id) {
         log.info("GraphQL Mutation: deleteUser(id: {})", id);
         userService.deleteUser(id);
         return true;

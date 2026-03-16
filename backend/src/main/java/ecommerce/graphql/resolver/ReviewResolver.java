@@ -24,6 +24,8 @@ import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.stereotype.Controller;
 
+import java.util.UUID;
+
 /**
  * GraphQL resolver for Review queries and mutations.
  *
@@ -50,7 +52,7 @@ class ReviewResolver {
     @QueryMapping
     
     public ReviewResponseDto productReviews(
-            @Argument Long productId,
+            @Argument UUID productId,
             @Argument PageInput pagination,
             @Argument ReviewFilterInput filter) {
         log.info("GraphQL Query: productReviews productId={}", productId);
@@ -63,7 +65,7 @@ class ReviewResolver {
 
     @QueryMapping
     
-    public ReviewSummaryResponse productRatingStats(@Argument Long productId) {
+    public ReviewSummaryResponse productRatingStats(@Argument UUID productId) {
         log.info("GraphQL Query: productRatingStats productId={}", productId);
         return reviewService.getProductRatingStats(productId);
     }
@@ -87,7 +89,7 @@ class ReviewResolver {
     
     public ReviewResponse createReview(
             @Argument ReviewCreateRequest input,
-            @ContextValue Long userId) {
+            @ContextValue UUID userId) {
         log.info("GraphQL Mutation: createReview user={}", userId);
         return reviewService.createReview(input, userId);
     }
@@ -95,9 +97,9 @@ class ReviewResolver {
     @MutationMapping
     
     public ReviewResponse updateReview(
-            @Argument Long id,
+            @Argument UUID id,
             @Argument ReviewUpdateRequest input,
-            @ContextValue Long userId) {
+            @ContextValue UUID userId) {
         log.info("GraphQL Mutation: updateReview id={} user={}", id, userId);
         return reviewService.updateReview(id, input, userId);
     }
@@ -105,8 +107,8 @@ class ReviewResolver {
     @MutationMapping
     
     public Boolean deleteReview(
-            @Argument Long id,
-            @ContextValue Long userId) {
+            @Argument UUID id,
+            @ContextValue UUID userId) {
         log.info("GraphQL Mutation: deleteReview id={} user={}", id, userId);
         reviewService.deleteReview(id, userId);
         return true;
@@ -114,7 +116,7 @@ class ReviewResolver {
 
     @MutationMapping
     
-    public ReviewResponse markReviewHelpful(@Argument Long id) {
+    public ReviewResponse markReviewHelpful(@Argument UUID id) {
         log.info("GraphQL Mutation: markReviewHelpful id={}", id);
         reviewService.markHelpful(id);
         return reviewService.getReview(id);
@@ -141,7 +143,7 @@ class ReviewResolver {
         return PageRequest.of(input.getPage(), input.getSize(), sort);
     }
 
-    private Predicate buildProductPredicate(Long productId, ReviewFilterInput f) {
+    private Predicate buildProductPredicate(UUID productId, ReviewFilterInput f) {
         ReviewPredicates p = ReviewPredicates.builder()
                 .withProductId(productId)
                 .withRating(f.getRating())
