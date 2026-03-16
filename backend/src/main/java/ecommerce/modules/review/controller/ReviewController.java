@@ -8,6 +8,7 @@ import ecommerce.common.response.PaginatedResponse;
 import ecommerce.modules.review.dto.*;
 import ecommerce.modules.review.entity.Review;
 import ecommerce.modules.review.service.ReviewService;
+import ecommerce.security.UserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -22,6 +23,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -44,7 +46,7 @@ import java.util.UUID;
 public class ReviewController {
 
     private final ReviewService reviewService;
-    private final SecurityService securityService;
+
 
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -175,9 +177,10 @@ public class ReviewController {
 
     @Operation(summary = "Create a product review")
     public ResponseEntity<ApiResponse<ReviewResponse>> createReview(
-            @Valid @RequestBody ReviewCreateRequest request
+            @Valid @RequestBody ReviewCreateRequest request,
+             @AuthenticationPrincipal UserPrincipal principal
            ) {
-        UUID userId = securityService.getCurrentUserId();
+        UUID userId = principal.getId();
 
         if (userId == null) {
             return ResponseEntity.badRequest().body(ApiResponse.error("User ID is required to create a review"));
@@ -192,9 +195,10 @@ public class ReviewController {
     @Operation(summary = "Update your review")
     public ResponseEntity<ApiResponse<ReviewResponse>> updateReview(
             @PathVariable UUID reviewId,
-            @Valid @RequestBody ReviewUpdateRequest request
+            @Valid @RequestBody ReviewUpdateRequest request,
+            @AuthenticationPrincipal UserPrincipal principal
             ) {
-        UUID userId = securityService.getCurrentUserId();
+        UUID userId = principal.getId();
 
         return ResponseEntity.ok(ApiResponse.success("Review updated successfully",
                 reviewService.updateReview(reviewId, request, userId)));
@@ -205,9 +209,10 @@ public class ReviewController {
 
     @Operation(summary = "Delete your review")
     public ResponseEntity<ApiResponse<Void>> deleteReview(
+            @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID reviewId
             ) {
-        UUID userId = securityService.getCurrentUserId();
+        UUID userId = principal.getId();
 
         reviewService.deleteReview(reviewId, userId);
         return ResponseEntity.ok(ApiResponse.success("Review deleted successfully", null));
@@ -218,9 +223,10 @@ public class ReviewController {
 
     @Operation(summary = "Restore a soft-deleted review")
     public ResponseEntity<ApiResponse<ReviewResponse>> restoreReview(
+            @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID reviewId
            ) {
-        UUID userId = securityService.getCurrentUserId();
+        UUID userId = principal.getId();
 
         return ResponseEntity.ok(ApiResponse.success("Review restored successfully",
                 reviewService.restoreReview(reviewId, userId)));

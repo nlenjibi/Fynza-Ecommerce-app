@@ -1,6 +1,7 @@
 package ecommerce.modules.category.service.impl;
 
 import ecommerce.exception.ResourceNotFoundException;
+import ecommerce.modules.category.dto.CategoryCreateRequest;
 import ecommerce.modules.category.dto.CategoryRequest;
 import ecommerce.modules.category.dto.CategoryResponse;
 import ecommerce.modules.category.entity.Category;
@@ -9,6 +10,8 @@ import ecommerce.modules.category.repository.CategoryRepository;
 import ecommerce.modules.category.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -134,5 +137,46 @@ public class CategoryServiceImpl implements CategoryService {
                 .toList();
         response.setChildren(children);
         return response;
+    }
+
+    // ==================== GraphQL Resolver Methods ====================
+
+    @Override
+    public CategoryResponse mapToResponse(Category category) {
+        return categoryMapper.toSimpleResponse(category);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<CategoryResponse> getAllCategories(Pageable pageable) {
+        return categoryRepository.findAll(pageable)
+                .map(categoryMapper::toSimpleResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CategoryResponse getCategoryById(UUID id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with ID: " + id));
+        return categoryMapper.toSimpleResponse(category);
+    }
+
+    @Override
+    @Transactional
+    public CategoryResponse createCategory(CategoryCreateRequest request) {
+        log.info("Creating new category via GraphQL: {}", request.getName());
+
+        String slug = generateSlug(request.getName());
+        if (categoryRepository.existsBySlug(slug)) {
+            slug = generateUniqueSlug(slug);
+        }
+
+        Category category = categoryMapper.toEntityFromRequest(request);
+        category.setSlug(slug);
+
+        Category savedCategory = categoryRepository.save(category);
+        log.info("Category created successfully with ID: {}", savedCategory.getId());
+
+        return categoryMapper.toSimpleResponse(savedCategory);
     }
 }
