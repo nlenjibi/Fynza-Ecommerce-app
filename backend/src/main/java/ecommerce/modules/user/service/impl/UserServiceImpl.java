@@ -364,11 +364,8 @@ public class UserServiceImpl implements UserService {
         if (request.getPhone() != null) {
             user.setPhone(request.getPhone());
         }
-        if (request.getAvatar() != null) {
-            user.setAvatar(request.getAvatar());
-        }
-        if (request.getDateOfBirth() != null) {
-            user.setDateOfBirth(request.getDateOfBirth());
+        if (request.getProfileImageUrl() != null) {
+            user.setProfileImageUrl(request.getProfileImageUrl());
         }
 
         User updatedUser = userRepository.save(user);
