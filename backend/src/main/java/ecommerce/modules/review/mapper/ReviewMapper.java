@@ -69,5 +69,7 @@ public interface ReviewMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "product", ignore = true)
     @Mapping(target = "customer", ignore = true)
+    @Mapping(target = "pros", ignore = true)
+    @Mapping(target = "cons", ignore = true)
     void updateFromDto(ReviewUpdateRequest request, @MappingTarget Review review);
 }

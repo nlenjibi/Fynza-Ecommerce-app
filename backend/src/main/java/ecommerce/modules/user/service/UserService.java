@@ -21,6 +21,16 @@ public interface UserService {
     UserDto updateUserRole(UUID userId, UpdateUserRoleRequest request);
     UserDto updateUserStatus(UUID userId, UserStatusRequest request);
 
+    // Customer profile operations
+    UserDto getCustomerProfile(UUID userId);
+    UserDto updateCustomerProfile(UUID userId, UserDto request);
+
+    // Address operations
+    List<AddressDto> getCustomerAddresses(UUID userId);
+    AddressDto addCustomerAddress(UUID userId, AddressRequest request);
+    AddressDto updateCustomerAddress(UUID userId, UUID addressId, AddressRequest request);
+    void deleteCustomerAddress(UUID userId, UUID addressId);
+
     // Bulk operations for admin
     List<UserDto> bulkUpdateUsers(BulkUserUpdateRequest request);
 

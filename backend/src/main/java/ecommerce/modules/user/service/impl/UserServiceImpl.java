@@ -8,8 +8,11 @@ import ecommerce.modules.notification.repository.NotificationRepository;
 import ecommerce.modules.user.dto.*;
 import ecommerce.modules.user.entity.Role;
 import ecommerce.modules.user.entity.User;
+import ecommerce.modules.user.entity.Address;
 import ecommerce.modules.user.mapper.UserMapper;
+import ecommerce.modules.user.mapper.AddressMapper;
 import ecommerce.modules.user.repository.UserRepository;
+import ecommerce.modules.user.repository.AddressRepository;
 import ecommerce.modules.user.service.UserService;
 import ecommerce.services.TokenValidationService;
 import lombok.AllArgsConstructor;
@@ -36,7 +39,9 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
 
     private final UserMapper userMapper;
+    private final AddressMapper addressMapper;
     private final UserRepository userRepository;
+    private final AddressRepository addressRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenValidationService tokenValidationService;
     private final NotificationRepository notificationRepository;
@@ -130,7 +135,7 @@ public class UserServiceImpl implements UserService {
             "users-predicate", "admin-dashboard"
     }, allEntries = true)
     public void deleteUser(UUID id) {
-        checkSelfOrAdmin(id);
+        securityService.checkSelfOrAdmin(id);
         if (!userRepository.existsById(id)) {
             throw new ResourceNotFoundException(USER_NOT_FOUND + id);
         }
@@ -329,5 +334,132 @@ public class UserServiceImpl implements UserService {
     @Cacheable(value = "users-predicate", key = "T(org.springframework.util.DigestUtils).md5DigestAsHex(('#predicate=' + #predicate.toString() + '&page=' + #pageable.pageNumber + '&size=' + #pageable.pageSize + '&sort=' + #pageable.sort).getBytes())")
     public Page<UserDto> findUsersWithPredicate(com.querydsl.core.types.Predicate predicate, Pageable pageable) {
         return userRepository.findAll(predicate, pageable).map(userMapper::toDto);
+    }
+
+    // ==================== Customer Profile Operations ====================
+
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "user-profile", key = "#userId")
+    public UserDto getCustomerProfile(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND + userId));
+        return userMapper.toDto(user);
+    }
+
+    @Override
+    @Transactional
+    @CachePut(value = "user-profile", key = "#userId")
+    @CacheEvict(value = {"users"}, allEntries = true)
+    public UserDto updateCustomerProfile(UUID userId, UserDto request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND + userId));
+
+        if (request.getFirstName() != null) {
+            user.setFirstName(request.getFirstName());
+        }
+        if (request.getLastName() != null) {
+            user.setLastName(request.getLastName());
+        }
+        if (request.getPhone() != null) {
+            user.setPhone(request.getPhone());
+        }
+        if (request.getAvatar() != null) {
+            user.setAvatar(request.getAvatar());
+        }
+        if (request.getDateOfBirth() != null) {
+            user.setDateOfBirth(request.getDateOfBirth());
+        }
+
+        User updatedUser = userRepository.save(user);
+        log.info("Customer profile updated for user: {}", userId);
+        return userMapper.toDto(updatedUser);
+    }
+
+    // ==================== Address Operations ====================
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AddressDto> getCustomerAddresses(UUID userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new ResourceNotFoundException(USER_NOT_FOUND + userId);
+        }
+        List<Address> addresses = addressRepository.findByUserId(userId);
+        return addresses.stream()
+                .map(addressMapper::toDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public AddressDto addCustomerAddress(UUID userId, AddressRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND + userId));
+
+        if (Boolean.TRUE.equals(request.getIsDefault())) {
+            addressRepository.clearDefaultByUserId(userId);
+        }
+
+        Address address = addressMapper.toEntity(request);
+        address.setUser(user);
+
+        Address savedAddress = addressRepository.save(address);
+        log.info("Address added for user: {}", userId);
+        return addressMapper.toDto(savedAddress);
+    }
+
+    @Override
+    @Transactional
+    public AddressDto updateCustomerAddress(UUID userId, UUID addressId, AddressRequest request) {
+        Address address = addressRepository.findById(addressId)
+                .orElseThrow(() -> new ResourceNotFoundException("Address not found with id: " + addressId));
+
+        if (!address.getUser().getId().equals(userId)) {
+            throw new ResourceNotFoundException("Address not found with id: " + addressId);
+        }
+
+        if (Boolean.TRUE.equals(request.getIsDefault())) {
+            addressRepository.clearDefaultByUserId(userId);
+        }
+
+        if (request.getLabel() != null) {
+            address.setLabel(request.getLabel());
+        }
+        if (request.getStreetAddress() != null) {
+            address.setStreetAddress(request.getStreetAddress());
+        }
+        if (request.getCity() != null) {
+            address.setCity(request.getCity());
+        }
+        if (request.getState() != null) {
+            address.setState(request.getState());
+        }
+        if (request.getPostalCode() != null) {
+            address.setPostalCode(request.getPostalCode());
+        }
+        if (request.getCountry() != null) {
+            address.setCountry(request.getCountry());
+        }
+        if (request.getIsDefault() != null) {
+            address.setIsDefault(request.getIsDefault());
+        }
+
+        Address updatedAddress = addressRepository.save(address);
+        log.info("Address updated for user: {}", userId);
+        return addressMapper.toDto(updatedAddress);
+    }
+
+    @Override
+    @Transactional
+    public void deleteCustomerAddress(UUID userId, UUID addressId) {
+        Address address = addressRepository.findById(addressId)
+                .orElseThrow(() -> new ResourceNotFoundException("Address not found with id: " + addressId));
+
+        if (!address.getUser().getId().equals(userId)) {
+            throw new ResourceNotFoundException("Address not found with id: " + addressId);
+        }
+
+        addressRepository.delete(address);
+        log.info("Address deleted for user: {}", userId);
     }
 }
