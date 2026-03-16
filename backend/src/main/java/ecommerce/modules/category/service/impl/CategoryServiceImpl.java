@@ -10,6 +10,8 @@ import ecommerce.modules.category.repository.CategoryRepository;
 import ecommerce.modules.category.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryMapper categoryMapper;
 
     @Override
+    @Cacheable(value = "categories", key = "'all'")
     public List<CategoryResponse> findAll() {
         log.debug("Fetching all categories");
         return categoryRepository.findAll().stream()
@@ -36,6 +39,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Cacheable(value = "categories", key = "#id")
     public CategoryResponse findById(UUID id) {
         log.debug("Fetching category by ID: {}", id);
         Category category = categoryRepository.findById(id)
@@ -44,6 +48,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Cacheable(value = "categories", key = "'tree'")
     public List<CategoryResponse> findTree() {
         log.debug("Fetching category tree");
         List<Category> rootCategories = categoryRepository.findRootCategories();
@@ -54,6 +59,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "categories", allEntries = true)
     public CategoryResponse create(CategoryRequest request) {
         log.info("Creating new category: {}", request.getName());
 
@@ -73,6 +79,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "categories", allEntries = true)
     public CategoryResponse update(UUID id, CategoryRequest request) {
         log.info("Updating category with ID: {}", id);
 
@@ -97,6 +104,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "categories", allEntries = true)
     public void delete(UUID id) {
         log.info("Deleting category with ID: {}", id);
 
