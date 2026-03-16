@@ -437,13 +437,13 @@ public class ReviewServiceImpl implements ReviewService {
             "reviews",
             "reviews-predicate"
     }, allEntries = true)
-    public ReviewResponse addAdminResponse(UUID reviewId, AdminResponseRequest request, UUID adminId) {
+    public ReviewResponse addAdminResponse(UUID reviewId, AdminResponseRequest request) {
         log.info("Adding admin response to review {}", reviewId);
 
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> ResourceNotFoundException.forResource(REVIEW_ID_LITERAL, reviewId));
 
-        review.addAdminResponse(request.getResponse(), adminId);
+        review.addAdminResponse(request.getResponse(), null);
         Review updatedReview = reviewRepository.save(review);
 
         return reviewMapper.toDto(updatedReview);

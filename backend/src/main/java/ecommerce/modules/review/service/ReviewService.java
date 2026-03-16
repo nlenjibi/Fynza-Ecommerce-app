@@ -32,6 +32,8 @@ public interface ReviewService {
 
     Page<ReviewResponse> getProductReviewsWithFilters(UUID productId, ReviewFilterRequest filters, Pageable pageable);
 
+    Page<ReviewResponse> getUserReviews(UUID userId, Pageable pageable);
+
     // ==================== Statistics & Analytics ====================
 
     ReviewSummaryResponse getProductRatingStats(UUID productId);
@@ -47,7 +49,7 @@ public interface ReviewService {
 
     ReviewResponse rejectReview(UUID reviewId, String reason);
 
-    ReviewResponse addAdminResponse(UUID reviewId, AdminResponseRequest request, UUID adminId);
+    ReviewResponse addAdminResponse(UUID reviewId, AdminResponseRequest request);
 
     ReviewResponse removeAdminResponse(UUID reviewId);
 

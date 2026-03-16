@@ -1,62 +1,158 @@
+# ──────────────────────────────────────────────────────────────
+#  Enums
+# ──────────────────────────────────────────────────────────────
+
+enum ReviewStatus {
+    PENDING
+    APPROVED
+    REJECTED
+}
+
+# ──────────────────────────────────────────────────────────────
+#  Types
+# ──────────────────────────────────────────────────────────────
+
 type Review {
-id: ID!
-product: ProductResponse!
-user: User!
-rating: Int!
-title: String
-comment: String!
-verifiedPurchase: Boolean!
-createdAt: DateTime!
+    id: ID!
+    product: ProductResponse!
+    customer: User!
+    rating: Int!
+    title: String
+    comment: String!
+    verifiedPurchase: Boolean!
+    approved: Boolean!
+    helpfulCount: Int!
+    notHelpfulCount: Int!
+    helpfulPercentage: Float
+    totalVotes: Int!
+    hasImages: Boolean!
+    images: [String!]
+    pros: [String!]
+    cons: [String!]
+    adminResponse: String
+    adminResponseAt: DateTime
+    rejectionReason: String
+    createdAt: DateTime!
+    updatedAt: DateTime
 }
 
 type ProductRatingStats {
-productId: ID!
-averageRating: Float!
-totalReviews: Int!
+    productId: ID!
+    averageRating: Float!
+    totalReviews: Int!
+    verifiedPurchases: Int!
+    verifiedPurchasePercentage: Float!
+    distribution: RatingDistribution
+    topPros: [String!]
+    topCons: [String!]
+}
+
+type RatingDistribution {
+    fiveStars: Int!
+    fiveStarsPercentage: Float!
+    fourStars: Int!
+    fourStarsPercentage: Float!
+    threeStars: Int!
+    threeStarsPercentage: Float!
+    twoStars: Int!
+    twoStarsPercentage: Float!
+    oneStar: Int!
+    oneStarPercentage: Float!
 }
 
 type ReviewPage {
-content: [Review!]!
-pageInfo: PageInfo!
+    content: [Review!]!
+    pageInfo: PageInfo!
 }
 
+# ──────────────────────────────────────────────────────────────
+#  Inputs
+# ──────────────────────────────────────────────────────────────
+
 input ReviewCreateInput {
-productId: ID!
-rating: Int!
-title: String
-comment: String!
+    productId: ID!
+    rating: Int!
+    title: String
+    comment: String!
+    pros: [String!]
+    cons: [String!]
 }
 
 input ReviewUpdateInput {
-rating: Int
-title: String
-comment: String
+    rating: Int
+    title: String
+    comment: String
+    pros: [String!]
+    cons: [String!]
 }
 
-type ReviewResponse {
-review: Review
-errors: [String!]
+input AdminResponseInput {
+    response: String!
 }
 
-type ReviewResponseDto {
-content: [Review!]!
-pageInfo: PageInfo!
-errors: [String!]
-}
-
-type ReviewSummaryResponse {
-stats: ProductRatingStats!
-errors: [String!]
-}
+# ──────────────────────────────────────────────────────────────
+#  Queries
+# ──────────────────────────────────────────────────────────────
 
 extend type Query {
-productReviews(productId: ID!, pagination: PageInput): ReviewResponseDto!
-productRatingStats(productId: ID!): ReviewSummaryResponse!
+    # Public - Get product reviews
+    productReviews(
+        productId: ID!,
+        pagination: PageInput,
+        filter: ReviewFilterInput
+    ): ReviewPage!
+    
+    # Public - Get product rating stats
+    productRatingStats(productId: ID!): ProductRatingStats!
+    
+    # Public - Search reviews across products
+    searchReviews(
+        filter: ReviewFilterInput,
+        pagination: PageInput
+    ): ReviewPage!
+    
+    # Authenticated - Get current user's reviews
+    myReviews(pagination: PageInput): ReviewPage!
+    
+    # Public - Get single review
+    review(id: ID!): Review
 }
 
+# ──────────────────────────────────────────────────────────────
+#  Mutations
+# ──────────────────────────────────────────────────────────────
+
 extend type Mutation {
-createReview(input: ReviewCreateInput!): ReviewResponse!
-updateReview(id: ID!, input: ReviewUpdateInput!): ReviewResponse!
-deleteReview(id: ID!): Boolean!
-markReviewHelpful(id: ID!): ReviewResponse!
+    # Authenticated - Create a review
+    createReview(input: ReviewCreateInput!): Review!
+    
+    # Authenticated - Update own review
+    updateReview(id: ID!, input: ReviewUpdateInput!): Review!
+    
+    # Authenticated - Delete own review
+    deleteReview(id: ID!): Boolean!
+    
+    # Public - Mark review as helpful
+    markReviewHelpful(id: ID!): Review!
+    
+    # Authenticated - Restore own review
+    restoreReview(id: ID!): Review!
+    
+    # Admin - Approve review
+    approveReview(id: ID!): Review!
+    
+    # Admin - Reject review
+    rejectReview(id: ID!, reason: String!): Review!
+    
+    # Admin - Add admin response
+    addAdminResponse(id: ID!, input: AdminResponseInput!): Review!
+    
+    # Admin - Remove admin response
+    removeAdminResponse(id: ID!): Review!
+    
+    # Admin - Bulk approve reviews
+    bulkApproveReviews(ids: [ID!]!): Int!
+    
+    # Admin - Bulk reject reviews
+    bulkRejectReviews(ids: [ID!]!, reason: String!): Int!
 }
