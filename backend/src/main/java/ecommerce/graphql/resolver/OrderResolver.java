@@ -1,11 +1,11 @@
 package ecommerce.graphql.resolver;
 
 import ecommerce.common.enums.OrderStatus;
-import ecommerce.common.enums.PaymentStatus;
 import ecommerce.common.response.PaginatedResponse;
 import ecommerce.graphql.dto.OrderResponseDto;
 import ecommerce.graphql.input.PageInput;
 import ecommerce.graphql.input.SortDirection;
+import ecommerce.modules.order.dto.CreateOrderRequest;
 import ecommerce.modules.order.dto.OrderResponse;
 import ecommerce.modules.order.dto.OrderStatsResponse;
 import ecommerce.modules.order.dto.OrderStatusUpdateRequest;
@@ -77,11 +77,21 @@ public class OrderResolver {
         return orderService.getOrderStatistics();
     }
 
+    // ==================== Mutations ====================
+
+    @MutationMapping
+    public OrderResponse createOrder(@Argument CreateOrderRequest input,
+                                     @ContextValue UUID userId) {
+        log.info("GQL createOrder(user={})", userId);
+        return orderService.createOrder(input, userId);
+    }
+
     @MutationMapping
     public OrderResponse cancelOrder(@Argument UUID id,
-                                     @ContextValue UUID userId) {
+                                      @Argument String reason,
+                                      @ContextValue UUID userId) {
         log.info("GQL cancelOrder(id={}, user={})", id, userId);
-        return orderService.cancelOrder(id, userId);
+        return orderService.cancelOrder(id, reason);
     }
 
     @MutationMapping
