@@ -23,7 +23,6 @@ public interface ReviewMapper {
     @Mapping(target = "user.firstName", source = "customer.firstName")
     @Mapping(target = "user.lastName", source = "customer.lastName")
     @Mapping(target = "user.email", source = "customer.email")
-    @Mapping(target = "comment", source = "text")
     @Mapping(target = "helpfulCount", source = "helpful")
     @Mapping(target = "notHelpfulCount", source = "unhelpful")
     ReviewResponse toDto(Review review);
@@ -40,15 +39,17 @@ public interface ReviewMapper {
     @Mapping(target = "deleted", constant = "false")
     @Mapping(target = "adminResponse", ignore = true)
     @Mapping(target = "adminResponseAt", ignore = true)
+    @Mapping(target = "adminResponseBy", ignore = true)
     @Mapping(target = "rejectionReason", ignore = true)
     @Mapping(target = "deletedAt", ignore = true)
-    @Mapping(target = "text", source = "comment")
+    @Mapping(target = "hasImages", ignore = true)
+    @Mapping(target = "pros", ignore = true)
+    @Mapping(target = "cons", ignore = true)
     Review toEntity(ReviewCreateRequest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "product", ignore = true)
     @Mapping(target = "customer", ignore = true)
-    @Mapping(target = "text", source = "comment")
     void updateFromDto(ReviewUpdateRequest request, @MappingTarget Review review);
 }
