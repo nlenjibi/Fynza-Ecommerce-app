@@ -135,10 +135,18 @@ class WishlistResolver {
     @MutationMapping
     
     public WishlistItemDto markWishlistItemPurchased(
-            @Argument UUIDgit productId,
+            @Argument UUID productId,
             @ContextValue UUID userId) {
         log.info("GraphQL Mutation: markWishlistItemPurchased productId={} user={}", productId, userId);
         return wishlistService.markAsPurchased(userId, productId);
+    }
+
+    @MutationMapping
+    
+    public Boolean moveWishlistItemToCart(@Argument UUID productId, @ContextValue UUID userId) {
+        log.info("GraphQL Mutation: moveWishlistItemToCart productId={} user={}", productId, userId);
+        wishlistService.moveToCart(userId, productId);
+        return true;
     }
 
     // ─────────────────────────────────────────────────────────────────────────

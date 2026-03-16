@@ -135,4 +135,7 @@ extend type Mutation {
     
     # Security: AUTHENTICATED - Mark item as purchased
     markWishlistItemPurchased(productId: ID!):                          WishlistItem!
+    
+    # Security: AUTHENTICATED - Move wishlist item to cart
+    moveWishlistItemToCart(productId: ID!):                             Boolean!
 }

@@ -19,10 +19,11 @@ public interface WishlistMapper {
      * Computed fields use expression() so MapStruct delegates to the entity's
      * own business-logic methods rather than duplicating the logic here.
      */
-    @Mapping(source = "wishlist.user.id", target = "userId")
+    @Mapping(source = "user.id", target = "userId")
     @Mapping(source = "createdAt", target = "addedAt")
     @Mapping(source = "product",   target = "product",              qualifiedByName = "toProductSummary")
-    @Mapping(target  = "currentPrice",           expression = "java(item.getProduct().getEffectivePrice())")
+    @Mapping(target  = "currentPrice",           expression = "java(item.getProduct().getPrice())")
+    @Mapping(target  = "priceDifference",        expression = "java(item.getProduct().getOriginalPrice() != null && item.getProduct().getPrice() != null ? item.getProduct().getOriginalPrice().subtract(item.getProduct().getPrice()) : null)")
     @Mapping(target  = "inStock",                expression = "java(item.getProduct().isInStock())")
     WishlistItemDto toDto(WishlistItem item);
 
@@ -41,7 +42,7 @@ public interface WishlistMapper {
                 .slug(product.getSlug())
                 .sku(product.getSku())
                 .price(product.getPrice())
-                .discountPrice(product.getDiscountPrice())
+                .discountPrice(product.getOriginalPrice())
                 .imageUrl(product.getImageUrl())
                 .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
                 .inStock(product.isInStock())
