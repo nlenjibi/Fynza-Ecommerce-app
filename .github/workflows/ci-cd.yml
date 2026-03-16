@@ -171,6 +171,9 @@ jobs:
     needs: [backend-ci, frontend-ci]
     runs-on: ubuntu-latest
     if: always() && (needs.backend-ci.result == 'success' || needs.backend-ci.result == 'skipped') && (needs.frontend-ci.result == 'success' || needs.frontend-ci.result == 'skipped')
+    permissions:
+      contents: read
+      security-events: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -185,7 +188,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
       - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: 'trivy-results.sarif'
@@ -233,7 +236,7 @@ jobs:
           severity: 'CRITICAL'
 
       - name: Upload backend scan results
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: 'backend-trivy-results.sarif'
@@ -255,7 +258,7 @@ jobs:
           severity: 'CRITICAL'
 
       - name: Upload frontend scan results
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: 'frontend-trivy-results.sarif'
