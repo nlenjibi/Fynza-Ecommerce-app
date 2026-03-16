@@ -135,7 +135,7 @@ class WishlistResolver {
     @MutationMapping
     
     public WishlistItemDto markWishlistItemPurchased(
-            @Argument UUID productId,
+            @Argument UUIDgit productId,
             @ContextValue UUID userId) {
         log.info("GraphQL Mutation: markWishlistItemPurchased productId={} user={}", productId, userId);
         return wishlistService.markAsPurchased(userId, productId);

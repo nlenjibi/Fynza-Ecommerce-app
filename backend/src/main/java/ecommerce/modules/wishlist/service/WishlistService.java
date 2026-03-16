@@ -12,10 +12,6 @@ import java.util.UUID;
 
 public interface WishlistService {
 
-    // ──────────────────────────────────────────────────────────────
-    //  Basic CRUD
-    // ──────────────────────────────────────────────────────────────
-
     WishlistItemDto addToWishlist(UUID userId, AddToWishlistRequest request);
 
     List<WishlistItemDto> getUserWishlist(UUID userId);
@@ -31,10 +27,6 @@ public interface WishlistService {
     boolean isInWishlist(UUID userId, UUID productId);
 
     void clearWishlist(UUID userId);
-
-    // ──────────────────────────────────────────────────────────────
-    //  Price & stock tracking
-    // ──────────────────────────────────────────────────────────────
 
     List<WishlistItemDto> getItemsWithPriceDrops(UUID userId);
 
