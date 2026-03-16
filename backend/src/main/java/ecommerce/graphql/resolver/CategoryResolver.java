@@ -256,7 +256,7 @@ public class CategoryResolver {
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public CategoryResponse createCategory(@Argument CategoryCreateRequest input) {
         log.info("GraphQL Mutation: createCategory(name: {})", input.getName());
-        return categoryService.createCategory(input);
+        return categoryService.create(input);
     }
 
     // ==================== Helper Methods ====================
