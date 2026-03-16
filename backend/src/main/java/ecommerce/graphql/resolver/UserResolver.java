@@ -9,6 +9,8 @@ import ecommerce.graphql.input.SortDirection;
 import ecommerce.graphql.input.UserFilterInput;
 import ecommerce.modules.admin.AdminDashboardDto;
 import ecommerce.modules.admin.service.AdminService;
+import ecommerce.modules.user.dto.AddressDto;
+import ecommerce.modules.user.dto.AddressRequest;
 import ecommerce.modules.user.dto.UserCreateRequest;
 import ecommerce.modules.user.dto.UserDto;
 import ecommerce.modules.user.dto.UserUpdateRequest;
@@ -26,6 +28,7 @@ import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 
+import java.util.List;
 import java.util.UUID;
 
 @Controller
@@ -97,6 +100,37 @@ public class UserResolver {
     public Boolean deleteUser(@Argument UUID id) {
         log.info("GraphQL Mutation: deleteUser(id: {})", id);
         userService.deleteUser(id);
+        return true;
+    }
+
+    // ==================== Address Operations ====================
+
+    @QueryMapping
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public List<AddressDto> myAddresses(@ContextValue UUID userId) {
+        log.info("GraphQL Query: myAddresses for user {}", userId);
+        return userService.getCustomerAddresses(userId);
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public AddressDto addAddress(@Argument AddressRequest input, @ContextValue UUID userId) {
+        log.info("GraphQL Mutation: addAddress for user {}", userId);
+        return userService.addCustomerAddress(userId, input);
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public AddressDto updateAddress(@Argument UUID id, @Argument AddressRequest input, @ContextValue UUID userId) {
+        log.info("GraphQL Mutation: updateAddress(id: {})", id);
+        return userService.updateCustomerAddress(userId, id, input);
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public Boolean deleteAddress(@Argument UUID id, @ContextValue UUID userId) {
+        log.info("GraphQL Mutation: deleteAddress(id: {})", id);
+        userService.deleteCustomerAddress(userId, id);
         return true;
     }
 
