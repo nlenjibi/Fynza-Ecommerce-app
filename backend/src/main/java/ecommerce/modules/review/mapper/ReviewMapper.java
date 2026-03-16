@@ -6,7 +6,7 @@ import ecommerce.modules.review.dto.ReviewUpdateRequest;
 import ecommerce.modules.review.entity.Review;
 import org.mapstruct.*;
 
-import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 @Mapper(
@@ -25,7 +25,23 @@ public interface ReviewMapper {
     @Mapping(target = "user.email", source = "customer.email")
     @Mapping(target = "helpfulCount", source = "helpful")
     @Mapping(target = "notHelpfulCount", source = "unhelpful")
+    @Mapping(target = "pros", source = "pros")
+    @Mapping(target = "cons", source = "cons")
     ReviewResponse toDto(Review review);
+
+    default List<String> stringToList(String value) {
+        if (value == null || value.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return List.of(value.split(","));
+    }
+
+    default String listToString(List<String> value) {
+        if (value == null || value.isEmpty()) {
+            return null;
+        }
+        return String.join(",", value);
+    }
 
     List<ReviewResponse> toDtoList(List<Review> reviews);
 
@@ -43,8 +59,8 @@ public interface ReviewMapper {
     @Mapping(target = "rejectionReason", ignore = true)
     @Mapping(target = "deletedAt", ignore = true)
     @Mapping(target = "hasImages", ignore = true)
-    @Mapping(target = "pros", ignore = true)
-    @Mapping(target = "cons", ignore = true)
+    @Mapping(target = "pros", source = "pros", qualifiedByName = "listToString")
+    @Mapping(target = "cons", source = "cons", qualifiedByName = "listToString")
     Review toEntity(ReviewCreateRequest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
