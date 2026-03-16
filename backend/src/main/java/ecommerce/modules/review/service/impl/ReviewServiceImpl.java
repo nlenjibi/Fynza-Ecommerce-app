@@ -79,7 +79,7 @@ public class ReviewServiceImpl implements ReviewService {
         review.setCustomer(customer);
 
         // Check if verified purchase
-        boolean hasOrdered = orderRepository.existsByUserIdAndProductId(userId, request.getProductId());
+        boolean hasOrdered = orderRepository.existsByCustomerIdAndProductId(userId, request.getProductId());
         review.setVerifiedPurchase(hasOrdered);
 
         // Auto-approve verified purchases, pending for others
@@ -244,7 +244,7 @@ public class ReviewServiceImpl implements ReviewService {
             throw ResourceNotFoundException.forResource("User id", userId);
         }
 
-        Page<Review> reviews = reviewRepository.findByUserId(userId, pageable);
+        Page<Review> reviews = reviewRepository.findByCustomerId(userId, pageable);
         return reviews.map(reviewMapper::toDto);
     }
 
@@ -310,9 +310,9 @@ public class ReviewServiceImpl implements ReviewService {
         List<String> topPros = reviewRepository.getMostCommonPros(productId, 5);
         List<String> topCons = reviewRepository.getMostCommonCons(productId, 5);
 
-        UUID totalReviews = 0L;
+        Long totalReviews = 0L;
         Double avgRating = 0.0;
-        UUID verifiedPurchases = 0L;
+        Long verifiedPurchases = 0L;
         if (stats != null) {
             if (stats.length > 0 && stats[0] instanceof Number) {
                 totalReviews = ((Number) stats[0]).longValue();
@@ -338,13 +338,13 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     private ReviewSummaryResponse.RatingDistribution buildRatingDistribution(List<Object[]> distribution) {
-        Map<Integer, UUID> countMap = new HashMap<>();
+        Map<Integer, Long> countMap = new HashMap<>();
         Map<Integer, Double> percentageMap = new HashMap<>();
 
         if (distribution != null) {
             for (Object[] row : distribution) {
                 Integer rating = (Integer) row[0];
-                UUID count = (UUID) row[1];
+                Long count = ((Number) row[1]).longValue();
                 Double percentage = (Double) row[2];
                 countMap.put(rating, count);
                 percentageMap.put(rating, percentage);

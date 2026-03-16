@@ -66,4 +66,16 @@ public interface ReviewService {
      * Find reviews with QueryDSL predicate for advanced filtering
      */
     Page<ReviewResponse> findReviewsWithPredicate(Predicate predicate, Pageable pageable);
+
+    // ==================== Additional Query Operations ====================
+
+    Page<ReviewResponse> getVerifiedReviews(UUID productId, Pageable pageable);
+
+    Page<ReviewResponse> getReviewsByRating(UUID productId, Integer rating, Pageable pageable);
+
+    List<ReviewResponse> getMostHelpfulReviews(UUID productId, int limit);
+
+    List<ReviewResponse> getRecentReviews(UUID productId, int limit);
+
+    Page<ReviewResponse> getReviewsWithImages(UUID productId, Pageable pageable);
 }
