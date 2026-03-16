@@ -1,0 +1,68 @@
+# Analytics GraphQL Schema
+
+# ==================== Admin Analytics Types ====================
+
+"""
+Seller metrics for admin dashboard
+"""
+type SellerMetrics {
+    sellerId: ID!
+    sellerName: String!
+    totalOrders: Long!
+    totalRevenue: BigDecimal!
+    cancellationRate: Float!
+    lowStockCount: Long!
+    averageRating: Float!
+}
+
+"""
+Trend data for charts
+"""
+type TrendData {
+    period: DateTime!
+    count: Long!
+    value: BigDecimal!
+}
+
+"""
+Category preference for customers
+"""
+type CategoryPreference {
+    categoryId: ID!
+    categoryName: String!
+    purchaseCount: Long!
+    totalSpent: BigDecimal!
+    percentage: Float!
+}
+
+# ==================== Queries ====================
+
+extend type Query {
+    # ==================== Admin Analytics ====================
+    
+    # Security: ADMIN only
+    totalUsers: Long!
+    totalRevenue: BigDecimal!
+    revenueForPeriod(start: DateTime!, end: DateTime!): BigDecimal!
+    totalOrderCount: Long!
+    orderCountForPeriod(start: DateTime!, end: DateTime!): Long!
+    topSellers(limit: Int = 10): [SellerMetrics!]!
+    orderTrends(start: DateTime!, end: DateTime!): [TrendData!]!
+    revenueTrends(start: DateTime!, end: DateTime!): [TrendData!]!
+
+    # ==================== Seller Analytics ====================
+    
+    # Security: SELLER only
+    sellerProductSales: Long!
+    sellerRevenue: BigDecimal!
+    sellerRevenueForPeriod(start: DateTime!, end: DateTime!): BigDecimal!
+    sellerCancellationRate: Float!
+    sellerLowStockCount: Long!
+    sellerMetrics: SellerMetrics!
+
+    # ==================== Customer Analytics ====================
+    
+    # Security: AUTHENTICATED
+    customerTotalSpending: BigDecimal!
+    customerCategoryPreferences: [CategoryPreference!]!
+}
