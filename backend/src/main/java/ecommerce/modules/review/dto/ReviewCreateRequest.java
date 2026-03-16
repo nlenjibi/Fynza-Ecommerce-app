@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -19,7 +20,7 @@ public class ReviewCreateRequest {
     @Schema(description = "ID of the product being reviewed", example = "123", required = true)
     @NotNull(message = "Product ID is required")
     @Positive(message = "Product ID must be positive")
-    private Long productId;
+    private UUID productId;
 
     @Schema(description = "Star rating from 1 to 5", example = "5", required = true)
     @NotNull(message = "Rating is required")

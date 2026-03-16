@@ -15,13 +15,8 @@ import java.util.UUID;
 @Repository
 public interface ReviewRepository extends BaseRepository<Review, UUID> {
 
-    Page<Review> findByProductId(UUID productId, Pageable pageable);
-
-    Page<Review> findByCustomerId(UUID customerId, Pageable pageable);
 
     boolean existsByCustomerIdAndProductId(UUID customerId, UUID productId);
-
-    Optional<Review> findByCustomerIdAndProductId(UUID customerId, UUID productId);
 
     Page<Review> findByProductIdAndApproved(UUID productId, Boolean approved, Pageable pageable);
 
