@@ -15,6 +15,8 @@ public interface CategoryRepository extends BaseRepository<Category, UUID> {
 
     Optional<Category> findBySlug(String slug);
 
+    boolean existsBySlug(String slug);
+
     List<Category> findByParentCategoryId(UUID parentCategoryId);
 
     @Query("SELECT c FROM Category c WHERE c.parentCategory IS NULL")
