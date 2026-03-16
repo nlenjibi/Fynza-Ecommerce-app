@@ -4,6 +4,7 @@ import com.querydsl.core.types.Predicate;
 import ecommerce.exception.BadRequestException;
 import ecommerce.exception.ResourceNotFoundException;
 import ecommerce.exception.AuthorizationException;
+import ecommerce.modules.auth.service.SecurityService;
 import ecommerce.modules.order.repository.OrderRepository;
 import ecommerce.modules.product.entity.Product;
 import ecommerce.modules.product.repository.ProductRepository;
@@ -45,6 +46,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
     private final ReviewMapper reviewMapper;
+    private final SecurityService securityService;
 
     private static final String REVIEW_ID_LITERAL = "Review id";
 
@@ -439,11 +441,12 @@ public class ReviewServiceImpl implements ReviewService {
     }, allEntries = true)
     public ReviewResponse addAdminResponse(UUID reviewId, AdminResponseRequest request) {
         log.info("Adding admin response to review {}", reviewId);
+        UUID adminId = securityService.getCurrentUserId();
 
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> ResourceNotFoundException.forResource(REVIEW_ID_LITERAL, reviewId));
 
-        review.addAdminResponse(request.getResponse(), null);
+        review.addAdminResponse(request.getResponse(), adminId);
         Review updatedReview = reviewRepository.save(review);
 
         return reviewMapper.toDto(updatedReview);

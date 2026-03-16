@@ -25,10 +25,11 @@ public interface ReviewMapper {
     @Mapping(target = "user.email", source = "customer.email")
     @Mapping(target = "helpfulCount", source = "helpful")
     @Mapping(target = "notHelpfulCount", source = "unhelpful")
-    @Mapping(target = "pros", source = "pros")
-    @Mapping(target = "cons", source = "cons")
+    @Mapping(target = "pros", source = "pros", qualifiedByName = "stringToList")
+    @Mapping(target = "cons", source = "cons", qualifiedByName = "stringToList")
     ReviewResponse toDto(Review review);
 
+    @Named("stringToList")
     default List<String> stringToList(String value) {
         if (value == null || value.isEmpty()) {
             return Collections.emptyList();
@@ -36,6 +37,7 @@ public interface ReviewMapper {
         return List.of(value.split(","));
     }
 
+    @Named("listToString")
     default String listToString(List<String> value) {
         if (value == null || value.isEmpty()) {
             return null;

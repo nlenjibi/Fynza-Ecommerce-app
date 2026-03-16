@@ -60,7 +60,7 @@ type RatingDistribution {
     oneStarPercentage: Float!
 }
 
-type ReviewPage {
+type ReviewResponseDto {
     content: [Review!]!
     pageInfo: PageInfo!
 }
@@ -100,7 +100,7 @@ extend type Query {
         productId: ID!,
         pagination: PageInput,
         filter: ReviewFilterInput
-    ): ReviewPage!
+    ): ReviewResponseDto!
     
     # Public - Get product rating stats
     productRatingStats(productId: ID!): ProductRatingStats!
@@ -109,10 +109,10 @@ extend type Query {
     searchReviews(
         filter: ReviewFilterInput,
         pagination: PageInput
-    ): ReviewPage!
+    ): ReviewResponseDto!
     
     # Authenticated - Get current user's reviews
-    myReviews(pagination: PageInput): ReviewPage!
+    myReviews(pagination: PageInput): ReviewResponseDto!
     
     # Public - Get single review
     review(id: ID!): Review

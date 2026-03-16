@@ -235,10 +235,11 @@ public class ReviewController {
     @Operation(summary = "Add admin response to a review")
     public ResponseEntity<ApiResponse<ReviewResponse>> addAdminResponse(
             @PathVariable @Positive UUID reviewId,
-            @Valid @RequestBody AdminResponseRequest request,
-            @RequestParam(required = false) UUID adminId) {
+            @Valid @RequestBody AdminResponseRequest request
+            ) {
+
         return ResponseEntity.ok(ApiResponse.success("Admin response added successfully",
-                reviewService.addAdminResponse(reviewId, request, adminId)));
+                reviewService.addAdminResponse(reviewId, request)));
     }
 
     @DeleteMapping("/admin/{reviewId}/admin-response")
