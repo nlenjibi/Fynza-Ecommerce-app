@@ -4,6 +4,7 @@ import ecommerce.common.enums.ProductStatus;
 import ecommerce.modules.auth.service.SecurityService;
 import ecommerce.modules.category.entity.Category;
 import ecommerce.modules.category.repository.CategoryRepository;
+import ecommerce.modules.product.async.SearchAsyncService;
 import ecommerce.modules.product.dto.ProductResponse;
 import ecommerce.modules.product.dto.SearchRequest;
 import ecommerce.modules.product.dto.SearchResponse;
@@ -35,6 +36,7 @@ public class SearchServiceImpl implements SearchService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final SecurityService securityService;
+    private final SearchAsyncService searchAsyncService;
 
     @Override
     @Transactional(readOnly = true)
@@ -51,6 +53,8 @@ public class SearchServiceImpl implements SearchService {
                 .collect(Collectors.toList());
         
         SearchResponse.Filters filters = getCachedFilters();
+        
+        searchAsyncService.recordSearchQuery(request);
         
         return SearchResponse.builder()
                 .results(results)

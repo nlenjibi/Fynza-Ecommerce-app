@@ -9,12 +9,10 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder(setterPrefix = "with")
+@Builder
 @Getter
 @Setter
 public class ProductDto {
     private List<ProductResponse> content;
     private PaginatedResponse<ProductResponse> pageInfo;
-
-
 }

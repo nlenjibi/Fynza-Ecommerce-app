@@ -10,7 +10,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder(setterPrefix = "with")
+@Builder
 public class ProductFilterRequest {
     private UUID categoryId;
     private List<UUID> categoryIds;
