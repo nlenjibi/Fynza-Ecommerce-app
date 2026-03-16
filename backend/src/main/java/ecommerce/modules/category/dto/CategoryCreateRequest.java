@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -21,6 +23,8 @@ public class CategoryCreateRequest {
     @Size(max = 500, message = "Description must not exceed 500 characters")
     private String description;
 
+    private UUID parentCategoryId;
+
     @Size(max = 500, message = "Image URL must not exceed 500 characters")
     private String imageUrl;
 
@@ -32,5 +36,5 @@ public class CategoryCreateRequest {
     @Size(max = 100, message = "Icon must not exceed 100 characters")
     private String icon;
 
-
+    private String slug;
 }
