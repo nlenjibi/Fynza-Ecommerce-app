@@ -7,9 +7,11 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Builder(setterPrefix = "with")
 public class CategoryInfo {
     private UUID id;
     private String name;
     private String slug;
+    private String description;
+    private String imageUrl;
 }

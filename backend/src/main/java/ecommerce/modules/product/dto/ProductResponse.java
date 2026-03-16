@@ -10,7 +10,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Builder(setterPrefix = "with")
 public class ProductResponse {
     private UUID id;
     private String name;
@@ -22,18 +22,37 @@ public class ProductResponse {
     private BigDecimal price;
     private BigDecimal originalPrice;
     private BigDecimal discount;
+    private BigDecimal discountPrice;
+    private BigDecimal costPrice;
+    private BigDecimal effectivePrice;
+    private BigDecimal discountPercentage;
+    private Integer stock;
+    private Integer stockQuantity;
+    private Integer reservedQuantity;
+    private Integer availableQuantity;
+    private Integer lowStockThreshold;
+    private Integer reorderPoint;
+    private Integer reorderQuantity;
+    private Integer maxStockQuantity;
     private BigDecimal rating;
+    private BigDecimal ratingAverage;
     private Integer reviewCount;
+    private Integer ratingCount;
     private Integer viewCount;
+    private Long salesCount;
     private List<String> images;
     private List<ProductVariantResponse> variants;
     private Boolean inStock;
     private Integer stockCount;
-    private Integer availableQuantity;
-    private Integer soldQuantity;
+    private Boolean trackInventory;
+    private Boolean allowBackorder;
+    private Boolean featured;
+    private Boolean isNew;
+    private Boolean isBestseller;
     private SellerInfo seller;
     private String status;
     private String inventoryStatus;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Long version;
 }

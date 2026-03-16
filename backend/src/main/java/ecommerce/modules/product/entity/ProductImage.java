@@ -2,16 +2,17 @@ package ecommerce.modules.product.entity;
 
 import ecommerce.common.base.BaseEntity;
 import jakarta.persistence.*;
-import lombok.Getter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Getter
-@Setter
+@Data
 @SuperBuilder
 @NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "product_images")
 public class ProductImage extends BaseEntity {
 

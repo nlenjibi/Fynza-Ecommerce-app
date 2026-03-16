@@ -95,6 +95,18 @@ public class Product extends BaseEntity {
     @Builder.Default
     private InventoryStatus inventoryStatus = InventoryStatus.IN_STOCK;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean featured = false;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isNew = false;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isBestseller = false;
+
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<ProductImage> images = new ArrayList<>();
