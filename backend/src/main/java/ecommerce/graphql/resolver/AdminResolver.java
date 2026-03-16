@@ -2,13 +2,16 @@ package ecommerce.graphql.resolver;
 
 import com.querydsl.core.types.Predicate;
 import ecommerce.modules.user.entity.UserPredicates;
+import ecommerce.common.response.PaginatedResponse;
 import ecommerce.graphql.dto.UserResponceDto;
 import ecommerce.graphql.input.PageInput;
 import ecommerce.graphql.input.SortDirection;
 import ecommerce.graphql.input.UserFilterInput;
-import ecommerce.modules.user.dto.AddressDto;
-import ecommerce.modules.user.dto.AddressRequest;
+import ecommerce.modules.admin.AdminDashboardDto;
+import ecommerce.modules.admin.service.AdminService;
+import ecommerce.modules.user.dto.UserCreateRequest;
 import ecommerce.modules.user.dto.UserDto;
+import ecommerce.modules.user.dto.UserUpdateRequest;
 import ecommerce.modules.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,38 +20,39 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.graphql.data.method.annotation.Argument;
-import org.springframework.graphql.data.method.annotation.ContextValue;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 
-import java.util.List;
 import java.util.UUID;
 
 @Controller
 @RequiredArgsConstructor
 @Slf4j
-public class UserResolver {
+public class AdminResolver {
 
     private final UserService userService;
+    private final AdminService adminService;
 
     @QueryMapping
-    public UserDto user(@Argument UUID id) {
-        log.info("GraphQL Query: user(id: {})", id);
-        return userService.getUserById(id).orElse(null);
+    @PreAuthorize("hasRole('ADMIN')")
+    public AdminDashboardDto adminDashboard() {
+        log.info("GraphQL Query: adminDashboard");
+        return adminService.getDashboardStats();
     }
 
     @QueryMapping
-    public UserDto currentUser(@ContextValue UUID userId) {
-        log.info("GraphQL Query: currentUser for user {}", userId);
-        return userService.getUserById(userId).orElse(null);
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    public AdminDashboardDto staffDashboard() {
+        log.info("GraphQL Query: staffDashboard");
+        return adminService.getDashboardStats();
     }
 
     @QueryMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public UserResponceDto users(@Argument PageInput pagination, @Argument UserFilterInput filter) {
-        log.info("GraphQL Query: users");
+    public UserResponceDto allUsers(@Argument PageInput pagination, @Argument UserFilterInput filter) {
+        log.info("GraphQL Query: allUsers");
         Pageable pageable = createPageable(pagination);
 
         Page<UserDto> userPage;
@@ -61,39 +65,44 @@ public class UserResolver {
 
         return UserResponceDto.builder()
                 .content(userPage.getContent())
-                .pageInfo(ecommerce.common.response.PaginatedResponse.from(userPage))
+                .pageInfo(PaginatedResponse.from(userPage))
                 .build();
     }
 
-    // ==================== Address Operations ====================
-
-    @QueryMapping
-    @PreAuthorize("hasRole('CUSTOMER')")
-    public List<AddressDto> myAddresses(@ContextValue UUID userId) {
-        log.info("GraphQL Query: myAddresses for user {}", userId);
-        return userService.getCustomerAddresses(userId);
+    @MutationMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public UserDto createUser(@Argument UserCreateRequest input) {
+        log.info("GraphQL Mutation: createUser");
+        return userService.createUser(input);
     }
 
     @MutationMapping
-    @PreAuthorize("hasRole('CUSTOMER')")
-    public AddressDto addAddress(@Argument AddressRequest input, @ContextValue UUID userId) {
-        log.info("GraphQL Mutation: addAddress for user {}", userId);
-        return userService.addCustomerAddress(userId, input);
+    @PreAuthorize("hasRole('ADMIN')")
+    public UserDto updateUser(@Argument UUID id, @Argument UserUpdateRequest input) {
+        log.info("GraphQL Mutation: updateUser(id: {})", id);
+        return userService.updateUser(id, input);
     }
 
     @MutationMapping
-    @PreAuthorize("hasRole('CUSTOMER')")
-    public AddressDto updateAddress(@Argument UUID id, @Argument AddressRequest input, @ContextValue UUID userId) {
-        log.info("GraphQL Mutation: updateAddress(id: {})", id);
-        return userService.updateCustomerAddress(userId, id, input);
-    }
-
-    @MutationMapping
-    @PreAuthorize("hasRole('CUSTOMER')")
-    public Boolean deleteAddress(@Argument UUID id, @ContextValue UUID userId) {
-        log.info("GraphQL Mutation: deleteAddress(id: {})", id);
-        userService.deleteCustomerAddress(userId, id);
+    @PreAuthorize("hasRole('ADMIN')")
+    public Boolean deleteUser(@Argument UUID id) {
+        log.info("GraphQL Mutation: deleteUser(id: {})", id);
+        userService.deleteUser(id);
         return true;
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public Boolean lockAccount(@Argument UUID userId) {
+        log.info("GraphQL Mutation: lockAccount(userId: {})", userId);
+        return userService.lockUserAccount(userId);
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public Boolean unlockAccount(@Argument UUID userId) {
+        log.info("GraphQL Mutation: unlockAccount(userId: {})", userId);
+        return userService.unlockUserAccount(userId);
     }
 
     private Pageable createPageable(PageInput input) {
@@ -110,7 +119,7 @@ public class UserResolver {
         return UserPredicates.builder()
                 .withSearch(filter.getSearch())
                 .withRole(filter.getRole())
-                .withActive(filter.getActive())
+                .isActive(filter.getActive())
                 .withEmailVerified(filter.getEmailVerified())
                 .withCreatedAfter(filter.getCreatedAfter())
                 .withCreatedBefore(filter.getCreatedBefore())
