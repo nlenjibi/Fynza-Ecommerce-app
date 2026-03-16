@@ -20,4 +20,6 @@ public interface OrderRepository extends BaseRepository<Order, UUID> {
     long countByStatus(OrderStatus status);
     
     Page<Order> findByStatus(OrderStatus status, Pageable pageable);
+    
+    boolean existsByCustomerIdAndProductId(UUID customerId, UUID productId);
 }

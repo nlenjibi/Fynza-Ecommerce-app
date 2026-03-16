@@ -177,7 +177,7 @@ public class ReviewServiceImpl implements ReviewService {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> ResourceNotFoundException.forResource(REVIEW_ID_LITERAL, reviewId));
 
-        if (!review.getUser().getId().equals(userId)) {
+        if (!review.getCustomer().getId().equals(userId)) {
             throw new AuthorizationException("You can only restore your own reviews");
         }
 
