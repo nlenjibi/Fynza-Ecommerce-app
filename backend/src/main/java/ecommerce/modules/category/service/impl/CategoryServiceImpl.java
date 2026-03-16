@@ -2,7 +2,7 @@ package ecommerce.modules.category.service.impl;
 
 import ecommerce.exception.ResourceNotFoundException;
 import ecommerce.modules.category.dto.CategoryCreateRequest;
-import ecommerce.modules.category.dto.CategoryRequest;
+import ecommerce.modules.category.dto.CategoryCreateRequest;
 import ecommerce.modules.category.dto.CategoryResponse;
 import ecommerce.modules.category.entity.Category;
 import ecommerce.modules.category.mapper.CategoryMapper;
@@ -60,7 +60,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     @CacheEvict(value = "categories", allEntries = true)
-    public CategoryResponse create(CategoryRequest request) {
+    public CategoryResponse create(CategoryCreateRequest request) {
         log.info("Creating new category: {}", request.getName());
 
         String slug = generateSlug(request.getName());
@@ -80,7 +80,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     @CacheEvict(value = "categories", allEntries = true)
-    public CategoryResponse update(UUID id, CategoryRequest request) {
+    public CategoryResponse update(UUID id, CategoryCreateRequest request) {
         log.info("Updating category with ID: {}", id);
 
         Category category = findCategoryById(id);

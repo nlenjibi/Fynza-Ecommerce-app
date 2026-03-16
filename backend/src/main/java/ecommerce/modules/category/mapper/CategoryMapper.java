@@ -32,6 +32,15 @@ public interface CategoryMapper {
     @Mapping(target = "parentCategory", expression = "java(mapParentCategory(request.getParentCategoryId()))")
     void updateEntityFromRequest(CategoryUpdateRequest request, @MappingTarget Category category);
 
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "slug", ignore = true)
+    @Mapping(target = "isActive", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "parentCategory", expression = "java(mapParentCategory(request.getParentCategoryId()))")
+    void updateEntityFromRequest(CategoryCreateRequest request, @MappingTarget Category category);
+
     default Category mapParentCategory(UUID parentId) {
         if (parentId == null) {
             return null;
