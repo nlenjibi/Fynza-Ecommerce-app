@@ -219,6 +219,47 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"users", "admin-dashboard"}, allEntries = true)
+    public Boolean lockUserAccount(UUID userId) {
+        log.info("Locking user account: {}", userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND + userId));
+        
+        if (user.getIsLocked() != null && user.getIsLocked()) {
+            log.warn("User account already locked: {}", userId);
+            return true;
+        }
+        
+        user.setIsLocked(true);
+        userRepository.save(user);
+        tokenValidationService.evictPrincipal(userId);
+        
+        log.info("User account locked successfully: {}", userId);
+        return true;
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = {"users", "admin-dashboard"}, allEntries = true)
+    public Boolean unlockUserAccount(UUID userId) {
+        log.info("Unlocking user account: {}", userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND + userId));
+        
+        if (user.getIsLocked() == null || !user.getIsLocked()) {
+            log.warn("User account already unlocked: {}", userId);
+            return true;
+        }
+        
+        user.setIsLocked(false);
+        userRepository.save(user);
+        
+        log.info("User account unlocked successfully: {}", userId);
+        return true;
+    }
+
+    @Override
+    @Transactional
     @CacheEvict(value = {
             "users", "users-page", "users-search", "users-role", "users-active",
             "users-predicate", "admin-dashboard"

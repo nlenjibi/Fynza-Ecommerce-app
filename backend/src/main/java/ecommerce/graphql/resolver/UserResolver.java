@@ -134,6 +134,29 @@ public class UserResolver {
         return true;
     }
 
+    // ==================== Admin Operations ====================
+
+    @QueryMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    public AdminDashboardDto staffDashboard() {
+        log.info("GraphQL Query: staffDashboard");
+        return adminService.getDashboardStats();
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public Boolean lockAccount(@Argument UUID userId) {
+        log.info("GraphQL Mutation: lockAccount(userId: {})", userId);
+        return userService.lockUserAccount(userId);
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public Boolean unlockAccount(@Argument UUID userId) {
+        log.info("GraphQL Mutation: unlockAccount(userId: {})", userId);
+        return userService.unlockUserAccount(userId);
+    }
+
     private Pageable createPageable(PageInput input) {
         if (input == null) {
             return PageRequest.of(0, 20, Sort.by("id"));

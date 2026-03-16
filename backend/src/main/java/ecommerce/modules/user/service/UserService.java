@@ -21,6 +21,10 @@ public interface UserService {
     UserDto updateUserRole(UUID userId, UpdateUserRoleRequest request);
     UserDto updateUserStatus(UUID userId, UserStatusRequest request);
 
+    // Account lock/unlock
+    Boolean lockUserAccount(UUID userId);
+    Boolean unlockUserAccount(UUID userId);
+
     // Customer profile operations
     UserDto getCustomerProfile(UUID userId);
     UserDto updateCustomerProfile(UUID userId, UserDto request);
