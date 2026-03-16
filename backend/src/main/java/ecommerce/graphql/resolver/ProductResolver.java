@@ -3,6 +3,7 @@ package ecommerce.graphql.resolver;
 import ecommerce.common.response.PaginatedResponse;
 import ecommerce.graphql.dto.ProductDto;
 import ecommerce.graphql.input.PageInput;
+import ecommerce.graphql.input.SortDirection;
 import ecommerce.modules.product.dto.CreateProductRequest;
 import ecommerce.modules.product.dto.ProductResponse;
 import ecommerce.modules.product.dto.UpdateProductRequest;
@@ -14,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.graphql.data.method.annotation.Argument;
+import org.springframework.graphql.data.method.annotation.ContextValue;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -75,13 +77,16 @@ public class ProductResolver {
                 .build();
     }
 
+    // ==================== Mutations ====================
+
     @MutationMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'SELLER')")
-    public ProductResponse createProduct(@Argument CreateProductRequest input) {
+    public ProductResponse createProduct(
+            @Argument CreateProductRequest input,
+            @ContextValue UUID sellerId) {
         log.info("GraphQL Mutation: createProduct(name: {})", input.getName());
-        // In a real implementation, we'd get the seller ID from the context
-        UUID sellerId = UUID.fromString("00000000-0000-0000-0000-000000000001");
-        return productService.create(input, sellerId);
+        UUID resolvedSellerId = sellerId != null ? sellerId : UUID.fromString("00000000-0000-0000-0000-000000000001");
+        return productService.create(input, resolvedSellerId);
     }
 
     @MutationMapping
@@ -130,6 +135,31 @@ public class ProductResolver {
 
     @MutationMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ProductResponse releaseReservedStock(
+            @Argument UUID id,
+            @Argument Integer quantity) {
+        log.info("GraphQL Mutation: releaseReservedStock(id: {}, quantity: {})", id, quantity);
+        return productService.releaseReservedStock(id, quantity);
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ProductResponse reduceStock(
+            @Argument UUID id,
+            @Argument Integer quantity) {
+        log.info("GraphQL Mutation: reduceStock(id: {}, quantity: {})", id, quantity);
+        return productService.reduceStock(id, quantity);
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public Boolean incrementViewCount(@Argument UUID id) {
+        log.info("GraphQL Mutation: incrementViewCount(id: {})", id);
+        return productService.incrementViewCount(id);
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ProductResponse updateRating(
             @Argument UUID id,
             @Argument Float rating) {
@@ -141,7 +171,7 @@ public class ProductResolver {
         if (input == null) {
             return PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "id"));
         }
-        Sort.Direction direction = input.getDirection() == ecommerce.graphql.input.SortDirection.DESC
+        Sort.Direction direction = input.getDirection() == SortDirection.DESC
                 ? Sort.Direction.DESC
                 : Sort.Direction.ASC;
         String sortBy = input.getSortBy() != null ? input.getSortBy() : "id";
