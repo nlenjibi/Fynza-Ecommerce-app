@@ -10,7 +10,6 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,16 +57,26 @@ public class Product extends BaseEntity {
     private Integer stock;
 
     @Column(nullable = false)
-    private Integer availableQuantity;
+    @Builder.Default
+    private Integer availableQuantity = 0;
 
     @Column(nullable = false)
-    private Integer soldQuantity;
+    @Builder.Default
+    private Integer soldQuantity = 0;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer reservedQuantity = 0;
 
     @Column(precision = 3, scale = 2)
     private BigDecimal rating;
 
     @Column
     private Integer reviewCount;
+
+    @Column
+    @Builder.Default
+    private Integer viewCount = 0;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
@@ -79,10 +88,12 @@ public class Product extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ProductStatus status;
+    @Builder.Default
+    private ProductStatus status = ProductStatus.DRAFT;
 
     @Enumerated(EnumType.STRING)
-    private InventoryStatus inventoryStatus;
+    @Builder.Default
+    private InventoryStatus inventoryStatus = InventoryStatus.IN_STOCK;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
@@ -91,24 +102,30 @@ public class Product extends BaseEntity {
     @Column
     private String mainImageUrl;
 
-    @Column
-    private LocalDateTime createdAt;
-
-    @Column
-    private LocalDateTime updatedAt;
-
     public void addImage(ProductImage image) {
         images.add(image);
-        image.setProduct(this);
     }
 
     public void removeImage(ProductImage image) {
         images.remove(image);
-        image.setProduct(null);
     }
 
     public boolean isInStock() {
         return (stock != null && stock > 0) || (availableQuantity != null && availableQuantity > 0);
+    }
+
+    public void addStock(int quantity) {
+        this.stock = (this.stock != null ? this.stock : 0) + quantity;
+        this.availableQuantity = (this.availableQuantity != null ? this.availableQuantity : 0) + quantity;
+    }
+
+    public void releaseReservedStock(int quantity) {
+        if (availableQuantity != null) {
+            this.availableQuantity += quantity;
+        }
+        if (stock != null) {
+            this.stock += quantity;
+        }
     }
 
     public void reserveStock(int quantity) {
@@ -120,11 +137,16 @@ public class Product extends BaseEntity {
         }
     }
 
+    public void reduceStock(int quantity) {
+        this.stock = (this.stock != null ? this.stock : 0) - quantity;
+        this.availableQuantity = (this.availableQuantity != null ? this.availableQuantity : 0) - quantity;
+    }
+
     public String getImageUrl() {
         if (mainImageUrl != null && !mainImageUrl.isEmpty()) {
             return mainImageUrl;
         }
-        return (images != null && !images.isEmpty()) ? images.get(0).getUrl() : null;
+        return (images != null && !images.isEmpty()) ? images.get(0).getImageUrl() : null;
     }
 
     public InventoryStatus getInventoryStatus() {

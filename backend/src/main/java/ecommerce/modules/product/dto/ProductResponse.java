@@ -14,6 +14,7 @@ import java.util.UUID;
 public class ProductResponse {
     private UUID id;
     private String name;
+    private String slug;
     private String description;
     private String brand;
     private String sku;
@@ -23,10 +24,16 @@ public class ProductResponse {
     private BigDecimal discount;
     private BigDecimal rating;
     private Integer reviewCount;
+    private Integer viewCount;
     private List<String> images;
     private List<ProductVariantResponse> variants;
     private Boolean inStock;
     private Integer stockCount;
+    private Integer availableQuantity;
+    private Integer soldQuantity;
     private SellerInfo seller;
+    private String status;
+    private String inventoryStatus;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

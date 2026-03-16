@@ -48,6 +48,18 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public CartResponse getCartById(UUID cartId, UUID userId) {
+        log.info("Fetching cart by id: {} for user: {}", cartId, userId);
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> ResourceNotFoundException.forResource("Cart", cartId));
+        if (!cart.getUserId().equals(userId)) {
+            throw new IllegalStateException("Cart does not belong to user");
+        }
+        return mapToCartResponse(cart);
+    }
+
+    @Override
     @Transactional
     public CartItemResponse addItem(UUID userId, AddToCartRequest request) {
         log.info("Adding item to cart for user: {}, product: {}, quantity: {}", 
@@ -60,29 +72,50 @@ public class CartServiceImpl implements CartService {
         
         int quantity = request.getQuantity() != null ? request.getQuantity() : 1;
         
-        int availableStock = product.getStockQuantity() - product.getReservedQuantity();
+        return addToCart(cart, product, quantity);
+    }
+
+    @Override
+    @Transactional
+    public CartItemResponse addItemByProductId(UUID userId, UUID productId, int quantity) {
+        log.info("Adding item to cart for user: {}, product: {}, quantity: {}", userId, productId, quantity);
+        
+        Cart cart = getOrCreateCart(userId);
+        
+        var product = productRepository.findById(productId)
+                .orElseThrow(() -> ResourceNotFoundException.forResource("Product", productId));
+        
+        return addToCart(cart, product, quantity);
+    }
+
+    private CartItemResponse addToCart(Cart cart, Product product, int quantity) {
+        int availableStock = (product.getStock() != null ? product.getStock() : 0) 
+                - (product.getReservedQuantity() != null ? product.getReservedQuantity() : 0);
         if (availableStock < quantity) {
             throw new InsufficientStockException(product.getName(), availableStock, quantity);
         }
         
-        CartItem cartItem = cartItemRepository.findByCartIdAndProductId(cart.getId(), request.getProductId())
+        CartItem cartItem = cartItemRepository.findByCartIdAndProductId(cart.getId(), product.getId())
                 .orElse(null);
+        
+        BigDecimal price = calculateDiscountPrice(product);
         
         if (cartItem != null) {
             int newQuantity = cartItem.getQuantity() + quantity;
-            int newAvailableStock = product.getStockQuantity() - product.getReservedQuantity();
+            int newAvailableStock = (product.getStock() != null ? product.getStock() : 0) 
+                    - (product.getReservedQuantity() != null ? product.getReservedQuantity() : 0);
             if (newAvailableStock < newQuantity) {
                 throw new InsufficientStockException(product.getName(), newAvailableStock, newQuantity);
             }
             cartItem.setQuantity(newQuantity);
-            cartItem.setPrice(product.getDiscountPrice() != null ? product.getDiscountPrice() : product.getPrice());
+            cartItem.setPrice(price);
             cartItem = cartItemRepository.save(cartItem);
         } else {
             cartItem = CartItem.builder()
                     .cart(cart)
                     .product(product)
                     .quantity(quantity)
-                    .price(product.getDiscountPrice() != null ? product.getDiscountPrice() : product.getPrice())
+                    .price(price)
                     .build();
             cartItem = cartItemRepository.save(cartItem);
         }
@@ -103,11 +136,30 @@ public class CartServiceImpl implements CartService {
         CartItem cartItem = cartItemRepository.findByCartIdAndId(cart.getId(), cartItemId)
                 .orElseThrow(() -> ResourceNotFoundException.forResource("Cart item", cartItemId));
         
+        return updateCartItem(cartItem, quantity);
+    }
+
+    @Override
+    @Transactional
+    public CartItemResponse updateItemByProductId(UUID userId, UUID productId, int quantity) {
+        log.info("Updating cart item by productId for user: {}, productId: {}, quantity: {}", 
+                userId, productId, quantity);
+        
+        Cart cart = getOrCreateCart(userId);
+        
+        CartItem cartItem = cartItemRepository.findByCartIdAndProductId(cart.getId(), productId)
+                .orElseThrow(() -> ResourceNotFoundException.forResource("Cart item for product", productId));
+        
+        return updateCartItem(cartItem, quantity);
+    }
+
+    private CartItemResponse updateCartItem(CartItem cartItem, int quantity) {
         var product = cartItem.getProduct();
-        int availableStock = product.getStockQuantity() - product.getReservedQuantity();
+        int availableStock = (product.getStock() != null ? product.getStock() : 0) 
+                - (product.getReservedQuantity() != null ? product.getReservedQuantity() : 0);
         
         int existingReserved = 0;
-        StockReservation reservation = stockReservationRepository.findByCartItemId(cartItemId).orElse(null);
+        StockReservation reservation = stockReservationRepository.findByCartItemId(cartItem.getId()).orElse(null);
         if (reservation != null) {
             existingReserved = reservation.getQuantity();
         }
@@ -139,7 +191,24 @@ public class CartServiceImpl implements CartService {
         CartItem cartItem = cartItemRepository.findByCartIdAndId(cart.getId(), cartItemId)
                 .orElseThrow(() -> ResourceNotFoundException.forResource("Cart item", cartItemId));
         
-        stockReservationRepository.findByCartItemId(cartItemId)
+        removeCartItem(cartItem);
+    }
+
+    @Override
+    @Transactional
+    public void removeItemByProductId(UUID userId, UUID productId) {
+        log.info("Removing item from cart for user: {}, productId: {}", userId, productId);
+        
+        Cart cart = getOrCreateCart(userId);
+        
+        CartItem cartItem = cartItemRepository.findByCartIdAndProductId(cart.getId(), productId)
+                .orElseThrow(() -> ResourceNotFoundException.forResource("Cart item for product", productId));
+        
+        removeCartItem(cartItem);
+    }
+
+    private void removeCartItem(CartItem cartItem) {
+        stockReservationRepository.findByCartItemId(cartItem.getId())
                 .ifPresent(reservation -> {
                     stockReservationRepository.delete(reservation);
                     releaseStockReservation(cartItem.getProduct(), reservation.getQuantity());
@@ -187,6 +256,67 @@ public class CartServiceImpl implements CartService {
         
         cart.setCouponCode(null);
         cartRepository.save(cart);
+    }
+
+    @Override
+    @Transactional
+    public CartResponse createCart(UUID userId) {
+        log.info("Creating cart for user: {}", userId);
+        
+        Cart existingCart = cartRepository.findByUserIdWithItems(userId).orElse(null);
+        if (existingCart != null) {
+            return mapToCartResponse(existingCart);
+        }
+        
+        Cart newCart = Cart.builder()
+                .userId(userId)
+                .build();
+        newCart = cartRepository.save(newCart);
+        
+        return mapToCartResponse(newCart);
+    }
+
+    @Override
+    @Transactional
+    public CartResponse mergeCart(UUID userId, UUID guestCartId) {
+        log.info("Merging guest cart: {} with user: {}", guestCartId, userId);
+        
+        Cart userCart = getOrCreateCart(userId);
+        
+        Cart guestCart = cartRepository.findById(guestCartId)
+                .orElseThrow(() -> ResourceNotFoundException.forResource("Guest cart", guestCartId));
+        
+        var guestItems = cartItemRepository.findByCartId(guestCartId);
+        
+        for (CartItem guestItem : guestItems) {
+            var product = guestItem.getProduct();
+            int quantity = guestItem.getQuantity();
+            
+            CartItem existingItem = cartItemRepository.findByCartIdAndProductId(userCart.getId(), product.getId())
+                    .orElse(null);
+            
+            if (existingItem != null) {
+                existingItem.setQuantity(existingItem.getQuantity() + quantity);
+                cartItemRepository.save(existingItem);
+                
+                createStockReservation(existingItem, product, quantity);
+            } else {
+                CartItem newItem = CartItem.builder()
+                        .cart(userCart)
+                        .product(product)
+                        .quantity(quantity)
+                        .price(guestItem.getPrice())
+                        .build();
+                newItem = cartItemRepository.save(newItem);
+                
+                createStockReservation(newItem, product, quantity);
+            }
+        }
+        
+        cartItemRepository.deleteByCartId(guestCartId);
+        cartRepository.delete(guestCart);
+        
+        return mapToCartResponse(userCart);
     }
 
     private Cart getOrCreateCart(UUID userId) {
@@ -281,6 +411,17 @@ public class CartServiceImpl implements CartService {
             subtotal = subtotal.add(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
         }
         return subtotal;
+    }
+
+    private BigDecimal calculateDiscountPrice(Product product) {
+        if (product.getDiscount() != null && product.getDiscount().compareTo(BigDecimal.ZERO) > 0 
+                && product.getOriginalPrice() != null) {
+            return product.getOriginalPrice()
+                    .subtract(product.getOriginalPrice()
+                            .multiply(product.getDiscount())
+                            .divide(BigDecimal.valueOf(100)));
+        }
+        return product.getPrice();
     }
 
     private CartItemResponse mapToCartItemResponse(CartItem cartItem) {
