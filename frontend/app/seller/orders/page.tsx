@@ -265,6 +265,29 @@ export default function SellerOrders() {
     setShowContactModal(false);
   };
 
+  const handleExportReport = () => {
+    const csvContent = [
+      ['Order ID', 'Customer', 'Date', 'Products', 'Total', 'Status', 'Payment'].join(','),
+      ...filteredOrders.map(order => [
+        order.id,
+        order.customer.name,
+        order.date,
+        order.products.map(p => p.name).join('; '),
+        order.total.toFixed(2),
+        order.status,
+        order.paymentStatus
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'orders-report.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="flex h-screen bg-gray-50">
       <SellerSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -305,7 +328,7 @@ export default function SellerOrders() {
               <h1 className="text-3xl font-bold text-gray-900">Orders</h1>
               <p className="text-gray-600 mt-1">Manage and track your customer orders</p>
             </div>
-            <Button className="bg-orange-500 hover:bg-orange-600 flex items-center gap-2">
+            <Button className="bg-orange-500 hover:bg-orange-600 flex items-center gap-2" onClick={handleExportReport}>
               <Download size={18} />
               Export Report
             </Button>
