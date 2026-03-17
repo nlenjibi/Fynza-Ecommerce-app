@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/components/auth-context"
+import { Chrome } from "lucide-react"
 
 export default function SignupPage() {
   const [name, setName] = useState("")
@@ -136,6 +137,24 @@ export default function SignupPage() {
               className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2"
             >
               {isLoading ? "Creating account..." : "Sign Up"}
+            </Button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or continue with</span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full border-2 border-gray-300 hover:bg-gray-50 font-semibold py-2"
+            >
+              <Chrome className="mr-2 h-5 w-5" />
+              Register with Google
             </Button>
           </form>
 

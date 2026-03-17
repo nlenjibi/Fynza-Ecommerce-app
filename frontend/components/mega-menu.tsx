@@ -302,7 +302,7 @@ const megaMenuContent: Record<string, any> = {
 
 export function MegaMenu({ onClose, activeCategory, setActiveCategory }: MegaMenuProps) {
   return (
-    <div className="absolute left-0 top-full w-full bg-background border-t shadow-lg" onMouseLeave={onClose}>
+    <div className="absolute left-0 top-full mt-1 bg-background border shadow-xl rounded-md w-[60vw]" onMouseLeave={onClose}>
       <div className="container mx-auto px-4">
         <div className="flex">
           {/* Category Sidebar */}
