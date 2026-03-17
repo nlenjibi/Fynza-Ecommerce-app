@@ -106,3 +106,20 @@ management:
     metrics:
       export:
         enabled: true
+
+# Redis Configuration
+redis:
+  host: ${REDIS_HOST:localhost}
+  port: ${REDIS_PORT:6379}
+  password: ${REDIS_PASSWORD:}
+  database: 0
+  timeout: 5000ms
+
+# Cache Configuration
+cache:
+  level: multi  # Options: caffeine, redis, multi (default: caffeine)
+  l1:
+    max-size: 10000
+    ttl-minutes: 5
+  l2:
+    ttl-minutes: 15

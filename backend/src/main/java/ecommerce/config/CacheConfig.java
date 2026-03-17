@@ -19,12 +19,19 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Project-specific Cache Configuration using Caffeine
+ * Unified Cache Configuration
  * 
- * Caches are grouped into three tiers to reduce JVM heap fragmentation:
- * - SHORT_LIVED: 5-15 minutes (rapidly changing data like user sessions, stats)
- * - MEDIUM_LIVED: 30-60 minutes ( moderately changing data like products, categories)
- * - LONG_LIVED: 2-3 hours (rarely changing data like configurations)
+ * Supports both Caffeine (L1) and Redis (L2) caching based on configuration.
+ * 
+ * Configuration:
+ * - cache.level=caffeine  -> L1 only (default)
+ * - cache.level=redis     -> L2 only
+ * - cache.level=multi     -> L1 + L2 (recommended for production)
+ * 
+ * Caches are grouped into three tiers:
+ * - SHORT_LIVED: 5-15 minutes (user sessions, stats)
+ * - MEDIUM_LIVED: 30-60 minutes (products, categories)
+ * - LONG_LIVED: 2-3 hours (configurations)
  */
 @Slf4j
 @Configuration

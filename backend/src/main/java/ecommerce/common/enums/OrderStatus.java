@@ -8,6 +8,8 @@ public enum OrderStatus {
     PENDING("Pending", "Order is pending confirmation"),
     CONFIRMED("Confirmed", "Order has been confirmed"),
     PROCESSING("Processing", "Order is being processed"),
+    VALIDATION_FAILED("Validation Failed", "Order validation failed"),
+    VALIDATED("Validated", "Order validated successfully"),
     SHIPPED("Shipped", "Order has been shipped"),
     OUT_FOR_DELIVERY("Out for Delivery", "Order is out for delivery"),
     DELIVERED("Delivered", "Order has been delivered"),

@@ -199,3 +199,18 @@ management:
     export:
       simple:
         enabled: true
+
+# Redis Configuration (for testing)
+redis:
+  host: ${REDIS_HOST:localhost}
+  port: ${REDIS_PORT:6379}
+  password: ${REDIS_PASSWORD:}
+  database: 1
+  timeout: 3000ms
+  lettuce:
+    pool:
+      max-active: 4
+      max-idle: 4
+      min-idle: 1
+      max-wait: -1ms
+    shutdown-timeout: 50ms

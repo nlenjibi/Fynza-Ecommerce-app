@@ -36,13 +36,21 @@ public class FraudDetectionService {
                 .orTimeout(2, TimeUnit.SECONDS)
                 .exceptionally(ex -> FraudResult.neutral("Device check timeout"));
 
-        return anyOf(creditCheckFuture, addressVerificationFuture, deviceFingerprintFuture)
-                .thenApply(result -> {
-                    if (result.isApproved()) {
+        return CompletableFuture.allOf(creditCheckFuture, addressVerificationFuture, deviceFingerprintFuture)
+                .thenApply(v -> {
+                    FraudResult creditResult = creditCheckFuture.join();
+                    FraudResult addressResult = addressVerificationFuture.join();
+                    FraudResult deviceResult = deviceFingerprintFuture.join();
+                    
+                    FraudResult firstApproved = creditResult.isApproved() ? creditResult : 
+                            (addressResult.isApproved() ? addressResult : 
+                            (deviceResult.isApproved() ? deviceResult : null));
+                    
+                    if (firstApproved != null) {
                         log.info("[{}] Fraud check approved for order: {}", correlationId, order.getId());
                         return ValidationResult.success("FRAUD", "Risk assessment: LOW");
                     }
-                    return handleConsensusRejection(creditCheckFuture, addressVerificationFuture, deviceFingerprintFuture);
+                    return ValidationResult.neutral("FRAUD", "All checks neutral");
                 })
                 .exceptionally(ex -> {
                     log.error("[{}] Error in fraud detection for order: {}", correlationId, order.getId(), ex);

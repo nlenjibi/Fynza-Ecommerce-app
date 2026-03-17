@@ -247,7 +247,7 @@ public class ProductServiceImpl implements ProductService {
         // Batch fetch seller profiles for all sellers (single query)
         Map<UUID, SellerProfile> sellerProfileMap = sellerProfileRepository.findByUserIdIn(sellerIds)
                 .stream()
-                .collect(Collectors.toMap(SellerProfile::getUserId, Function.identity()));
+                .collect(Collectors.toMap(sp -> sp.getUser().getId(), sp -> sp));
 
         // Map with pre-fetched data
         return products.map(product -> mapToResponseWithCache(product, variantsMap, sellerProfileMap));

@@ -39,6 +39,7 @@ public class ProductResponse {
     private Integer reviewCount;
     private Integer ratingCount;
     private Integer viewCount;
+    private Integer soldQuantity;
     private Long salesCount;
     private List<String> images;
     private List<ProductVariantResponse> variants;
