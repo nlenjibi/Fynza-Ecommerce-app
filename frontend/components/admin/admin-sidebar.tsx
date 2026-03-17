@@ -18,7 +18,6 @@ import {
   Bell,
   Settings,
   LogOut,
-  Shield,
   Building2,
   AlertTriangle,
   ChevronDown,
@@ -51,6 +50,7 @@ const navigation = [
     title: "MARKETING",
     items: [
       { name: "Promotions", href: "/admin/promotions", icon: Percent },
+      { name: "Coupons", href: "/admin/coupons", icon: Tag, badge: "12", badgeColor: "orange" },
       { name: "Flash Sales", href: "/admin/flash-sales", icon: Zap, badge: "2", badgeColor: "purple" },
     ],
   },
@@ -73,7 +73,6 @@ const navigation = [
     title: "SYSTEM",
     items: [
       { name: "Settings", href: "/admin/settings", icon: Settings },
-      { name: "Security", href: "/admin/security", icon: Shield },
       { name: "Activity Logs", href: "/admin/activity-logs", icon: TrendingUp },
     ],
   },
