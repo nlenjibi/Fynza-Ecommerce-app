@@ -28,7 +28,7 @@ import {
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("general")
   const [showApiKey, setShowApiKey] = useState(false)
-  const [settings, setSettings] = useState({
+const [settings, setSettings] = useState({
     siteName: "Fynza",
     siteEmail: "support@fynza.com",
     sitePhone: "+1 (555) 000-0000",
@@ -46,6 +46,13 @@ export default function SettingsPage() {
     orderNotifications: true,
     refundNotifications: true,
     sellerNotifications: true,
+    socialFacebook: "",
+    socialTwitter: "",
+    socialInstagram: "",
+    socialLinkedIn: "",
+    socialYouTube: "",
+    socialTikTok: "",
+    socialPinterest: "",
   })
 
   const tabs = [
@@ -56,6 +63,7 @@ export default function SettingsPage() {
     { id: "email", label: "Email", icon: Mail },
     { id: "notifications", label: "Notifications", icon: Bell },
     { id: "security", label: "Security", icon: Shield },
+    { id: "social", label: "Social Links", icon: Globe },
   ]
 
   return (
@@ -397,7 +405,7 @@ export default function SettingsPage() {
                   </Card>
                 )}
 
-                {/* Security Settings */}
+{/* Security Settings */}
                 {activeTab === "security" && (
                   <Card className="border-0 shadow-sm">
                     <CardHeader>
@@ -434,6 +442,89 @@ export default function SettingsPage() {
                             <span className="block w-6 h-6 bg-white rounded-full shadow transform translate-x-6" />
                           </button>
                         </div>
+                      </div>
+
+                      <div className="flex justify-end pt-4 border-t">
+                        <Button className="bg-orange-500 hover:bg-orange-600">
+                          <Save className="h-4 w-4 mr-2" />
+                          Save Changes
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Social Links Settings */}
+                {activeTab === "social" && (
+                  <Card className="border-0 shadow-sm">
+                    <CardHeader>
+                      <CardTitle>Social Media Links</CardTitle>
+                      <CardDescription>Add your social media profiles to display on the platform</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="grid grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Facebook</label>
+                          <Input 
+                            placeholder="https://facebook.com/yourpage"
+                            value={settings.socialFacebook}
+                            onChange={(e) => setSettings({ ...settings, socialFacebook: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Twitter / X</label>
+                          <Input 
+                            placeholder="https://twitter.com/yourhandle"
+                            value={settings.socialTwitter}
+                            onChange={(e) => setSettings({ ...settings, socialTwitter: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Instagram</label>
+                          <Input 
+                            placeholder="https://instagram.com/yourhandle"
+                            value={settings.socialInstagram}
+                            onChange={(e) => setSettings({ ...settings, socialInstagram: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">LinkedIn</label>
+                          <Input 
+                            placeholder="https://linkedin.com/company/yourcompany"
+                            value={settings.socialLinkedIn}
+                            onChange={(e) => setSettings({ ...settings, socialLinkedIn: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">YouTube</label>
+                          <Input 
+                            placeholder="https://youtube.com/@yourchannel"
+                            value={settings.socialYouTube}
+                            onChange={(e) => setSettings({ ...settings, socialYouTube: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">TikTok</label>
+                          <Input 
+                            placeholder="https://tiktok.com/@yourhandle"
+                            value={settings.socialTikTok}
+                            onChange={(e) => setSettings({ ...settings, socialTikTok: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Pinterest</label>
+                          <Input 
+                            placeholder="https://pinterest.com/yourprofile"
+                            value={settings.socialPinterest}
+                            onChange={(e) => setSettings({ ...settings, socialPinterest: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="p-4 rounded-lg bg-blue-50 border border-blue-100">
+                        <p className="text-sm text-blue-700">
+                          <strong>Tip:</strong> Leave empty any social links you don't want to display on your platform.
+                        </p>
                       </div>
 
                       <div className="flex justify-end pt-4 border-t">
