@@ -48,7 +48,7 @@ interface Order {
 }
 
 export default function SellerOrders() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [filter, setFilter] = useState<OrderStatus>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);

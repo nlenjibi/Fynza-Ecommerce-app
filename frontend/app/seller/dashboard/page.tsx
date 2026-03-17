@@ -23,7 +23,7 @@ import {
 import Link from "next/link";
 
 export default function SellerDashboard() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Dashboard Statistics
   const stats = [

@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 export default function SellerReports() {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(true);
     const [dateRange, setDateRange] = useState("month");
     const [reportType, setReportType] = useState("sales");
 
