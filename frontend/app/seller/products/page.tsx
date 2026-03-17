@@ -51,6 +51,7 @@ export default function SellerProducts() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   const products: Product[] = [
     {
@@ -401,7 +402,15 @@ export default function SellerProducts() {
                           >
                             <Eye size={16} />
                           </Button>
-                          <Button variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-50">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                            onClick={() => {
+                              setSelectedProduct(product);
+                              setIsEditing(true);
+                            }}
+                          >
                             <Edit2 size={16} />
                           </Button>
                           <Button
@@ -438,121 +447,253 @@ export default function SellerProducts() {
         </div>
       </main>
 
-      {/* Product Details Modal */}
+      {/* Product Details/Edit Modal */}
       {selectedProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Product Details</h2>
+                <h2 className="text-xl font-bold text-gray-900">
+                  {isEditing ? 'Edit Product' : 'Product Details'}
+                </h2>
                 <p className="text-gray-600 text-sm">SKU: {selectedProduct.sku}</p>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setSelectedProduct(null)}
+                onClick={() => {
+                  setSelectedProduct(null);
+                  setIsEditing(false);
+                }}
               >
                 <X size={20} />
               </Button>
             </div>
 
             <div className="p-6 space-y-6">
-              {/* Product Info */}
-              <div className="flex gap-6">
-                <div className="w-32 h-32 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <Image className="text-gray-400" size={40} />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900">{selectedProduct.name}</h3>
-                  <p className="text-sm text-gray-600 mt-1">{selectedProduct.description}</p>
-                  <div className="flex items-center gap-4 mt-3">
-                    <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
-                      {selectedProduct.category}
-                    </span>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                        selectedProduct.status
-                      )}`}
+              {isEditing ? (
+                /* Edit Mode */
+                <>
+                  {/* Basic Info */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Product Name
+                        </label>
+                        <input
+                          type="text"
+                          defaultValue={selectedProduct.name}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Description
+                        </label>
+                        <textarea
+                          rows={3}
+                          defaultValue={selectedProduct.description}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500 resize-none"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Category
+                          </label>
+                          <select 
+                            defaultValue={selectedProduct.category}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500"
+                          >
+                            <option value="Electronics">Electronics</option>
+                            <option value="Accessories">Accessories</option>
+                            <option value="Office">Office</option>
+                            <option value="Fashion">Fashion</option>
+                            <option value="Home">Home</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Status
+                          </label>
+                          <select 
+                            defaultValue={selectedProduct.status}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500"
+                          >
+                            <option value="active">Active</option>
+                            <option value="draft">Draft</option>
+                            <option value="out_of_stock">Out of Stock</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Pricing & Inventory */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Pricing & Inventory</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Regular Price (GH₵)
+                        </label>
+                        <input
+                          type="number"
+                          defaultValue={selectedProduct.price}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Discount Price (GH₵)
+                        </label>
+                        <input
+                          type="number"
+                          defaultValue={selectedProduct.discountPrice || ''}
+                          placeholder="Optional"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Stock Quantity
+                        </label>
+                        <input
+                          type="number"
+                          defaultValue={selectedProduct.stock}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-3 pt-4 border-t">
+                    <Button 
+                      className="bg-orange-500 hover:bg-orange-600"
+                      onClick={() => {
+                        alert('Product updated successfully!');
+                        setIsEditing(false);
+                        setSelectedProduct(null);
+                      }}
                     >
-                      {selectedProduct.status}
-                    </span>
+                      <Check size={16} className="mr-2" />
+                      Save Changes
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => setIsEditing(false)}
+                    >
+                      Cancel
+                    </Button>
                   </div>
-                </div>
-              </div>
+                </>
+              ) : (
+                /* View Mode */
+                <>
+                  {/* Product Info */}
+                  <div className="flex gap-6">
+                    <div className="w-32 h-32 bg-gray-100 rounded-lg flex items-center justify-center">
+                      <Image className="text-gray-400" size={40} />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900">{selectedProduct.name}</h3>
+                      <p className="text-sm text-gray-600 mt-1">{selectedProduct.description}</p>
+                      <div className="flex items-center gap-4 mt-3">
+                        <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
+                          {selectedProduct.category}
+                        </span>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                            selectedProduct.status
+                          )}`}
+                        >
+                          {selectedProduct.status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
 
-              {/* Pricing & Inventory */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">Regular Price</p>
-                  <p className="text-xl font-bold text-gray-900">GH₵ {selectedProduct.price}</p>
-                </div>
-                {selectedProduct.discountPrice && (
-                  <div className="p-4 bg-green-50 rounded-lg">
-                    <p className="text-sm text-green-600 mb-1">Discount Price</p>
-                    <p className="text-xl font-bold text-green-600">GH₵ {selectedProduct.discountPrice}</p>
+                  {/* Pricing & Inventory */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-1">Regular Price</p>
+                      <p className="text-xl font-bold text-gray-900">GH₵ {selectedProduct.price}</p>
+                    </div>
+                    {selectedProduct.discountPrice && (
+                      <div className="p-4 bg-green-50 rounded-lg">
+                        <p className="text-sm green-600 mb-1">Discount Price</p>
+                        <p className="text-xl font-bold text-green-600">GH₵ {selectedProduct.discountPrice}</p>
+                      </div>
+                    )}
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-1">Stock Level</p>
+                      <p className="text-xl font-bold text-gray-900">{selectedProduct.stock}</p>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-1">Total Sales</p>
+                      <p className="text-xl font-bold text-gray-900">{selectedProduct.sales}</p>
+                    </div>
                   </div>
-                )}
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">Stock Level</p>
-                  <p className="text-xl font-bold text-gray-900">{selectedProduct.stock}</p>
-                </div>
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">Total Sales</p>
-                  <p className="text-xl font-bold text-gray-900">{selectedProduct.sales}</p>
-                </div>
-              </div>
 
-              {/* Variants */}
-              {selectedProduct.variants && selectedProduct.variants.length > 0 && (
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Variants</h3>
-                  <div className="border rounded-lg overflow-hidden">
-                    <table className="w-full">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Variant</th>
-                          <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">SKU</th>
-                          <th className="px-4 py-2 text-right text-xs font-semibold text-gray-700">Price</th>
-                          <th className="px-4 py-2 text-center text-xs font-semibold text-gray-700">Stock</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y">
-                        {selectedProduct.variants.map((variant) => (
-                          <tr key={variant.id}>
-                            <td className="px-4 py-3 text-sm font-medium text-gray-900">{variant.name}</td>
-                            <td className="px-4 py-3 text-sm text-gray-600">{variant.sku}</td>
-                            <td className="px-4 py-3 text-sm text-gray-900 text-right">GH₵ {variant.price}</td>
-                            <td className="px-4 py-3 text-center">
-                              <span
-                                className={`px-2 py-1 rounded-full text-xs font-medium ${variant.stock > 10
-                                  ? "bg-green-100 text-green-800"
-                                  : variant.stock > 0
-                                    ? "bg-yellow-100 text-yellow-800"
-                                    : "bg-red-100 text-red-800"
-                                  }`}
-                              >
-                                {variant.stock}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  {/* Variants */}
+                  {selectedProduct.variants && selectedProduct.variants.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Variants</h3>
+                      <div className="border rounded-lg overflow-hidden">
+                        <table className="w-full">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Variant</th>
+                              <th className="px-4 py-2 text-left text-xs font-sem-gray-700">SKU</th>
+                              <th className="px-4 py-2 text-right text-xs font-semibold text-gray-700">Price</th>
+                              <th className="px-4 py-2 text-center text-xs font-semibold text-gray-700">Stock</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y">
+                            {selectedProduct.variants.map((variant) => (
+                              <tr key={variant.id}>
+                                <td className="px-4 py-3 text-sm font-medium text-gray-900">{variant.name}</td>
+                                <td className="px-4 py-3 text-sm text-gray-600">{variant.sku}</td>
+                                <td className="px-4 py-3 text-sm text-gray-900 text-right">GH₵ {variant.price}</td>
+                                <td className="px-4 py-3 text-center">
+                                  <span
+                                    className={`px-2 py-1 rounded-full text-xs font-medium ${variant.stock > 10
+                                      ? "bg-green-100 text-green-800"
+                                      : variant.stock > 0
+                                        ? "bg-yellow-100 text-yellow-800"
+                                        : "bg-red-100 text-red-800"
+                                      }`}
+                                  >
+                                    {variant.stock}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex gap-3 pt-4 border-t">
+                    <Button 
+                      className="bg-orange-500 hover:bg-orange-600"
+                      onClick={() => setIsEditing(true)}
+                    >
+                      <Edit2 size={16} className="mr-2" />
+                      Edit Product
+                    </Button>
+                    <Button variant="outline">
+                      <Eye size={16} className="mr-2" />
+                      View on Store
+                    </Button>
                   </div>
-                </div>
+                </>
               )}
-
-              {/* Actions */}
-              <div className="flex gap-3 pt-4 border-t">
-                <Button className="bg-orange-500 hover:bg-orange-600">
-                  <Edit2 size={16} className="mr-2" />
-                  Edit Product
-                </Button>
-                <Button variant="outline">
-                  <Eye size={16} className="mr-2" />
-                  View on Store
-                </Button>
-              </div>
             </div>
           </div>
         </div>
