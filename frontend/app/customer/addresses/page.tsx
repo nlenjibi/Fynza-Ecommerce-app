@@ -8,8 +8,21 @@ import { Input } from '@/components/ui/input';
 import { MapPin, Edit2, Trash2, Plus, Check } from 'lucide-react';
 import { useState } from 'react';
 
+interface Address {
+  id: number;
+  type: string;
+  name: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  isDefault: boolean;
+}
+
 export default function AddressesPage() {
-  const [addresses, setAddresses] = useState([
+  const [addresses, setAddresses] = useState<Address[]>([
     {
       id: 1,
       type: 'Home',
@@ -38,6 +51,17 @@ export default function AddressesPage() {
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [formData, setFormData] = useState<Partial<Address>>({
+    type: 'Home',
+    name: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: 'Ghana',
+    isDefault: false,
+  });
 
   const removeAddress = (id: number) => {
     setAddresses(addresses.filter(addr => addr.id !== id));
@@ -48,6 +72,42 @@ export default function AddressesPage() {
       ...addr,
       isDefault: addr.id === id,
     })));
+  };
+
+  const handleEdit = (address: Address) => {
+    setFormData(address);
+    setEditingId(address.id);
+    setShowForm(true);
+  };
+
+  const handleSave = () => {
+    if (!formData.name || !formData.address || !formData.city) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    if (editingId) {
+      setAddresses(addresses.map(addr => 
+        addr.id === editingId ? { ...addr, ...formData } as Address : addr
+      ));
+    } else {
+      const newId = Math.max(...addresses.map(a => a.id), 0) + 1;
+      setAddresses([...addresses, { ...formData, id: newId } as Address]);
+    }
+    
+    setShowForm(false);
+    setEditingId(null);
+    setFormData({
+      type: 'Home',
+      name: '',
+      phone: '',
+      address: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      country: 'Ghana',
+      isDefault: false,
+    });
   };
 
   return (
@@ -84,21 +144,33 @@ export default function AddressesPage() {
                   {editingId ? 'Edit Address' : 'Add New Address'}
                 </h2>
 
-                <form className="space-y-4">
+                <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                      <Input placeholder="John Doe" />
+                      <Input 
+                        placeholder="John Doe" 
+                        value={formData.name || ''}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                      <Input placeholder="+233 24 XXX XXXX" />
+                      <Input 
+                        placeholder="+233 24 XXX XXXX"
+                        value={formData.phone || ''}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      />
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Address Type</label>
-                    <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    <select 
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      value={formData.type || 'Home'}
+                      onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                    >
                       <option>Home</option>
                       <option>Office</option>
                       <option>Other</option>
@@ -107,36 +179,62 @@ export default function AddressesPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Street Address</label>
-                    <Input placeholder="123 Main Street" />
+                    <Input 
+                      placeholder="123 Main Street"
+                      value={formData.address || ''}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
-                      <Input placeholder="Accra" />
+                      <Input 
+                        placeholder="Accra"
+                        value={formData.city || ''}
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                      />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">State/Region</label>
-                      <Input placeholder="Greater Accra" />
+                      <Input 
+                        placeholder="Greater Accra"
+                        value={formData.state || ''}
+                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                      />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">ZIP Code</label>
-                      <Input placeholder="00233" />
+                      <Input 
+                        placeholder="00233"
+                        value={formData.zipCode || ''}
+                        onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
+                      />
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
-                    <Input placeholder="Ghana" />
+                    <Input 
+                      placeholder="Ghana"
+                      value={formData.country || ''}
+                      onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                    />
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <input type="checkbox" id="default" className="rounded" />
+                    <input 
+                      type="checkbox" 
+                      id="default" 
+                      className="rounded"
+                      checked={formData.isDefault || false}
+                      onChange={(e) => setFormData({ ...formData, isDefault: e.target.checked })}
+                    />
                     <label htmlFor="default" className="text-sm text-gray-700">Set as default address</label>
                   </div>
 
                   <div className="flex gap-3 pt-4">
-                    <Button className="bg-orange-500 hover:bg-orange-600">
+                    <Button className="bg-orange-500 hover:bg-orange-600" type="submit">
                       {editingId ? 'Update Address' : 'Save Address'}
                     </Button>
                     <Button
@@ -188,7 +286,7 @@ export default function AddressesPage() {
                       variant="outline"
                       size="sm"
                       className="flex-1 gap-2"
-                      onClick={() => setEditingId(address.id)}
+                      onClick={() => handleEdit(address)}
                     >
                       <Edit2 className="h-4 w-4" />
                       Edit
