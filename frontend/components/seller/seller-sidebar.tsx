@@ -15,9 +15,19 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-export function SellerSidebar() {
+interface SellerSidebarProps {
+    isOpen?: boolean;
+    onClose?: () => void;
+}
+
+export function SellerSidebar({ isOpen: externalIsOpen, onClose }: SellerSidebarProps) {
     const pathname = usePathname();
-    const [isOpen, setIsOpen] = useState(true);
+    const [internalIsOpen, setInternalIsOpen] = useState(true);
+    
+    const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+    const setIsOpen = onClose ? (value: boolean) => {
+        if (!value) onClose();
+    } : setInternalIsOpen;
 
     const menuItems = [
         {
