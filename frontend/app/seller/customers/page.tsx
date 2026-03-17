@@ -30,7 +30,7 @@ interface Customer {
 }
 
 export default function SellerCustomers() {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 

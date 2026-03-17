@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Service interface for review operations
@@ -15,45 +16,47 @@ public interface ReviewService {
 
     // ==================== Basic CRUD Operations ====================
 
-    ReviewResponse createReview(ReviewCreateRequest request, Long userId);
+    ReviewResponse createReview(ReviewCreateRequest request, UUID userId);
 
-    ReviewResponse updateReview(Long reviewId, ReviewUpdateRequest request, Long userId);
+    ReviewResponse updateReview(UUID reviewId, ReviewUpdateRequest request, UUID userId);
 
-    void deleteReview(Long reviewId, Long userId);
+    void deleteReview(UUID reviewId, UUID userId);
 
-    ReviewResponse getReview(Long reviewId);
+    ReviewResponse getReview(UUID reviewId);
 
-    ReviewResponse restoreReview(Long reviewId, Long userId);
+    ReviewResponse restoreReview(UUID reviewId, UUID userId);
 
     // ==================== Query Operations ====================
 
-    Page<ReviewResponse> getProductReviews(Long productId, Pageable pageable);
+    Page<ReviewResponse> getProductReviews(UUID productId, Pageable pageable);
 
-    Page<ReviewResponse> getProductReviewsWithFilters(Long productId, ReviewFilterRequest filters, Pageable pageable);
+    Page<ReviewResponse> getProductReviewsWithFilters(UUID productId, ReviewFilterRequest filters, Pageable pageable);
+
+    Page<ReviewResponse> getUserReviews(UUID userId, Pageable pageable);
 
     // ==================== Statistics & Analytics ====================
 
-    ReviewSummaryResponse getProductRatingStats(Long productId);
+    ReviewSummaryResponse getProductRatingStats(UUID productId);
 
     // ==================== Voting Operations ====================
 
-    void markHelpful(Long reviewId);
+    void markHelpful(UUID reviewId);
 
 
     // ==================== Admin Operations ====================
 
-    ReviewResponse approveReview(Long reviewId);
+    ReviewResponse approveReview(UUID reviewId);
 
-    ReviewResponse rejectReview(Long reviewId, String reason);
+    ReviewResponse rejectReview(UUID reviewId, String reason);
 
-    ReviewResponse addAdminResponse(Long reviewId, AdminResponseRequest request, Long adminId);
+    ReviewResponse addAdminResponse(UUID reviewId, AdminResponseRequest request);
 
-    ReviewResponse removeAdminResponse(Long reviewId);
+    ReviewResponse removeAdminResponse(UUID reviewId);
 
 
-    int bulkApproveReviews(List<Long> reviewIds);
+    int bulkApproveReviews(List<UUID> reviewIds);
 
-    int bulkRejectReviews(List<Long> reviewIds, String reason);
+    int bulkRejectReviews(List<UUID> reviewIds, String reason);
 
     // ==================== Utility Operations ====================
 
@@ -63,4 +66,16 @@ public interface ReviewService {
      * Find reviews with QueryDSL predicate for advanced filtering
      */
     Page<ReviewResponse> findReviewsWithPredicate(Predicate predicate, Pageable pageable);
+
+    // ==================== Additional Query Operations ====================
+
+    Page<ReviewResponse> getVerifiedReviews(UUID productId, Pageable pageable);
+
+    Page<ReviewResponse> getReviewsByRating(UUID productId, Integer rating, Pageable pageable);
+
+    List<ReviewResponse> getMostHelpfulReviews(UUID productId, int limit);
+
+    List<ReviewResponse> getRecentReviews(UUID productId, int limit);
+
+    Page<ReviewResponse> getReviewsWithImages(UUID productId, Pageable pageable);
 }

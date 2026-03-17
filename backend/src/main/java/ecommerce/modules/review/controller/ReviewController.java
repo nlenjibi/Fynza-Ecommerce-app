@@ -2,11 +2,13 @@ package ecommerce.modules.review.controller;
 
 import com.querydsl.core.types.Predicate;
 import ecommerce.common.response.ApiResponse;
+import ecommerce.modules.auth.service.SecurityService;
 import ecommerce.modules.review.entity.ReviewPredicates;
 import ecommerce.common.response.PaginatedResponse;
 import ecommerce.modules.review.dto.*;
 import ecommerce.modules.review.entity.Review;
 import ecommerce.modules.review.service.ReviewService;
+import ecommerce.security.UserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -21,9 +23,11 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 /**
  * Product review REST controller.
@@ -43,6 +47,8 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
+
+
     // ─────────────────────────────────────────────────────────────────────────
     //  Public reads
     // ─────────────────────────────────────────────────────────────────────────
@@ -50,7 +56,7 @@ public class ReviewController {
     @GetMapping("/{reviewId}")
 
     @Operation(summary = "Get review by ID")
-    public ResponseEntity<ApiResponse<ReviewResponse>> getReview(@PathVariable Long reviewId) {
+    public ResponseEntity<ApiResponse<ReviewResponse>> getReview(@PathVariable UUID reviewId) {
         return ResponseEntity.ok(ApiResponse.success(reviewService.getReview(reviewId)));
     }
 
@@ -62,8 +68,8 @@ public class ReviewController {
             @RequestParam(defaultValue = "10")        int     size,
             @RequestParam(defaultValue = "createdAt") String  sortBy,
             @RequestParam(defaultValue = "DESC")      String  direction,
-            @RequestParam(required = false) Long      productId,
-            @RequestParam(required = false) Long      userId,
+            @RequestParam(required = false) UUID      productId,
+            @RequestParam(required = false) UUID      userId,
             @RequestParam(required = false) Integer   rating,
             @RequestParam(required = false) Integer   minRating,
             @RequestParam(required = false) Integer   maxRating,
@@ -127,7 +133,7 @@ public class ReviewController {
 
     @Operation(summary = "Get reviews for a product")
     public ResponseEntity<ApiResponse<PaginatedResponse<ReviewResponse>>> getProductReviews(
-            @PathVariable Long productId,
+            @PathVariable UUID productId,
             @RequestParam(defaultValue = "0")         int    page,
             @RequestParam(defaultValue = "10")        int    size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -142,7 +148,7 @@ public class ReviewController {
 
     @Operation(summary = "Get filtered reviews for a product")
     public ResponseEntity<ApiResponse<PaginatedResponse<ReviewResponse>>> getFilteredReviews(
-            @PathVariable Long productId,
+            @PathVariable UUID productId,
             @Valid @RequestBody ReviewFilterRequest filters,
             @RequestParam(defaultValue = "0")         int    page,
             @RequestParam(defaultValue = "10")        int    size,
@@ -159,7 +165,7 @@ public class ReviewController {
 
     @Operation(summary = "Get product rating statistics")
     public ResponseEntity<ApiResponse<ReviewSummaryResponse>> getProductStats(
-            @PathVariable Long productId) {
+            @PathVariable UUID productId) {
         return ResponseEntity.ok(ApiResponse.success(reviewService.getProductRatingStats(productId)));
     }
 
@@ -172,9 +178,12 @@ public class ReviewController {
     @Operation(summary = "Create a product review")
     public ResponseEntity<ApiResponse<ReviewResponse>> createReview(
             @Valid @RequestBody ReviewCreateRequest request,
-            @RequestParam(required = false) Long userId) {
+             @AuthenticationPrincipal UserPrincipal principal
+           ) {
+        UUID userId = principal.getId();
+
         if (userId == null) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("User ID is required to create a review", null));
+            return ResponseEntity.badRequest().body(ApiResponse.error("User ID is required to create a review"));
         }
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Review created successfully",
@@ -185,29 +194,40 @@ public class ReviewController {
 
     @Operation(summary = "Update your review")
     public ResponseEntity<ApiResponse<ReviewResponse>> updateReview(
-            @PathVariable Long reviewId,
+            @PathVariable UUID reviewId,
             @Valid @RequestBody ReviewUpdateRequest request,
-            @RequestParam(required = false) Long userId) {
+            @AuthenticationPrincipal UserPrincipal principal
+            ) {
+        UUID userId = principal.getId();
+
         return ResponseEntity.ok(ApiResponse.success("Review updated successfully",
                 reviewService.updateReview(reviewId, request, userId)));
     }
 
     @DeleteMapping("/{reviewId}")
+    @PreAuthorize("hasAnyRole('CUSTOMER')")
 
     @Operation(summary = "Delete your review")
     public ResponseEntity<ApiResponse<Void>> deleteReview(
-            @PathVariable Long reviewId,
-            @RequestParam(required = false) Long userId) {
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable UUID reviewId
+            ) {
+        UUID userId = principal.getId();
+
         reviewService.deleteReview(reviewId, userId);
         return ResponseEntity.ok(ApiResponse.success("Review deleted successfully", null));
     }
 
     @PutMapping("/{reviewId}/restore")
+    @PreAuthorize("hasAnyRole('CUSTOMER')")
 
     @Operation(summary = "Restore a soft-deleted review")
     public ResponseEntity<ApiResponse<ReviewResponse>> restoreReview(
-            @PathVariable Long reviewId,
-            @RequestParam(required = false) Long userId) {
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable UUID reviewId
+           ) {
+        UUID userId = principal.getId();
+
         return ResponseEntity.ok(ApiResponse.success("Review restored successfully",
                 reviewService.restoreReview(reviewId, userId)));
     }
@@ -220,18 +240,19 @@ public class ReviewController {
     @PreAuthorize("hasAnyRole('ADMIN')")
     @Operation(summary = "Add admin response to a review")
     public ResponseEntity<ApiResponse<ReviewResponse>> addAdminResponse(
-            @PathVariable @Positive Long reviewId,
-            @Valid @RequestBody AdminResponseRequest request,
-            @RequestParam(required = false) Long adminId) {
+            @PathVariable @Positive UUID reviewId,
+            @Valid @RequestBody AdminResponseRequest request
+            ) {
+
         return ResponseEntity.ok(ApiResponse.success("Admin response added successfully",
-                reviewService.addAdminResponse(reviewId, request, adminId)));
+                reviewService.addAdminResponse(reviewId, request)));
     }
 
     @DeleteMapping("/admin/{reviewId}/admin-response")
     @PreAuthorize("hasAnyRole('ADMIN')")
     @Operation(summary = "Remove admin response from a review")
     public ResponseEntity<ApiResponse<ReviewResponse>> removeAdminResponse(
-            @PathVariable @Positive Long reviewId) {
+            @PathVariable @Positive UUID reviewId) {
         return ResponseEntity.ok(ApiResponse.success("Admin response removed successfully",
                 reviewService.removeAdminResponse(reviewId)));
     }
@@ -240,7 +261,7 @@ public class ReviewController {
     @PreAuthorize("hasAnyRole('ADMIN')")
     @Operation(summary = "Approve a review")
     public ResponseEntity<ApiResponse<ReviewResponse>> approveReview(
-            @PathVariable @Positive Long reviewId) {
+            @PathVariable @Positive UUID reviewId) {
         return ResponseEntity.ok(ApiResponse.success("Review approved successfully",
                 reviewService.approveReview(reviewId)));
     }
@@ -249,7 +270,7 @@ public class ReviewController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @Operation(summary = "Reject a review")
     public ResponseEntity<ApiResponse<ReviewResponse>> rejectReview(
-            @PathVariable @Positive Long reviewId,
+            @PathVariable @Positive UUID reviewId,
             @RequestBody RejectionRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Review rejected successfully",
                 reviewService.rejectReview(reviewId, request.getReason())));

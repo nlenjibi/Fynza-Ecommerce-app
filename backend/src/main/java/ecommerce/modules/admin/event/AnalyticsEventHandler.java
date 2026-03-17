@@ -28,12 +28,12 @@ public class AnalyticsEventHandler {
     @Async("analyticsExecutor")
     @EventListener
     public void handleOrderCreated(OrderCreatedEvent event) {
-        log.info("Handling order created event for order: {}", event.getOrderId());
+        log.info("Handling order created event for order: {}", event.orderId());
         
-        analyticsService.recordEvent("ORDER_CREATED", event.getOrderId(), java.util.Map.of(
-            "customerId", event.getCustomerId(),
-            "totalAmount", event.getTotalAmount(),
-            "itemCount", event.getItemCount()
+        analyticsService.recordEvent("ORDER_CREATED", event.orderId(), java.util.Map.of(
+            "customerId", event.customerId(),
+            "totalAmount", event.totalAmount(),
+            "itemCount", event.itemCount()
         ));
         
         // Trigger analytics refresh
@@ -46,11 +46,11 @@ public class AnalyticsEventHandler {
     @Async("analyticsExecutor")
     @EventListener
     public void handleOrderConfirmed(OrderConfirmedEvent event) {
-        log.info("Handling order confirmed event for order: {}", event.getOrderId());
+        log.info("Handling order confirmed event for order: {}", event.orderId());
         
-        analyticsService.recordEvent("ORDER_CONFIRMED", event.getOrderId(), java.util.Map.of(
-            "customerId", event.getCustomerId(),
-            "totalAmount", event.getTotalAmount()
+        analyticsService.recordEvent("ORDER_CONFIRMED", event.orderId(), java.util.Map.of(
+            "customerId", event.customerId(),
+            "totalAmount", event.totalAmount()
         ));
     }
 
@@ -60,12 +60,12 @@ public class AnalyticsEventHandler {
     @Async("analyticsExecutor")
     @EventListener
     public void handleOrderCancelled(OrderCancelledEvent event) {
-        log.info("Handling order cancelled event for order: {}", event.getOrderId());
+        log.info("Handling order cancelled event for order: {}", event.orderId());
         
-        analyticsService.recordEvent("ORDER_CANCELLED", event.getOrderId(), java.util.Map.of(
-            "customerId", event.getCustomerId(),
-            "totalAmount", event.getTotalAmount(),
-            "reason", event.getReason()
+        analyticsService.recordEvent("ORDER_CANCELLED", event.orderId(), java.util.Map.of(
+            "customerId", event.customerId(),
+            "totalAmount", event.totalAmount(),
+            "reason", event.reason()
         ));
     }
 
@@ -75,12 +75,12 @@ public class AnalyticsEventHandler {
     @Async("analyticsExecutor")
     @EventListener
     public void handleProductAdded(ProductAddedEvent event) {
-        log.info("Handling product added event for product: {}", event.getProductId());
+        log.info("Handling product added event for product: {}", event.productId());
         
-        analyticsService.recordEvent("PRODUCT_ADDED", event.getProductId(), java.util.Map.of(
-            "sellerId", event.getSellerId(),
-            "categoryId", event.getCategoryId(),
-            "price", event.getPrice()
+        analyticsService.recordEvent("PRODUCT_ADDED", event.productId(), java.util.Map.of(
+            "sellerId", event.sellerId(),
+            "categoryId", event.categoryId(),
+            "price", event.price()
         ));
     }
 
@@ -90,10 +90,10 @@ public class AnalyticsEventHandler {
     @Async("analyticsExecutor")
     @EventListener
     public void handleUserRegistered(UserRegisteredEvent event) {
-        log.info("Handling user registered event for user: {}", event.getUserId());
+        log.info("Handling user registered event for user: {}", event.userId());
         
-        analyticsService.recordEvent("USER_REGISTERED", event.getUserId(), java.util.Map.of(
-            "role", event.getRole()
+        analyticsService.recordEvent("USER_REGISTERED", event.userId(), java.util.Map.of(
+            "role", event.role()
         ));
     }
 

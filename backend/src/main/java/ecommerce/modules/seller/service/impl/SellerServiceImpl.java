@@ -37,8 +37,6 @@ public class SellerServiceImpl implements SellerService {
     @Override
     @Transactional(readOnly = true)
     public SellerDashboardResponse getDashboard(UUID sellerId) {
-        Long sellerIdLong = sellerId.getLeastSignificantBits();
-        
         long totalProducts = productRepository.findBySellerId(sellerId, Pageable.unpaged()).getTotalElements();
         
         List<ecommerce.modules.order.entity.Order> sellerOrders = orderRepository.findBySellerId(sellerId);
@@ -58,7 +56,7 @@ public class SellerServiceImpl implements SellerService {
         
         LocalDateTime startOfMonth = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
         BigDecimal monthlyRevenue = sellerOrders.stream()
-                .filter(o -> o.getCreatedAt().isAfter(startOfMonth))
+                .filter(o -> o.getCreatedAt() != null && o.getCreatedAt().isAfter(startOfMonth))
                 .filter(o -> o.getPaymentStatus() == ecommerce.modules.order.entity.PaymentStatus.PAID)
                 .map(ecommerce.modules.order.entity.Order::getTotalAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -70,7 +68,8 @@ public class SellerServiceImpl implements SellerService {
                 .orElse(0.0);
         
         long totalCustomers = sellerOrders.stream()
-                .map(ecommerce.modules.order.entity.Order::getCustomerId)
+                .map(o -> o.getCustomer() != null ? o.getCustomer().getId() : null)
+                .filter(java.util.Objects::nonNull)
                 .distinct()
                 .count();
         
@@ -177,7 +176,7 @@ public class SellerServiceImpl implements SellerService {
                                 items -> {
                                     long quantity = items.stream().mapToLong(ecommerce.modules.order.entity.OrderItem::getQuantity).sum();
                                     BigDecimal revenue = items.stream()
-                                            .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                                            .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                                             .reduce(BigDecimal.ZERO, BigDecimal::add);
                                     String name = items.get(0).getProduct().getName();
                                     return new Object[] { name, quantity, revenue };

@@ -65,6 +65,44 @@ type ProductDto {
     pageInfo: PageInfo!
 }
 
+type SearchResponse {
+    results: [ProductResponse!]!
+    pagination: PaginationInfo!
+    filters: SearchFilters
+}
+
+type SearchFilters {
+    categories: [FilterOption!]!
+    brands: [FilterOption!]!
+    priceRange: PriceRange
+    ratingRange: RatingRange
+    availableFilters: [String!]!
+}
+
+type FilterOption {
+    id: ID!
+    name: String!
+    count: Long
+}
+
+type PriceRange {
+    min: BigDecimal!
+    max: BigDecimal!
+}
+
+type RatingRange {
+    min: Float!
+    max: Float!
+}
+
+type PaginationInfo {
+    total: Long!
+    page: Int!
+    limit: Int!
+    totalPages: Int!
+    hasMore: Boolean!
+}
+
 type ProductStatisticsResponse {
     totalProducts: Long!
     activeProducts: Long!
@@ -109,6 +147,12 @@ input ProductFilterInput {
     categorySlug: String
 
     # Price Filters
+    minPrice: BigDecimal
+    maxPrice: BigDecimal
+
+    # Rating Filters
+    minRating: Float
+
     # Inventory Filters
     inventoryStatus: InventoryStatus
     inventoryStatuses: [InventoryStatus!]
@@ -125,6 +169,13 @@ input ProductFilterInput {
     # Discount Filters
     hasDiscount: Boolean
     minDiscountPercent: Int
+
+    # Search & Sort
+    keyword: String
+    sortBy: String
+    sortDirection: SortDirection
+
+    # Analytics Filters
     minSales: Long
     popular: Boolean
     trending: Boolean
@@ -188,6 +239,44 @@ input ProductUpdateRequest {
     tags: [String!]
 }
 
+# Advanced Search Input - matches REST API SearchRequest
+input SearchInput {
+    # Search query
+    q: String
+    
+    # Category filters
+    categoryId: ID
+    categoryIds: [ID!]
+    categoryName: String
+    categorySlug: String
+    
+    # Brand/Seller filter
+    brandId: ID
+    
+    # Price filters
+    minPrice: BigDecimal
+    maxPrice: BigDecimal
+    
+    # Rating filters
+    minRating: Float
+    maxRating: Float
+    
+    # Stock filters
+    inStock: Boolean
+    expressDelivery: Boolean
+    
+    # Discount filters
+    discountMin: Float
+    discountMax: Float
+    
+    # Sorting
+    sortBy: String  # popularity, price-low, price-high, rating, newest
+    
+    # Pagination
+    page: Int = 0
+    limit: Int = 20
+}
+
 extend type Query {
     # Security: PUBLIC - No authentication required
     # Single Product Queries
@@ -238,6 +327,22 @@ extend type Query {
         keyword: String!
         pagination: PageInput
     ): ProductDto
+
+    # Advanced Search - Full-featured search with all filters (matches REST API)
+    search(
+        input: SearchInput
+    ): SearchResponse
+    
+    # Search suggestions for autocomplete
+    searchSuggestions(
+        query: String!
+        limit: Int = 10
+    ): [String!]!
+    
+    # Trending search terms
+    trendingSearches(
+        limit: Int = 10
+    ): [String!]!
 
     # Inventory Management Queries
     productsByInventoryStatus(

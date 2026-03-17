@@ -174,37 +174,6 @@ export function CategorySidebar() {
         </div>
       </div>
 
-      {/* Inventory Status Filters */}
-      <div className="p-4 border-b">
-        <h3 className="font-bold text-sm mb-3">INVENTORY STATUS</h3>
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2">
-            <Checkbox id="in-stock" />
-            <Label htmlFor="in-stock" className="text-sm font-normal cursor-pointer">
-              In Stock Only
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox id="low-stock" />
-            <Label htmlFor="low-stock" className="text-sm font-normal cursor-pointer">
-              Low Stock
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox id="out-of-stock" />
-            <Label htmlFor="out-of-stock" className="text-sm font-normal cursor-pointer">
-              Out of Stock
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox id="needs-reorder" />
-            <Label htmlFor="needs-reorder" className="text-sm font-normal cursor-pointer">
-              Needs Reorder
-            </Label>
-          </div>
-        </div>
-      </div>
-
       {/* Stock & Quantity */}
       <div className="p-4 border-b">
         <h3 className="font-bold text-sm mb-3">STOCK & QUANTITY</h3>

@@ -34,7 +34,7 @@ interface Refund {
 }
 
 export default function SellerRefunds() {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [filterStatus, setFilterStatus] = useState("all");
     const [selectedRefund, setSelectedRefund] = useState<Refund | null>(null);

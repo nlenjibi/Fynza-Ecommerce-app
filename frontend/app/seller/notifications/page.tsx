@@ -28,7 +28,7 @@ interface Notification {
 }
 
 export default function SellerNotifications() {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(true);
     const [filterType, setFilterType] = useState("all");
     const [showUnreadOnly, setShowUnreadOnly] = useState(false);
 

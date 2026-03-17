@@ -49,7 +49,7 @@ public class CheckoutController {
             @RequestBody PaymentProcessRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
         log.info("POST /api/v1/payments/process — orderId={}, user={}", request.getOrderId(), principal.getId());
-        OrderResponse order = orderService.updateOrderStatus(request.getOrderId(), ecommerce.common.enums.OrderStatus.PAID);
+        OrderResponse order = orderService.updateOrderStatus(request.getOrderId(), ecommerce.common.enums.OrderStatus.CONFIRMED);
         return ResponseEntity.ok(ApiResponse.success("Payment processed successfully", order));
     }
 }

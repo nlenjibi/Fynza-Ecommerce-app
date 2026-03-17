@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 export default function SellerAnalytics() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [dateRange, setDateRange] = useState("month");
 
   const metrics = [

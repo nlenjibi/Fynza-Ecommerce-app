@@ -2,8 +2,8 @@ package ecommerce.modules.user.service.impl;
 
 import ecommerce.exception.BadRequestException;
 import ecommerce.exception.ResourceNotFoundException;
-import ecommerce.modules.user.dto.AddressCreateRequest;
 import ecommerce.modules.user.dto.AddressDto;
+import ecommerce.modules.user.dto.AddressRequest;
 import ecommerce.modules.user.entity.Address;
 import ecommerce.modules.user.entity.User;
 import ecommerce.modules.user.mapper.AddressMapper;
@@ -58,7 +58,7 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     @Transactional
-    public AddressDto createAddress(UUID userId, AddressCreateRequest request) {
+    public AddressDto createAddress(UUID userId, AddressRequest request) {
         log.debug("Creating new address for user: {}", userId);
 
         // Check address limit
@@ -89,7 +89,7 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     @Transactional
-    public AddressDto updateAddress(UUID userId, UUID addressId, AddressCreateRequest request) {
+    public AddressDto updateAddress(UUID userId, UUID addressId, AddressRequest request) {
         log.debug("Updating address {} for user {}", addressId, userId);
 
         Address address = addressRepository.findById(addressId)

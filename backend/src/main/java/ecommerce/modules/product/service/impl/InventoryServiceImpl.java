@@ -162,7 +162,7 @@ public class InventoryServiceImpl implements InventoryService {
                 Product product = productRepository.findById(productId)
                         .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + productId));
                 
-                product.deductStock(quantity);
+                product.reduceStock(quantity);
                 productRepository.save(product);
                 
                 log.info("Stock reduced for product {}: quantity={}, remaining stock={}",

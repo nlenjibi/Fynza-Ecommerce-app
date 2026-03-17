@@ -17,6 +17,7 @@ type User {
     lastName: String!
     fullName: String!
     phoneNumber: String
+    profileImageUrl: String
     role: Role!
     isActive: Boolean!
     emailVerified: Boolean!
@@ -74,6 +75,39 @@ input UserFilterInput {
     name: String
 }
 
+# ==================== Address Types ====================
+
+enum AddressType {
+    SHIPPING
+    BILLING
+    BOTH
+}
+
+type Address {
+    id: ID!
+    label: String
+    addressType: AddressType!
+    streetAddress: String!
+    city: String!
+    state: String!
+    postalCode: String!
+    country: String!
+    isDefault: Boolean!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}
+
+input AddressInput {
+    label: String
+    addressType: AddressType
+    streetAddress: String!
+    city: String!
+    state: String!
+    postalCode: String!
+    country: String!
+    isDefault: Boolean
+}
+
 # Security:
 # - user(id): Public
 # - users: ADMIN only
@@ -86,6 +120,9 @@ extend type Query {
     currentUser: User
     adminDashboard: AdminDashboard!
     staffDashboard: AdminDashboard!
+    
+    # Address queries
+    myAddresses: [Address!]!
 }
 
 extend type Mutation {
@@ -94,4 +131,9 @@ extend type Mutation {
     deleteUser(id: ID!): Boolean!
     lockAccount(userId: ID!): Boolean!
     unlockAccount(userId: ID!): Boolean!
+    
+    # Address mutations
+    addAddress(input: AddressInput!): Address!
+    updateAddress(id: ID!, input: AddressInput!): Address!
+    deleteAddress(id: ID!): Boolean!
 }

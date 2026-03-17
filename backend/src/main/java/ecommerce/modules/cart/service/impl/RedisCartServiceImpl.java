@@ -1,0 +1,291 @@
+package ecommerce.modules.cart.service.impl;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import ecommerce.exception.InsufficientStockException;
+import ecommerce.exception.ResourceNotFoundException;
+import ecommerce.modules.cart.dto.CartItemResponse;
+import ecommerce.modules.cart.dto.CartResponse;
+import ecommerce.modules.cart.service.RedisCartService;
+import ecommerce.modules.product.dto.ProductResponse;
+import ecommerce.modules.product.service.ProductService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.Duration;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * Redis-based Cart Service Implementation
+ * 
+ * Per smart caching guidelines:
+ * - Cart stored in Redis (NOT database)
+ * - TTL: 30 minutes with sliding expiration
+ * - O(1) operations for add/update/remove
+ * - No Caffeine (user-specific data)
+ * 
+ * Redis Key: cart:{userId}
+ * Data Structure: Hash (productId -> JSON of CartItem)
+ */
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class RedisCartServiceImpl implements RedisCartService {
+
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final ProductService productService;
+    private final ObjectMapper objectMapper;
+
+    private static final String CART_KEY_PREFIX = "cart:";
+    private static final Duration CART_TTL = Duration.ofMinutes(30);
+
+    @Override
+    public CartItemResponse addItem(UUID userId, UUID productId, int quantity) {
+        String cartKey = getCartKey(userId);
+        
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be positive");
+        }
+
+        // Get product details (from cache or DB)
+        ProductResponse product = productService.findById(productId.toString());
+
+        // Check stock
+        int availableStock = (product.getStockCount() != null ? product.getStockCount() : 0);
+        if (availableStock < quantity) {
+            throw new InsufficientStockException(product.getName(), availableStock, quantity);
+        }
+
+        // Get existing item or create new
+        CartItemData item = getCartItem(cartKey, productId);
+        
+        if (item != null) {
+            // Update quantity
+            int newQuantity = item.getQuantity() + quantity;
+            if (newQuantity > availableStock) {
+                throw new InsufficientStockException(product.getName(), availableStock, newQuantity);
+            }
+            item.setQuantity(newQuantity);
+        } else {
+            // Create new item
+            item = new CartItemData();
+            item.setProductId(productId);
+            item.setQuantity(quantity);
+            item.setPrice(product.getPrice());
+            item.setProductName(product.getName());
+            item.setProductImage(product.getImages() != null && !product.getImages().isEmpty() 
+                    ? product.getImages().get(0) : null);
+        }
+
+        // Save to Redis
+        saveCartItem(cartKey, item);
+        
+        // Refresh TTL (sliding expiration)
+        refreshTTL(cartKey);
+
+        log.info("Added item to cart for user {}: product {}, quantity {}", userId, productId, quantity);
+        return mapToResponse(item, product);
+    }
+
+    @Override
+    public CartResponse getCart(UUID userId) {
+        String cartKey = getCartKey(userId);
+        
+        Map<Object, Object> entries = redisTemplate.opsForHash().entries(cartKey);
+        
+        if (entries.isEmpty()) {
+            return emptyCartResponse(userId);
+        }
+
+        List<CartItemResponse> items = entries.values().stream()
+                .map(value -> {
+                    try {
+                        CartItemData item = objectMapper.convertValue(value, CartItemData.class);
+                        ProductResponse product = getProductSafe(item.getProductId());
+                        return mapToResponse(item, product);
+                    } catch (Exception e) {
+                        log.error("Error parsing cart item: {}", e.getMessage());
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        // Refresh TTL on read
+        refreshTTL(cartKey);
+
+        return buildCartResponse(userId, items);
+    }
+
+    @Override
+    public CartItemResponse updateItemQuantity(UUID userId, UUID productId, int quantity) {
+        String cartKey = getCartKey(userId);
+        
+        if (quantity < 0) {
+            throw new IllegalArgumentException("Quantity cannot be negative");
+        }
+
+        CartItemData item = getCartItem(cartKey, productId);
+        if (item == null) {
+            throw new ResourceNotFoundException("Item not found in cart");
+        }
+
+        if (quantity == 0) {
+            // Remove item
+            removeItem(userId, productId);
+            return null;
+        }
+
+        // Check stock
+        ProductResponse product = getProductSafe(productId);
+        if (quantity > (product.getStockCount() != null ? product.getStockCount() : 0)) {
+            throw new InsufficientStockException(product.getName(), 
+                    product.getStockCount() != null ? product.getStockCount() : 0, quantity);
+        }
+
+        item.setQuantity(quantity);
+        saveCartItem(cartKey, item);
+        refreshTTL(cartKey);
+
+        log.info("Updated cart item for user {}: product {}, quantity {}", userId, productId, quantity);
+        return mapToResponse(item, product);
+    }
+
+    @Override
+    public void removeItem(UUID userId, UUID productId) {
+        String cartKey = getCartKey(userId);
+        redisTemplate.opsForHash().delete(cartKey, productId.toString());
+        refreshTTL(cartKey);
+        
+        log.info("Removed item from cart for user {}: product {}", userId, productId);
+    }
+
+    @Override
+    public void clearCart(UUID userId) {
+        String cartKey = getCartKey(userId);
+        redisTemplate.delete(cartKey);
+        
+        log.info("Cleared cart for user {}", userId);
+    }
+
+    @Override
+    public boolean hasProduct(UUID userId, UUID productId) {
+        String cartKey = getCartKey(userId);
+        return Boolean.TRUE.equals(redisTemplate.opsForHash().hasKey(cartKey, productId.toString()));
+    }
+
+    @Override
+    public long getItemCount(UUID userId) {
+        String cartKey = getCartKey(userId);
+        Long size = redisTemplate.opsForHash().size(cartKey);
+        return size != null ? size : 0;
+    }
+
+    // ==================== Private Helpers ====================
+
+    private String getCartKey(UUID userId) {
+        return CART_KEY_PREFIX + userId;
+    }
+
+    private CartItemData getCartItem(String cartKey, UUID productId) {
+        Object value = redisTemplate.opsForHash().get(cartKey, productId.toString());
+        if (value == null) {
+            return null;
+        }
+        return objectMapper.convertValue(value, CartItemData.class);
+    }
+
+    private void saveCartItem(String cartKey, CartItemData item) {
+        try {
+            redisTemplate.opsForHash().put(cartKey, item.getProductId().toString(), item);
+        } catch (Exception e) {
+            log.error("Error saving cart item: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to save cart item", e);
+        }
+    }
+
+    private void refreshTTL(String cartKey) {
+        redisTemplate.expire(cartKey, CART_TTL);
+    }
+
+    private ProductResponse getProductSafe(UUID productId) {
+        try {
+            return productService.findById(productId.toString());
+        } catch (Exception e) {
+            log.warn("Product {} not found, returning minimal data", productId);
+            return null;
+        }
+    }
+
+    private CartItemResponse mapToResponse(CartItemData item, ProductResponse product) {
+        if (product == null) {
+            return CartItemResponse.builder()
+                    .productId(item.getProductId())
+                    .quantity(item.getQuantity())
+                    .price(item.getPrice())
+                    .build();
+        }
+
+        BigDecimal subtotal = item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+        
+        return CartItemResponse.builder()
+                .productId(item.getProductId())
+                .productName(item.getProductName())
+                .productImage(item.getProductImage())
+                .quantity(item.getQuantity())
+                .price(item.getPrice())
+                .subtotal(subtotal)
+                .inStock(product.getInStock())
+                .stockCount(product.getStockCount())
+                .build();
+    }
+
+    private CartResponse emptyCartResponse(UUID userId) {
+        return CartResponse.builder()
+                .userId(userId)
+                .items(new ArrayList<>())
+                .totalItems(0)
+                .totalPrice(BigDecimal.ZERO)
+                .build();
+    }
+
+    private CartResponse buildCartResponse(UUID userId, List<CartItemResponse> items) {
+        BigDecimal totalPrice = items.stream()
+                .map(CartItemResponse::getSubtotal)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return CartResponse.builder()
+                .userId(userId)
+                .items(items)
+                .totalItems(items.size())
+                .totalPrice(totalPrice)
+                .build();
+    }
+
+    /**
+     * Internal cart item data structure
+     */
+    public static class CartItemData {
+        private UUID productId;
+        private String productName;
+        private String productImage;
+        private Integer quantity;
+        private BigDecimal price;
+
+        public UUID getProductId() { return productId; }
+        public void setProductId(UUID productId) { this.productId = productId; }
+        public String getProductName() { return productName; }
+        public void setProductName(String productName) { this.productName = productName; }
+        public String getProductImage() { return productImage; }
+        public void setProductImage(String productImage) { this.productImage = productImage; }
+        public Integer getQuantity() { return quantity; }
+        public void setQuantity(Integer quantity) { this.quantity = quantity; }
+        public BigDecimal getPrice() { return price; }
+        public void setPrice(BigDecimal price) { this.price = price; }
+    }
+}

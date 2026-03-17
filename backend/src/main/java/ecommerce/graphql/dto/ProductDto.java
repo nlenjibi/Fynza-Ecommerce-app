@@ -15,6 +15,4 @@ import java.util.List;
 public class ProductDto {
     private List<ProductResponse> content;
     private PaginatedResponse<ProductResponse> pageInfo;
-
-
 }

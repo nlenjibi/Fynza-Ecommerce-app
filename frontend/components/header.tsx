@@ -1,10 +1,9 @@
 "use client"
 
-import { Search, ShoppingCart, User, HelpCircle, ChevronDown, Menu, Heart, Bell } from "lucide-react"
+import { Search, ShoppingCart, User, HelpCircle, ChevronDown, Menu, Heart, Bell, Smartphone, ShoppingBag, Home, Laptop, Shirt, Dumbbell, Baby, Gamepad2, Tv, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import Image from "next/image"
 import Link from "next/link"
 import { MegaMenu } from "@/components/mega-menu"
 import { SearchSuggestions } from "@/components/search-suggestions"
@@ -41,7 +40,7 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white shadow-sm overflow-x-hidden">
+    <header className="sticky top-0 z-50 w-full bg-white shadow-sm">
       {/* Top Banner - Fynza Blue */}
       <div className="bg-primary text-white py-2 overflow-hidden">
         <div className="container mx-auto px-4 flex items-center justify-between min-w-0">
@@ -60,19 +59,28 @@ export function Header() {
 
       {/* Main Navigation */}
       <div className="bg-background border-b">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center gap-4">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center gap-6">
             {/* Categories Dropdown */}
-            <div className="relative flex-shrink-0">
+            <div className="relative">
               <Button
-                variant="ghost"
-                className="flex items-center gap-2 font-semibold"
+                variant="outline"
+                className="flex items-center gap-2 border-2 border-primary text-primary hover:bg-primary hover:text-white font-semibold"
                 onMouseEnter={() => setMegaMenuOpen(true)}
                 onClick={() => setMegaMenuOpen(!megaMenuOpen)}
               >
                 <Menu className="h-5 w-5" />
-                <span className="hidden sm:inline">Categories</span>
+                <span className="hidden md:inline">Categories</span>
+                <ChevronDown className="h-4 w-4" />
               </Button>
+
+              {megaMenuOpen && (
+                <MegaMenu
+                  onClose={() => setMegaMenuOpen(false)}
+                  activeCategory={activeCategory}
+                  setActiveCategory={setActiveCategory}
+                />
+              )}
             </div>
 
             {/* Logo */}
@@ -81,7 +89,7 @@ export function Header() {
             </Link>
 
             {/* Search */}
-            <div className="flex-1 max-w-2xl relative">
+            <div className="flex-1 max-w-2xl">
               <form onSubmit={handleSearch} className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" aria-hidden="true" />
                 <Input
@@ -96,13 +104,13 @@ export function Header() {
                   aria-label="Search products, brands and categories"
                   aria-autocomplete="list"
                   aria-controls="search-suggestions"
-                  className="pl-10 pr-24 h-12 border-2 border-border focus:border-primary focus:outline-none transition-colors w-full"
+                  className="pl-10 pr-4 h-12 border-2 border-border focus:border-primary"
                 />
                 <Button
                   type="submit"
                   size="lg"
                   disabled={!searchQuery.trim()}
-                  className="absolute right-0 top-0 h-12 rounded-l-none bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold transition-colors"
+                  className="absolute right-0 top-0 h-12 rounded-l-none bg-primary hover:bg-primary-dark text-white font-semibold"
                   aria-label={`Search for "${searchQuery}"`}
                 >
                   Search
@@ -265,14 +273,6 @@ export function Header() {
             </Link>
           </div>
         </div>
-
-        {megaMenuOpen && (
-          <MegaMenu
-            onClose={() => setMegaMenuOpen(false)}
-            activeCategory={activeCategory}
-            setActiveCategory={setActiveCategory}
-          />
-        )}
       </div>
     </header>
   )

@@ -1,8 +1,8 @@
 package ecommerce.modules.user.controller;
 
 import ecommerce.common.response.ApiResponse;
-import ecommerce.modules.user.dto.AddressCreateRequest;
 import ecommerce.modules.user.dto.AddressDto;
+import ecommerce.modules.user.dto.AddressRequest;
 import ecommerce.modules.user.service.AddressService;
 import ecommerce.security.UserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
@@ -52,7 +52,7 @@ public class AddressController {
     @Operation(summary = "Create new address", description = "Create a new address for the authenticated user")
     public ResponseEntity<ApiResponse<AddressDto>> createAddress(
             @AuthenticationPrincipal UserPrincipal principal,
-            @Valid @RequestBody AddressCreateRequest request) {
+            @Valid @RequestBody AddressRequest request) {
         UUID userId = principal.getId();
         AddressDto createdAddress = addressService.createAddress(userId, request);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -65,7 +65,7 @@ public class AddressController {
     public ResponseEntity<ApiResponse<AddressDto>> updateAddress(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID addressId,
-            @Valid @RequestBody AddressCreateRequest request) {
+            @Valid @RequestBody AddressRequest request) {
         UUID userId = principal.getId();
         AddressDto updatedAddress = addressService.updateAddress(userId, addressId, request);
         return ResponseEntity.ok(ApiResponse.success("Address updated successfully", updatedAddress));

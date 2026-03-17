@@ -1,7 +1,7 @@
 package ecommerce.modules.category.controller;
 
 import ecommerce.common.response.ApiResponse;
-import ecommerce.modules.category.dto.CategoryRequest;
+import ecommerce.modules.category.dto.CategoryCreateRequest;
 import ecommerce.modules.category.dto.CategoryResponse;
 import ecommerce.modules.category.service.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -48,7 +48,7 @@ public class CategoryController {
     @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
     @Operation(summary = "Create category", description = "Create a new category - SELLER/ADMIN only")
     public ResponseEntity<ApiResponse<CategoryResponse>> createCategory(
-            @Valid @RequestBody CategoryRequest request) {
+            @Valid @RequestBody CategoryCreateRequest request) {
         CategoryResponse category = categoryService.create(request);
         return ResponseEntity.ok(ApiResponse.success("Category created successfully", category));
     }
@@ -58,7 +58,7 @@ public class CategoryController {
     @Operation(summary = "Update category", description = "Update category details - SELLER/ADMIN only")
     public ResponseEntity<ApiResponse<CategoryResponse>> updateCategory(
             @PathVariable UUID id,
-            @Valid @RequestBody CategoryRequest request) {
+            @Valid @RequestBody CategoryCreateRequest request) {
         CategoryResponse category = categoryService.update(id, request);
         return ResponseEntity.ok(ApiResponse.success("Category updated successfully", category));
     }

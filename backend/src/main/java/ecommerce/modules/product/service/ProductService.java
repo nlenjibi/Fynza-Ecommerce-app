@@ -29,5 +29,11 @@ public interface ProductService {
 
     ProductResponse reserveStock(UUID id, int quantity);
 
+    ProductResponse releaseReservedStock(UUID id, int quantity);
+
+    ProductResponse reduceStock(UUID id, int quantity);
+
+    Boolean incrementViewCount(UUID id);
+
     ProductResponse updateRating(UUID id, Float rating);
 }

@@ -16,9 +16,7 @@ import java.util.UUID;
 @Repository
 public interface WishlistItemRepository extends BaseRepository<WishlistItem, UUID> {
 
-    List<WishlistItem> findByWishlistId(UUID wishlistId);
 
-    List<WishlistItem> findByProductId(UUID productId);
 
     // Methods for user-based operations
     Optional<WishlistItem> findByUserIdAndProductId(UUID userId, UUID productId);

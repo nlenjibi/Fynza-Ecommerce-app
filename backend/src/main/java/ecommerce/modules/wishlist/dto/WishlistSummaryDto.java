@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -14,7 +15,7 @@ import java.util.List;
 @Getter
 public class WishlistSummaryDto {
 
-    private Long userId;
+    private UUID userId;
     private Integer totalItems;
     private Integer inStockItems;
     private Integer outOfStockItems;

@@ -83,11 +83,12 @@ public class GraphQLExceptionResolver extends DataFetcherExceptionResolverAdapte
             return error(env, ErrorType.ExecutionAborted, ex.getMessage());
         }
 
-        if (ex instanceof RateLimitExceededException) {
-            log.warn("GraphQL rate limit exceeded on '{}': {}", path, ex.getMessage());
-            return error(env, ErrorType.ExecutionAborted,
-                    "Too many requests. Please slow down and try again.");
-        }
+        // RateLimitExceededException handling disabled - class not implemented
+        // if (ex instanceof RateLimitExceededException) {
+        //     log.warn("GraphQL rate limit exceeded on '{}': {}", path, ex.getMessage());
+        //     return error(env, ErrorType.ExecutionAborted,
+        //             "Too many requests. Please slow down and try again.");
+        // }
 
         // ── Catch-all ──────────────────────────────────────────────────────────
         // Log full stack trace for unexpected errors — critical for debugging.

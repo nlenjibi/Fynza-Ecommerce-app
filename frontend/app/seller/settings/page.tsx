@@ -22,7 +22,7 @@ import {
 import { useState as useReactState } from "react";
 
 export default function SellerSettings() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
 
   const [storeInfo, setStoreInfo] = useState({

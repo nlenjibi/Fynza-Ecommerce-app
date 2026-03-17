@@ -279,3 +279,18 @@ paypal:
   client-id: ${PAYPAL_CLIENT_ID:your-sandbox-client-id}
   client-secret: ${PAYPAL_CLIENT_SECRET:your-sandbox-client-secret}
   mode: sandbox
+
+# Redis Configuration
+redis:
+  host: ${REDIS_HOST:localhost}
+  port: ${REDIS_PORT:6379}
+  password: ${REDIS_PASSWORD:}
+  database: 0
+  timeout: 5000ms
+  lettuce:
+    pool:
+      max-active: 8
+      max-idle: 8
+      min-idle: 2
+      max-wait: -1ms
+    shutdown-timeout: 100ms

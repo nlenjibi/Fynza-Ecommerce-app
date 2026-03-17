@@ -247,7 +247,7 @@ public class ProductServiceImpl implements ProductService {
         // Batch fetch seller profiles for all sellers (single query)
         Map<UUID, SellerProfile> sellerProfileMap = sellerProfileRepository.findByUserIdIn(sellerIds)
                 .stream()
-                .collect(Collectors.toMap(SellerProfile::getUserId, Function.identity()));
+                .collect(Collectors.toMap(sp -> sp.getUser().getId(), sp -> sp));
 
         // Map with pre-fetched data
         return products.map(product -> mapToResponseWithCache(product, variantsMap, sellerProfileMap));
@@ -307,6 +307,7 @@ public class ProductServiceImpl implements ProductService {
         return ProductResponse.builder()
                 .id(product.getId())
                 .name(product.getName())
+                .slug(product.getSlug())
                 .description(product.getDescription())
                 .brand(product.getBrand())
                 .sku(product.getSku())
@@ -316,12 +317,18 @@ public class ProductServiceImpl implements ProductService {
                 .discount(product.getDiscount())
                 .rating(product.getRating())
                 .reviewCount(product.getReviewCount())
+                .viewCount(product.getViewCount())
                 .images(new ArrayList<>())
                 .variants(variantResponses)
-                .inStock(product.getStock() > 0)
+                .inStock(product.isInStock())
                 .stockCount(product.getStock())
+                .availableQuantity(product.getAvailableQuantity())
+                .soldQuantity(product.getSoldQuantity())
                 .seller(sellerInfo)
+                .status(product.getStatus() != null ? product.getStatus().name() : null)
+                .inventoryStatus(product.getInventoryStatus() != null ? product.getInventoryStatus().name() : null)
                 .createdAt(product.getCreatedAt())
+                .updatedAt(product.getUpdatedAt())
                 .build();
     }
 
@@ -376,6 +383,7 @@ public class ProductServiceImpl implements ProductService {
         return ProductResponse.builder()
                 .id(product.getId())
                 .name(product.getName())
+                .slug(product.getSlug())
                 .description(product.getDescription())
                 .brand(product.getBrand())
                 .sku(product.getSku())
@@ -385,12 +393,18 @@ public class ProductServiceImpl implements ProductService {
                 .discount(product.getDiscount())
                 .rating(product.getRating())
                 .reviewCount(product.getReviewCount())
+                .viewCount(product.getViewCount())
                 .images(new ArrayList<>())
                 .variants(variantResponses)
-                .inStock(product.getStock() > 0)
+                .inStock(product.isInStock())
                 .stockCount(product.getStock())
+                .availableQuantity(product.getAvailableQuantity())
+                .soldQuantity(product.getSoldQuantity())
                 .seller(sellerInfo)
+                .status(product.getStatus() != null ? product.getStatus().name() : null)
+                .inventoryStatus(product.getInventoryStatus() != null ? product.getInventoryStatus().name() : null)
                 .createdAt(product.getCreatedAt())
+                .updatedAt(product.getUpdatedAt())
                 .build();
     }
 
@@ -418,6 +432,17 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
+    public ProductResponse releaseReservedStock(UUID id, int quantity) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + id));
+        product.releaseReservedStock(quantity);
+        productRepository.save(product);
+        log.info("Released {} reserved stock for product {}", quantity, id);
+        return mapToResponse(product);
+    }
+
+    @Override
+    @Transactional
     public ProductResponse reserveStock(UUID id, int quantity) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + id));
@@ -425,6 +450,28 @@ public class ProductServiceImpl implements ProductService {
         productRepository.save(product);
         log.info("Reserved {} stock for product {}", quantity, id);
         return mapToResponse(product);
+    }
+
+    @Override
+    @Transactional
+    public ProductResponse reduceStock(UUID id, int quantity) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + id));
+        product.reduceStock(quantity);
+        productRepository.save(product);
+        log.info("Reduced {} stock from product {}", quantity, id);
+        return mapToResponse(product);
+    }
+
+    @Override
+    @Transactional
+    public Boolean incrementViewCount(UUID id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + id));
+        product.setViewCount((product.getViewCount() != null ? product.getViewCount() : 0) + 1);
+        productRepository.save(product);
+        log.debug("Incremented view count for product {}", id);
+        return true;
     }
 
     @Override

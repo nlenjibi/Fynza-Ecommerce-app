@@ -8,6 +8,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "reviews", indexes = {
@@ -39,13 +40,25 @@ public class Review extends BaseEntity {
     @Column(name = "title", length = 200)
     private String title;
 
-    @Column(name = "text", columnDefinition = "TEXT")
-    private String text;
+    @Column(name = "comment", columnDefinition = "TEXT")
+    private String comment;
+
+    @Column(name = "has_images")
+    @Builder.Default
+    private Boolean hasImages = false;
+
+    @Column(name = "pros")
+    private String pros;
+
+    @Column(name = "cons")
+    private String cons;
 
     @Column(name = "helpful")
+    @Builder.Default
     private Integer helpful = 0;
 
     @Column(name = "unhelpful")
+    @Builder.Default
     private Integer unhelpful = 0;
 
     @Column(name = "verified_purchase", nullable = false)
@@ -62,6 +75,9 @@ public class Review extends BaseEntity {
     @Column(name = "admin_response_at")
     private LocalDateTime adminResponseAt;
 
+    @Column(name = "admin_response_by")
+    private UUID adminResponseBy;
+
     @Column(name = "rejection_reason")
     private String rejectionReason;
 
@@ -71,4 +87,52 @@ public class Review extends BaseEntity {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    public boolean canBeEditedBy(UUID userId) {
+        return customer.getId().equals(userId) && !Boolean.TRUE.equals(deleted);
+    }
+
+    public boolean canBeDeletedBy(UUID userId) {
+        return customer.getId().equals(userId);
+    }
+
+    public void softDelete() {
+        this.deleted = true;
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    public void restore() {
+        this.deleted = false;
+        this.deletedAt = null;
+    }
+
+    public void approve() {
+        this.approved = true;
+        this.rejectionReason = null;
+    }
+
+    public void reject(String reason) {
+        this.approved = false;
+        this.rejectionReason = reason;
+    }
+
+    public void incrementHelpful() {
+        if (this.helpful == null) {
+            this.helpful = 0;
+        }
+        this.helpful++;
+    }
+
+    public void incrementUnhelpful() {
+        if (this.unhelpful == null) {
+            this.unhelpful = 0;
+        }
+        this.unhelpful++;
+    }
+
+    public void addAdminResponse(String response, UUID adminId) {
+        this.adminResponse = response;
+        this.adminResponseAt = LocalDateTime.now();
+        this.adminResponseBy = adminId;
+    }
 }
