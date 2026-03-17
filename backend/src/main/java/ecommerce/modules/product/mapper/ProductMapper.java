@@ -38,11 +38,17 @@ public interface ProductMapper {
 
     default List<String> mapImagesToUrls(List<ecommerce.modules.product.entity.ProductImage> images) {
         if (images == null) return null;
-        return images.stream().map(ecommerce.modules.product.entity.ProductImage::getUrl).toList();
+        return images.stream().map(ecommerce.modules.product.entity.ProductImage::getImageUrl).toList();
     }
 
     default List<ecommerce.modules.product.entity.ProductImage> mapUrlsToImages(List<String> urls) {
         if (urls == null) return null;
-        return urls.stream().map(url -> ecommerce.modules.product.entity.ProductImage.builder().url(url).build()).toList();
+        return urls.stream()
+                .map(url -> {
+                    var img = new ecommerce.modules.product.entity.ProductImage();
+                    img.setImageUrl(url);
+                    return img;
+                })
+                .toList();
     }
 }

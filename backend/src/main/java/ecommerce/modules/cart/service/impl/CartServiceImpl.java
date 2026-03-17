@@ -369,21 +369,22 @@ public class CartServiceImpl implements CartService {
         var cartItems = cartItemRepository.findByCartId(cart.getId());
         
         BigDecimal subtotal = calculateSubtotal(cart);
-        BigDecimal discount = BigDecimal.ZERO;
+        BigDecimal[] discount = {BigDecimal.ZERO};
         
         if (cart.getCouponCode() != null) {
+            final BigDecimal finalSubtotal = subtotal;
             couponRepository.findByCode(cart.getCouponCode()).ifPresent(coupon -> {
                 if (coupon.getDiscountType() == ecommerce.common.enums.DiscountType.PERCENTAGE) {
-                    discount = subtotal.multiply(coupon.getDiscountValue()).divide(BigDecimal.valueOf(100));
+                    discount[0] = finalSubtotal.multiply(coupon.getDiscountValue()).divide(BigDecimal.valueOf(100));
                 } else {
-                    discount = coupon.getDiscountValue();
+                    discount[0] = coupon.getDiscountValue();
                 }
             });
         }
         
-        BigDecimal tax = subtotal.subtract(discount).multiply(BigDecimal.valueOf(0.1));
+        BigDecimal tax = subtotal.subtract(discount[0]).multiply(BigDecimal.valueOf(0.1));
         BigDecimal shippingCost = subtotal.compareTo(BigDecimal.valueOf(50)) >= 0 ? BigDecimal.ZERO : BigDecimal.valueOf(5.99);
-        BigDecimal total = subtotal.subtract(discount).add(tax).add(shippingCost);
+        BigDecimal total = subtotal.subtract(discount[0]).add(tax).add(shippingCost);
         
         var itemResponses = new ArrayList<CartItemResponse>();
         for (CartItem item : cartItems) {
@@ -397,7 +398,7 @@ public class CartServiceImpl implements CartService {
                 .subtotal(subtotal)
                 .tax(tax)
                 .shippingCost(shippingCost)
-                .discount(discount)
+                .discount(discount[0])
                 .total(total)
                 .itemsCount(itemResponses.size())
                 .couponCode(cart.getCouponCode())

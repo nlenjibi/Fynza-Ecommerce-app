@@ -158,7 +158,7 @@ public class OrderValidationPipeline {
                 .build();
     }
 
-    public OrderStatus getOrderValidationStatus(Long orderId) {
+    public OrderStatus getOrderValidationStatus(UUID orderId) {
         return orderRepository.findById(orderId)
                 .map(Order::getStatus)
                 .orElse(null);

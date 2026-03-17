@@ -88,7 +88,7 @@ public class SellerServiceImpl implements SellerService {
     @Override
     @Transactional(readOnly = true)
     public Page<OrderResponse> getSellerOrders(UUID sellerId, Pageable pageable) {
-        Page<ecommerce.modules.order.entity.Order> orders = orderRepository.findBySellerIdPage(sellerId, pageable);
+        Page<ecommerce.modules.order.entity.Order> orders = orderRepository.findBySellerId(sellerId, pageable);
         return orders.map(orderMapper::toResponse);
     }
 

@@ -5,12 +5,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class PaymentProcessRequest {
-    private Long orderId;
+    private UUID orderId;
     private String status;
     private String paymentMethod;
     private String transactionId;

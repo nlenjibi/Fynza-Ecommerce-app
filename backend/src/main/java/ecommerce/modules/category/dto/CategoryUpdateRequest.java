@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -29,5 +31,7 @@ public class CategoryUpdateRequest {
 
     @Size(max = 100, message = "Icon must not exceed 100 characters")
     private String icon;
+
+    private UUID parentCategoryId;
 
 }

@@ -168,7 +168,6 @@ public class CategoryServiceImpl implements CategoryService {
         return categoryMapper.toSimpleResponse(category);
     }
 
-    @Override
     @Transactional
     public CategoryResponse createCategory(CategoryCreateRequest request) {
         log.info("Creating new category via GraphQL: {}", request.getName());

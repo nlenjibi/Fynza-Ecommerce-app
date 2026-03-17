@@ -2,7 +2,7 @@ package ecommerce.modules.order.service.impl;
 
 import ecommerce.common.enums.OrderStatus;
 import ecommerce.common.enums.PaymentMethod;
-import ecommerce.common.enums.PaymentStatus;
+import ecommerce.modules.order.entity.PaymentStatus;
 import ecommerce.exception.BadRequestException;
 import ecommerce.exception.ResourceNotFoundException;
 import ecommerce.exception.UnauthorizedException;
@@ -12,6 +12,7 @@ import ecommerce.modules.coupon.service.CouponService;
 import ecommerce.modules.order.dto.*;
 import ecommerce.modules.order.entity.Order;
 import ecommerce.modules.order.entity.OrderItem;
+import ecommerce.modules.order.entity.OrderStats;
 import ecommerce.modules.order.mapper.OrderMapper;
 import ecommerce.modules.order.repository.OrderRepository;
 import ecommerce.modules.order.service.OrderService;
@@ -310,12 +311,14 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     public OrderStatsResponse getOrderStatistics() {
         return OrderStatsResponse.builder()
-                .totalOrders(orderRepository.count())
-                .pendingOrders(orderRepository.countByStatus(OrderStatus.PENDING))
-                .processingOrders(orderRepository.countByStatus(OrderStatus.PROCESSING))
-                .shippedOrders(orderRepository.countByStatus(OrderStatus.SHIPPED))
-                .deliveredOrders(orderRepository.countByStatus(OrderStatus.DELIVERED))
-                .cancelledOrders(orderRepository.countByStatus(OrderStatus.CANCELLED))
+                .stats(OrderStats.builder()
+                        .totalOrders(orderRepository.count())
+                        .pendingOrders(orderRepository.countByStatus(OrderStatus.PENDING))
+                        .processingOrders(orderRepository.countByStatus(OrderStatus.PROCESSING))
+                        .shippedOrders(orderRepository.countByStatus(OrderStatus.SHIPPED))
+                        .deliveredOrders(orderRepository.countByStatus(OrderStatus.DELIVERED))
+                        .cancelledOrders(orderRepository.countByStatus(OrderStatus.CANCELLED))
+                        .build())
                 .build();
     }
 }
