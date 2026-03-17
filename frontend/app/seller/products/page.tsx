@@ -188,9 +188,38 @@ export default function SellerProducts() {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <SellerSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <SellerSidebar isOpen={sidebarOpen} onToggle={(open) => setSidebarOpen(open)} />
 
-      <main className="flex-1 overflow-auto lg:ml-0">
+      <main className={`flex-1 overflow-auto ${sidebarOpen ? 'lg:ml-0' : 'lg:ml-20'}`}>
+        {/* Sidebar Toggle Header - Shows when sidebar is collapsed */}
+        {!sidebarOpen && (
+          <div className="hidden lg:flex bg-white border-b border-gray-200 px-4 py-3 items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSidebarOpen(true)}
+              className="p-2"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            </Button>
+            <span className="font-semibold text-gray-900">Products</span>
+          </div>
+        )}
+
         {/* Mobile Header */}
         <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
           <Button
@@ -399,27 +428,31 @@ export default function SellerProducts() {
                             variant="outline"
                             size="sm"
                             onClick={() => setSelectedProduct(product)}
+                            className="gap-1"
                           >
                             <Eye size={16} />
+                            <span className="hidden sm:inline">View</span>
                           </Button>
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                            className="text-blue-600 border-blue-600 hover:bg-blue-50 gap-1"
                             onClick={() => {
                               setSelectedProduct(product);
                               setIsEditing(true);
                             }}
                           >
                             <Edit2 size={16} />
+                            <span className="hidden sm:inline">Edit</span>
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-red-600 border-red-600 hover:bg-red-50"
+                            className="text-red-600 border-red-600 hover:bg-red-50 gap-1"
                             onClick={() => handleDeleteProduct(product.id)}
                           >
                             <Trash2 size={16} />
+                            <span className="hidden sm:inline">Delete</span>
                           </Button>
                         </div>
                       </td>

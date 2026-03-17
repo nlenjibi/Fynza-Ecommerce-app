@@ -17,17 +17,23 @@ import { useState } from 'react';
 
 interface SellerSidebarProps {
     isOpen?: boolean;
-    onClose?: () => void;
+    onToggle?: (isOpen: boolean) => void;
 }
 
-export function SellerSidebar({ isOpen: externalIsOpen, onClose }: SellerSidebarProps) {
+export function SellerSidebar({ isOpen: externalIsOpen, onToggle }: SellerSidebarProps) {
     const pathname = usePathname();
     const [internalIsOpen, setInternalIsOpen] = useState(true);
     
     const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
-    const setIsOpen = onClose ? (value: boolean) => {
-        if (!value) onClose();
-    } : setInternalIsOpen;
+    
+    const handleToggle = () => {
+        const newValue = !isOpen;
+        if (onToggle) {
+            onToggle(newValue);
+        } else {
+            setInternalIsOpen(newValue);
+        }
+    };
 
     const menuItems = [
         {
@@ -117,7 +123,8 @@ export function SellerSidebar({ isOpen: externalIsOpen, onClose }: SellerSidebar
             <div className="border-t border-gray-200 p-4 space-y-2">
                 {/* Toggle Sidebar */}
                 <button
-                    onClick={() => setIsOpen(!isOpen)}
+                    type="button"
+                    onClick={handleToggle}
                     className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                 >
                     <ChevronDown
@@ -125,15 +132,19 @@ export function SellerSidebar({ isOpen: externalIsOpen, onClose }: SellerSidebar
                         className={`flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''
                             }`}
                     />
-                    {isOpen && (
+                    {isOpen ? (
                         <span className="text-sm font-medium">Collapse</span>
+                    ) : (
+                        <span className="text-sm font-medium">Expand</span>
                     )}
                 </button>
 
                 {/* Logout */}
                 <button className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                     <LogOut size={20} className="flex-shrink-0" />
-                    {isOpen && (
+                    {isOpen ? (
+                        <span className="text-sm font-medium">Logout</span>
+                    ) : (
                         <span className="text-sm font-medium">Logout</span>
                     )}
                 </button>
