@@ -111,15 +111,15 @@ public class RedisConfig {
         Map<String, RedisCacheConfiguration> cacheConfigs = new HashMap<>();
 
         // Per system.md TTL specifications
-        cacheConfigs.put(PRODUCTS, defaultConfig.entryTtl(Duration.ofMinutes(5)));
-        cacheConfigs.put(CATEGORIES, defaultConfig.entryTtl(Duration.ofHours(1)));
-        cacheConfigs.put(USER_SESSIONS, defaultConfig.entryTtl(Duration.ofMinutes(15)));
+        cacheConfigs.put("products", defaultConfig.entryTtl(Duration.ofMinutes(5)));
+        cacheConfigs.put("categories", defaultConfig.entryTtl(Duration.ofHours(1)));
+        cacheConfigs.put("userSessions", defaultConfig.entryTtl(Duration.ofMinutes(15)));
         
         // Security-critical, longer TTL
-        cacheConfigs.put(TOKEN_BLACKLIST, defaultConfig.entryTtl(Duration.ofHours(24)));
+        cacheConfigs.put("tokenBlacklist", defaultConfig.entryTtl(Duration.ofHours(24)));
         
         // Stock reservations - per architecture.md
-        cacheConfigs.put(STOCK_RESERVATIONS, defaultConfig.entryTtl(Duration.ofMinutes(15)));
+        cacheConfigs.put("stockReservations", defaultConfig.entryTtl(Duration.ofMinutes(15)));
 
         log.info("Redis CacheManager configured with {} caches (smart caching enabled)", cacheConfigs.size());
         return RedisCacheManager.builder(connectionFactory)

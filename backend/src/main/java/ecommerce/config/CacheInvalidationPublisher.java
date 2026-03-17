@@ -19,7 +19,7 @@ import java.util.Base64;
 @RequiredArgsConstructor
 public class CacheInvalidationPublisher {
 
-    private static final String CHANNEL = MultiLevelCacheConfig.CACHE_INVALIDATION_CHANNEL;
+    private static final String CHANNEL = "cache:invalidate";
     private final RedisTemplate<String, Object> redisTemplate;
 
     public void publishEvict(String cacheName, String key) {
