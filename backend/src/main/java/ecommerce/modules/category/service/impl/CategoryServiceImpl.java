@@ -2,7 +2,6 @@ package ecommerce.modules.category.service.impl;
 
 import ecommerce.exception.ResourceNotFoundException;
 import ecommerce.modules.category.dto.CategoryCreateRequest;
-import ecommerce.modules.category.dto.CategoryCreateRequest;
 import ecommerce.modules.category.dto.CategoryResponse;
 import ecommerce.modules.category.entity.Category;
 import ecommerce.modules.category.mapper.CategoryMapper;

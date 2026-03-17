@@ -10,6 +10,7 @@ import ecommerce.modules.cart.dto.UpdateCartItemRequest;
 import ecommerce.modules.cart.service.CartService;
 import ecommerce.modules.cart.async.StockReservationAsyncService;
 import ecommerce.modules.auth.service.SecurityService;
+import ecommerce.security.UserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -18,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,12 +41,14 @@ public class CartController {
 
     private final CartService cartService;
     private final StockReservationAsyncService stockReservationAsyncService;
-    private final SecurityService securityService;
 
     @GetMapping
     @Operation(summary = "Get user cart")
-    public ResponseEntity<ApiResponse<CartResponse>> getCart() {
-        UUID userId = securityService.getCurrentUserId();
+    public ResponseEntity<ApiResponse<CartResponse>> getCart(
+            @AuthenticationPrincipal UserPrincipal principal
+
+    ) {
+        UUID userId = principal.getId();
         CartResponse cart = cartService.getCart(userId);
         return ResponseEntity.ok(ApiResponse.success("Cart retrieved", cart));
     }
@@ -52,8 +56,9 @@ public class CartController {
     @PostMapping("/items")
     @Operation(summary = "Add item to cart")
     public ResponseEntity<ApiResponse<CartItemResponse>> addItem(
+            @AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody AddToCartRequest request) {
-        UUID userId = securityService.getCurrentUserId();
+        UUID userId = principal.getId();
         CartItemResponse item = cartService.addItem(userId, request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Item added to cart", item));
@@ -63,8 +68,10 @@ public class CartController {
     @Operation(summary = "Update cart item quantity")
     public ResponseEntity<ApiResponse<CartItemResponse>> updateItemQuantity(
             @PathVariable UUID itemId,
-            @Valid @RequestBody UpdateCartItemRequest request) {
-        UUID userId = securityService.getCurrentUserId();
+            @Valid @RequestBody UpdateCartItemRequest request,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        UUID userId = principal.getId();
         CartItemResponse item = cartService.updateItemQuantity(userId, itemId, request.getQuantity());
         return ResponseEntity.ok(ApiResponse.success("Item quantity updated", item));
     }
@@ -72,8 +79,9 @@ public class CartController {
     @DeleteMapping("/items/{itemId}")
     @Operation(summary = "Remove item from cart")
     public ResponseEntity<ApiResponse<Void>> removeItem(
+            @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID itemId) {
-        UUID userId = securityService.getCurrentUserId();
+        UUID userId = principal.getId();
         cartService.removeItem(userId, itemId);
         return ResponseEntity.ok(ApiResponse.success("Item removed from cart", null));
     }
@@ -81,16 +89,19 @@ public class CartController {
     @PostMapping("/apply-coupon")
     @Operation(summary = "Apply coupon to cart")
     public ResponseEntity<ApiResponse<CartResponse>> applyCoupon(
+            @AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody ApplyCouponRequest request) {
-        UUID userId = securityService.getCurrentUserId();
+        UUID userId = principal.getId();
         CartResponse cart = cartService.applyCoupon(userId, request.getCouponCode());
         return ResponseEntity.ok(ApiResponse.success("Coupon applied", cart));
     }
 
     @DeleteMapping
     @Operation(summary = "Clear cart")
-    public ResponseEntity<ApiResponse<Void>> clearCart() {
-        UUID userId = securityService.getCurrentUserId();
+    public ResponseEntity<ApiResponse<Void>> clearCart(
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        UUID userId = principal.getId();
         cartService.clearCart(userId);
         return ResponseEntity.ok(ApiResponse.success("Cart cleared", null));
     }
@@ -99,8 +110,9 @@ public class CartController {
     @Operation(summary = "Add item to cart with async stock reservation",
             description = "Returns immediately with pending status while stock is reserved in background")
     public ResponseEntity<ApiResponse<ReservationResponse>> addItemAsync(
+            @AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody AddToCartRequest request) {
-        UUID userId = securityService.getCurrentUserId();
+        UUID userId = principal.getId();
         CartItemResponse item = cartService.addItem(userId, request);
         
         stockReservationAsyncService.reserveStockAsync(item.getId())

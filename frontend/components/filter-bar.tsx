@@ -107,17 +107,6 @@ export function FilterBar() {
                   3 Stars & Above
                 </DropdownMenuItem>
 
-                <div className="mt-2 mb-2 text-xs font-medium text-gray-500">Availability</div>
-                <DropdownMenuItem onClick={() => handleFilterSelect("availability")}>
-                  In Stock
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleFilterSelect("availability")}>
-                  Low Stock
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleFilterSelect("availability")}>
-                  Out of Stock
-                </DropdownMenuItem>
-
                 <div className="mt-2 mb-2 text-xs font-medium text-gray-500">Discount</div>
                 <DropdownMenuItem onClick={() => handleFilterSelect("discount")}>
                   Has Discount
@@ -213,7 +202,7 @@ export function FilterBar() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {/* Rating Filter */}
             <div className="space-y-1">
               <label className="text-xs font-medium">Rating</label>
@@ -224,19 +213,6 @@ export function FilterBar() {
                 <option value="3">3 Stars & Above</option>
                 <option value="2">2 Stars & Above</option>
                 <option value="1">1 Star & Above</option>
-              </select>
-            </div>
-
-            {/* Availability Filter */}
-            <div className="space-y-1">
-              <label className="text-xs font-medium">Availability</label>
-              <select className="w-full border rounded px-2 py-1 text-sm">
-                <option value="">Any Status</option>
-                <option value="in-stock">In Stock</option>
-                <option value="low-stock">Low Stock</option>
-                <option value="out-of-stock">Out of Stock</option>
-                <option value="pre-order">Pre-order</option>
-                <option value="backorder">Backorder</option>
               </select>
             </div>
 

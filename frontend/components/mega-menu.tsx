@@ -307,14 +307,12 @@ export function MegaMenu({ onClose, activeCategory, setActiveCategory }: MegaMen
         <div className="flex">
           {/* Category Sidebar */}
           <div className="w-64 border-r py-4">
-            <h3 className="px-4 pb-2 text-sm font-semibold text-gray-500 uppercase tracking-wider">Categories</h3>
             {categories.map((category) => (
               <Link
                 key={category.id}
                 href={`/category/${category.id}`}
-                className={`flex items-center gap-3 px-4 py-3 hover:bg-muted transition-colors ${
-                  activeCategory === category.id ? "bg-muted" : ""
-                }`}
+                className={`flex items-center gap-3 px-4 py-3 hover:bg-muted transition-colors ${activeCategory === category.id ? "bg-muted" : ""
+                  }`}
                 onMouseEnter={() => setActiveCategory(category.id)}
               >
                 <category.icon className={`h-5 w-5 ${category.color}`} />

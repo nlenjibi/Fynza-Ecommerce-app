@@ -24,19 +24,25 @@ public class CartResolver {
     @QueryMapping
     public CartResponse cart(@Argument UUID id, @ContextValue UUID userId) {
         log.info("GraphQL Query: cart(id: {})", id);
-        return cartService.getCart(userId);
+        return cartService.getCartById(id, userId);
+    }
+
+    @MutationMapping
+    public CartResponse createCart(@ContextValue UUID userId) {
+        log.info("GraphQL Mutation: createCart");
+        return cartService.createCart(userId);
     }
 
     @MutationMapping
     public CartItemResponse addItemToCart(
             @Argument UUID cartId,
-            @Argument UUID productId,
-            @Argument Integer quantity,
+            @Argument AddItemToCartInput input,
             @ContextValue UUID userId) {
-        log.info("GraphQL Mutation: addItemToCart(cartId: {}, productId: {}, quantity: {})", cartId, productId, quantity);
+        log.info("GraphQL Mutation: addItemToCart(cartId: {}, productId: {}, quantity: {})", 
+                cartId, input.getProductId(), input.getQuantity());
         AddToCartRequest request = AddToCartRequest.builder()
-                .productId(productId)
-                .quantity(quantity)
+                .productId(input.getProductId())
+                .quantity(input.getQuantity())
                 .build();
         return cartService.addItem(userId, request);
     }
@@ -45,10 +51,11 @@ public class CartResolver {
     public CartItemResponse updateCartItem(
             @Argument UUID cartId,
             @Argument UUID productId,
-            @Argument Integer quantity,
+            @Argument UpdateCartItemInput input,
             @ContextValue UUID userId) {
-        log.info("GraphQL Mutation: updateCartItem(cartId: {}, productId: {}, quantity: {})", cartId, productId, quantity);
-        return cartService.updateItemQuantity(userId, productId, quantity);
+        log.info("GraphQL Mutation: updateCartItem(cartId: {}, productId: {}, quantity: {})", 
+                cartId, productId, input.getQuantity());
+        return cartService.updateItemByProductId(userId, productId, input.getQuantity());
     }
 
     @MutationMapping
@@ -57,7 +64,7 @@ public class CartResolver {
             @Argument UUID productId,
             @ContextValue UUID userId) {
         log.info("GraphQL Mutation: removeCartItem(cartId: {}, productId: {})", cartId, productId);
-        cartService.removeItem(userId, productId);
+        cartService.removeItemByProductId(userId, productId);
         return true;
     }
 
@@ -75,5 +82,46 @@ public class CartResolver {
             @ContextValue UUID userId) {
         log.info("GraphQL Mutation: applyCouponToCart(cartId: {}, coupon: {})", cartId, couponCode);
         return cartService.applyCoupon(userId, couponCode);
+    }
+
+    @MutationMapping
+    public CartResponse mergeCart(
+            @Argument UUID guestCartId,
+            @ContextValue UUID userId) {
+        log.info("GraphQL Mutation: mergeCart(guestCartId: {})", guestCartId);
+        return cartService.mergeCart(userId, guestCartId);
+    }
+
+    public static class AddItemToCartInput {
+        private UUID productId;
+        private Integer quantity;
+
+        public UUID getProductId() {
+            return productId;
+        }
+
+        public void setProductId(UUID productId) {
+            this.productId = productId;
+        }
+
+        public Integer getQuantity() {
+            return quantity;
+        }
+
+        public void setQuantity(Integer quantity) {
+            this.quantity = quantity;
+        }
+    }
+
+    public static class UpdateCartItemInput {
+        private Integer quantity;
+
+        public Integer getQuantity() {
+            return quantity;
+        }
+
+        public void setQuantity(Integer quantity) {
+            this.quantity = quantity;
+        }
     }
 }

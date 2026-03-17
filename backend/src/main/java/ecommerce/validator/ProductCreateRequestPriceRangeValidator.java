@@ -13,18 +13,17 @@ public class ProductCreateRequestPriceRangeValidator implements ConstraintValida
 
     @Override
     public boolean isValid(CreateProductRequest value, ConstraintValidatorContext context) {
-        if (value == null || value.getPrice() == null || value.getDiscountedPrice() == null) {
-            return true; // Let @NotNull handle null validation
+        if (value == null || value.getPrice() == null || value.getOriginalPrice() == null) {
+            return true;
         }
 
-        // Discounted price should always be less than or equal to original price
-        boolean isValid = value.getDiscountedPrice().compareTo(value.getPrice()) <= 0;
+        boolean isValid = value.getOriginalPrice().compareTo(value.getPrice()) >= 0;
 
         if (!isValid) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate(
-                    "Discounted price (" + value.getDiscountedPrice() +
-                            ") must be less than or equal to original price (" + value.getPrice() + ")")
+                    "Original price (" + value.getOriginalPrice() +
+                            ") must be greater than or equal to discounted price (" + value.getPrice() + ")")
                     .addConstraintViolation();
         }
 

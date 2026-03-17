@@ -16,7 +16,8 @@ public interface OrderService {
     OrderResponse getOrderByOrderNumber(String orderNumber, UUID userId);
     Page<OrderResponse> getUserOrders(UUID userId, Pageable pageable);
     OrderResponse cancelOrder(UUID id, String reason);
-    OrderResponse cancelOrder(UUID id, UUID userId); // For customer
+    OrderResponse cancelOrder(UUID id, UUID userId);
+    OrderResponse cancelOrder(UUID id, UUID userId, String reason);
     
     // Admin methods
     Page<OrderResponse> getAllOrders(Pageable pageable);

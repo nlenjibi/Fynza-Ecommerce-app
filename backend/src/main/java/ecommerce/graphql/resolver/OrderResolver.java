@@ -91,6 +91,14 @@ public class OrderResolver {
                                       @Argument String reason,
                                       @ContextValue UUID userId) {
         log.info("GQL cancelOrder(id={}, user={})", id, userId);
+        return orderService.cancelOrder(id, userId, reason);
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public OrderResponse cancelOrderAdmin(@Argument UUID id,
+                                          @Argument String reason) {
+        log.info("GQL cancelOrderAdmin(id={})", id);
         return orderService.cancelOrder(id, reason);
     }
 

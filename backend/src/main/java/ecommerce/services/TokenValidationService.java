@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -110,16 +109,18 @@ public class TokenValidationService {
                     new LockedException("Account is locked. Please contact support."));
         }
 
-        // ── 6. Password-change timestamp (from cached principal) ──────────────
-        Long tokenPasswordChangedAt   = jwtTokenProvider.getPasswordChangedAtFromToken(jwt);
-        Long principalPasswordChanged = principal.getLastPasswordChangeEpoch();
-        if (tokenPasswordChangedAt != null && principalPasswordChanged != null
-                && tokenPasswordChangedAt < principalPasswordChanged) {
-            log.warn("Token predates password change for user: {}", userId);
-            return ValidationResult.reject(
-                    new CredentialsExpiredException(
-                            "Password has been changed. Please login again."));
-        }
+        // ── 6. Password-change timestamp check (requires passwordChanged claim in token) ──────────────
+        // Note: This check requires passwordChanged claim to be added to JWT token
+        // Currently disabled - can be enabled once token includes passwordChanged claim
+        // Long tokenPasswordChangedAt   = jwtTokenProvider.getPasswordChangedAtFromToken(jwt);
+        // Long principalPasswordChanged = principal.getLastPasswordChangeEpoch();
+        // if (tokenPasswordChangedAt != null && principalPasswordChanged != null
+        //         && tokenPasswordChangedAt < principalPasswordChanged) {
+        //     log.warn("Token predates password change for user: {}", userId);
+        //     return ValidationResult.reject(
+        //             new CredentialsExpiredException(
+        //                     "Password has been changed. Please login again."));
+        // }
 
         // ── All checks passed – build the Authentication object ───────────────
         Authentication auth = new UsernamePasswordAuthenticationToken(

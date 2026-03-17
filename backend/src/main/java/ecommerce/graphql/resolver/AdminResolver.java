@@ -119,7 +119,7 @@ public class AdminResolver {
         return UserPredicates.builder()
                 .withSearch(filter.getSearch())
                 .withRole(filter.getRole())
-                .isActive(filter.getActive())
+                .withActive(filter.getActive())
                 .withEmailVerified(filter.getEmailVerified())
                 .withCreatedAfter(filter.getCreatedAfter())
                 .withCreatedBefore(filter.getCreatedBefore())

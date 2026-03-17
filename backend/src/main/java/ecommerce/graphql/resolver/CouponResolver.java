@@ -2,6 +2,7 @@ package ecommerce.graphql.resolver;
 
 import ecommerce.modules.coupon.dto.CouponRequest;
 import ecommerce.modules.coupon.dto.CouponResponse;
+import ecommerce.modules.coupon.mapper.CouponMapper;
 import ecommerce.modules.coupon.service.CouponService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class CouponResolver {
 
     private final CouponService couponService;
+    private final CouponMapper couponMapper;
 
     @QueryMapping
     public List<CouponResponse> coupons() {
@@ -61,6 +63,6 @@ public class CouponResolver {
             @Argument String code,
             @Argument BigDecimal orderAmount) {
         log.info("GraphQL Query: validateCoupon(code: {}, amount: {})", code, orderAmount);
-        return CouponResponse.fromEntity(couponService.validate(code, orderAmount));
+        return couponMapper.toResponse(couponService.validate(code, orderAmount));
     }
 }

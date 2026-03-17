@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.core.Authentication;
 
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Configuration
@@ -47,11 +48,11 @@ public class JwtCacheConfig {
 
     public record CachedAuthentication(
             Authentication authentication,
-            Long userId,
+            UUID userId,
             String username,
             long cachedAt
     ) {
-        public static CachedAuthentication create(Authentication auth, Long userId, String username) {
+        public static CachedAuthentication create(Authentication auth, UUID userId, String username) {
             return new CachedAuthentication(auth, userId, username, System.currentTimeMillis());
         }
     }

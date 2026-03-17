@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 
 /**
  * Standard API response wrapper for consistent response format
+ * Follows RFC 7807 Problem Detail specification for errors
  */
 @Data
 @Builder
@@ -19,30 +20,36 @@ import java.time.LocalDateTime;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime timestamp;
+    
     private String message;
     private T data;
     private Object errors;
-
-
     private Integer statusCode;
-    // Additional metadata fields can be added here
+
     public static <T> ApiResponse<T> success(T data) {
         return ApiResponse.<T>builder()
+                .timestamp(LocalDateTime.now())
                 .data(data)
-                .build();
-    }
-    // Overloaded method to include a custom success message
-    public static <T> ApiResponse<T> success(String message, T data) {
-        return ApiResponse.<T>builder()
-                .message(message)
-                .data(data)
+                .statusCode(200)
                 .build();
     }
 
-    // Overloaded method to include a custom error message
+    public static <T> ApiResponse<T> success(String message, T data) {
+        return ApiResponse.<T>builder()
+                .timestamp(LocalDateTime.now())
+                .message(message)
+                .data(data)
+                .statusCode(200)
+                .build();
+    }
+
     public static <T> ApiResponse<T> error(String message) {
         return ApiResponse.<T>builder()
+                .timestamp(LocalDateTime.now())
                 .message(message)
+                .statusCode(400)
                 .build();
     }
 

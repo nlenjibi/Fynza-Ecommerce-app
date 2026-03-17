@@ -2,9 +2,6 @@ package ecommerce.modules.admin.controller;
 
 import ecommerce.common.response.ApiResponse;
 import ecommerce.common.response.PaginatedResponse;
-import ecommerce.modules.coupon.dto.CouponRequest;
-import ecommerce.modules.coupon.dto.CouponResponse;
-import ecommerce.modules.coupon.service.CouponService;
 import ecommerce.modules.order.dto.OrderResponse;
 import ecommerce.modules.order.dto.OrderStatusUpdateRequest;
 import ecommerce.modules.order.service.OrderService;
@@ -25,7 +22,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
 import java.util.UUID;
@@ -38,7 +34,6 @@ public class AdminController {
 
     private final OrderService orderService;
     private final ProductService productService;
-    private final CouponService couponService;
     private final UserService userService;
 
     @GetMapping("/orders")
@@ -82,44 +77,6 @@ public class AdminController {
         
         ProductResponse updated = productService.update(id, updateRequest);
         return ResponseEntity.ok(ApiResponse.success("Inventory updated successfully", updated));
-    }
-
-    @GetMapping("/coupons")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Get all coupons", description = "Get all coupons for admin")
-    public ResponseEntity<ApiResponse<List<CouponResponse>>> getAllCoupons() {
-        List<CouponResponse> coupons = couponService.findAll();
-        return ResponseEntity.ok(ApiResponse.success("Coupons retrieved successfully", coupons));
-    }
-
-    @PostMapping("/coupons")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Create coupon", description = "Create a new coupon as admin")
-    public ResponseEntity<ApiResponse<CouponResponse>> createCoupon(
-            @Valid @RequestBody CouponRequest request,
-            UriComponentsBuilder uriBuilder) {
-        CouponResponse response = couponService.create(request);
-        var uri = uriBuilder.path("/api/v1/admin/coupons/{id}").buildAndExpand(response.getId()).toUri();
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Coupon created successfully", response));
-    }
-
-    @PutMapping("/coupons/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Update coupon", description = "Update an existing coupon as admin")
-    public ResponseEntity<ApiResponse<CouponResponse>> updateCoupon(
-            @PathVariable UUID id,
-            @Valid @RequestBody CouponRequest request) {
-        CouponResponse response = couponService.update(id, request);
-        return ResponseEntity.ok(ApiResponse.success("Coupon updated successfully", response));
-    }
-
-    @DeleteMapping("/coupons/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Delete coupon", description = "Delete a coupon as admin")
-    public ResponseEntity<ApiResponse<Void>> deleteCoupon(@PathVariable UUID id) {
-        couponService.delete(id);
-        return ResponseEntity.ok(ApiResponse.success("Coupon deleted successfully", null));
     }
 
     @GetMapping("/users")
