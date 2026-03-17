@@ -53,8 +53,135 @@ export default function SellerOrders() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [dateRange, setDateRange] = useState("all");
-
-  const orders: Order[] = [
+  const [orders, setOrders] = useState<Order[]>([
+    {
+      id: "ORD-7821",
+      customer: {
+        name: "Abena Mensah",
+        email: "abena.mensah@email.com",
+        phone: "+233 24 123 4567",
+      },
+      products: [
+        { name: "Wireless Bluetooth Earbuds", quantity: 1, price: 189.99, variant: "Black" },
+      ],
+      total: 189.99,
+      date: "Jan 8, 2024",
+      status: "pending",
+      paymentStatus: "paid",
+      shippingAddress: {
+        street: "123 Main Street",
+        city: "Accra",
+        region: "Greater Accra",
+      },
+    },
+    {
+      id: "ORD-7820",
+      customer: {
+        name: "Kofi Doe",
+        email: "kofi.doe@email.com",
+        phone: "+233 24 234 5678",
+      },
+      products: [
+        { name: "Smart Watch Series 5", quantity: 1, price: 450.0, variant: "Silver/45mm" },
+      ],
+      total: 450.0,
+      date: "Jan 8, 2024",
+      status: "processing",
+      paymentStatus: "paid",
+      shippingAddress: {
+        street: "456 Oak Avenue",
+        city: "Kumasi",
+        region: "Ashanti",
+      },
+    },
+    {
+      id: "ORD-7819",
+      customer: {
+        name: "Sarah Adjei",
+        email: "sarah.adjei@email.com",
+        phone: "+233 24 345 6789",
+      },
+      products: [
+        { name: "Laptop Stand Adjustable", quantity: 2, price: 89.99, variant: "Silver" },
+      ],
+      total: 179.98,
+      date: "Jan 7, 2024",
+      status: "shipped",
+      paymentStatus: "paid",
+      shippingAddress: {
+        street: "789 Pine Road",
+        city: "Takoradi",
+        region: "Western",
+      },
+      trackingNumber: "FYN-TRK-78219",
+    },
+    {
+      id: "ORD-7818",
+      customer: {
+        name: "John Amponsah",
+        email: "john.amponsah@email.com",
+        phone: "+233 24 456 7890",
+      },
+      products: [
+        { name: "USB-C Hub 7-in-1", quantity: 1, price: 129.99, variant: "Space Gray" },
+      ],
+      total: 129.99,
+      date: "Jan 7, 2024",
+      status: "delivered",
+      paymentStatus: "paid",
+      shippingAddress: {
+        street: "321 Elm Street",
+        city: "Cape Coast",
+        region: "Central",
+      },
+      trackingNumber: "FYN-TRK-78188",
+    },
+    {
+      id: "ORD-7817",
+      customer: {
+        name: "Emma Owusu",
+        email: "emma.owusu@email.com",
+        phone: "+233 24 567 8901",
+      },
+      products: [
+        { name: "Phone Case Premium", quantity: 3, price: 45.99, variant: "Clear" },
+      ],
+      total: 137.97,
+      date: "Jan 6, 2024",
+      status: "cancelled",
+      paymentStatus: "failed",
+      shippingAddress: {
+        street: "654 Birch Lane",
+        city: "Tema",
+        region: "Greater Accra",
+      },
+    },
+    {
+      id: "ORD-7816",
+      customer: {
+        name: "Michael Kwaku",
+        email: "michael.kwaku@email.com",
+        phone: "+233 24 678 9012",
+      },
+      products: [
+        { name: "Wireless Charger Pad", quantity: 2, price: 35.99, variant: "White" },
+        { name: "USB-C Cable 2m", quantity: 3, price: 15.99, variant: "Black" },
+      ],
+      total: 111.95,
+      date: "Jan 6, 2024",
+      status: "refunded",
+      paymentStatus: "paid",
+      shippingAddress: {
+        street: "987 Cedar Avenue",
+        city: "Accra",
+        region: "Greater Accra",
+      },
+    },
+  ]);
+  const [showTrackingModal, setShowTrackingModal] = useState(false);
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [contactMethod, setContactMethod] = useState<"email" | "phone" | "message" | null>(null);
     {
       id: "ORD-7821",
       customer: {
@@ -224,7 +351,42 @@ export default function SellerOrders() {
   });
 
   const handleUpdateStatus = (orderId: string, newStatus: OrderStatus) => {
-    console.log(`Updating order ${orderId} to ${newStatus}`);
+    setOrders(orders.map(order => 
+      order.id === orderId ? { ...order, status: newStatus } : order
+    ));
+    if (selectedOrder && selectedOrder.id === orderId) {
+      setSelectedOrder({ ...selectedOrder, status: newStatus });
+    }
+    alert(`Order ${orderId} status updated to ${newStatus}`);
+  };
+
+  const handleAddTrackingNumber = () => {
+    if (selectedOrder && trackingNumber.trim()) {
+      setOrders(orders.map(order => 
+        order.id === selectedOrder.id ? { ...order, trackingNumber: trackingNumber, status: "shipped" as OrderStatus } : order
+      ));
+      setSelectedOrder({ ...selectedOrder, trackingNumber: trackingNumber, status: "shipped" });
+      setShowTrackingModal(false);
+      setTrackingNumber("");
+      alert(`Tracking number added to order ${selectedOrder.id}`);
+    }
+  };
+
+  const handleContactCustomer = (method: "email" | "phone" | "message") => {
+    if (!selectedOrder) return;
+    
+    switch (method) {
+      case "email":
+        window.location.href = `mailto:${selectedOrder.customer.email}?subject=Order ${selectedOrder.id}`;
+        break;
+      case "phone":
+        window.location.href = `tel:${selectedOrder.customer.phone}`;
+        break;
+      case "message":
+        alert(`Message composer would open for ${selectedOrder.customer.name}`);
+        break;
+    }
+    setShowContactModal(false);
   };
 
   return (
@@ -637,7 +799,7 @@ export default function SellerOrders() {
                       <Truck size={16} className="mr-2" />
                       Mark as Shipped
                     </Button>
-                    <Button variant="outline">
+                    <Button variant="outline" onClick={() => setShowTrackingModal(true)}>
                       Add Tracking Number
                     </Button>
                   </>
@@ -651,11 +813,90 @@ export default function SellerOrders() {
                     Mark as Delivered
                   </Button>
                 )}
-                <Button variant="outline">
+                <Button variant="outline" onClick={() => setShowContactModal(true)}>
                   <MessageSquare size={16} className="mr-2" />
                   Contact Customer
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Tracking Number Modal */}
+      {showTrackingModal && selectedOrder && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Add Tracking Number</h3>
+              <Button variant="ghost" size="sm" onClick={() => setShowTrackingModal(false)}>
+                <XCircle size={20} />
+              </Button>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Enter the tracking number for order {selectedOrder.id}
+            </p>
+            <input
+              type="text"
+              placeholder="e.g., FYN-TRK-12345"
+              value={trackingNumber}
+              onChange={(e) => setTrackingNumber(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500 mb-4"
+            />
+            <div className="flex gap-3">
+              <Button 
+                className="flex-1 bg-orange-500 hover:bg-orange-600"
+                onClick={handleAddTrackingNumber}
+                disabled={!trackingNumber.trim()}
+              >
+                Add Tracking Number
+              </Button>
+              <Button variant="outline" onClick={() => setShowTrackingModal(false)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Contact Customer Modal */}
+      {showContactModal && selectedOrder && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Contact Customer</h3>
+              <Button variant="ghost" size="sm" onClick={() => setShowContactModal(false)}>
+                <XCircle size={20} />
+              </Button>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Contact {selectedOrder.customer.name} regarding order {selectedOrder.id}
+            </p>
+            <div className="space-y-3">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => handleContactCustomer("email")}
+              >
+                <Mail size={18} className="mr-3" />
+                Send Email
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => handleContactCustomer("phone")}
+              >
+                <Phone size={18} className="mr-3" />
+                Call {selectedOrder.customer.phone}
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => handleContactCustomer("message")}
+              >
+                <MessageSquare size={18} className="mr-3" />
+                Send Message
+              </Button>
             </div>
           </div>
         </div>
