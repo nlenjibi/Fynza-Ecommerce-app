@@ -1,6 +1,7 @@
 package ecommerce.modules.product.repository;
 
 import ecommerce.common.base.BaseRepository;
+import ecommerce.common.enums.InventoryStatus;
 import ecommerce.common.enums.ProductStatus;
 import ecommerce.modules.product.entity.Product;
 import org.springframework.data.domain.Page;
@@ -53,5 +54,18 @@ public interface ProductRepository extends BaseRepository<Product, UUID> {
 
     @Query("SELECT DISTINCT p FROM Product p LEFT JOIN FETCH p.category LEFT JOIN FETCH p.seller WHERE p.id IN :ids")
     List<Product> findByIdIn(@Param("ids") List<UUID> ids);
+
+    long countByInventoryStatusAndIsActiveTrue(InventoryStatus inventoryStatus);
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.status = :status")
+    long countByStatus(@Param("status") ProductStatus status);
+
+    @Modifying
+    @Query("UPDATE Product p SET p.stock = p.stock - :quantity, p.availableQuantity = p.availableQuantity - :quantity WHERE p.id = :id AND p.isActive = true AND p.stock >= :quantity")
+    int reserveStockAndIsActiveTrue(@Param("id") UUID id, @Param("quantity") int quantity);
+
+    @Modifying
+    @Query("UPDATE Product p SET p.stock = p.stock + :quantity, p.availableQuantity = p.availableQuantity + :quantity WHERE p.id = :id AND p.isActive = true")
+    int releaseReservedStockAndIsActiveTrue(@Param("id") UUID id, @Param("quantity") int quantity);
 
 }

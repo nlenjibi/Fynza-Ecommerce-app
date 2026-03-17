@@ -47,4 +47,8 @@ public interface CategoryMapper {
         }
         return Category.builder().id(parentId).build();
     }
+
+    default Category toEntityFromRequest(CategoryCreateRequest request) {
+        return toEntity(request);
+    }
 }

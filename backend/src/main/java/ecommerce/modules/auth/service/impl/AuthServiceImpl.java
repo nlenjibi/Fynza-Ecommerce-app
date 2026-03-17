@@ -8,7 +8,6 @@ import ecommerce.exception.InvalidTokenException;
 import ecommerce.modules.auth.dto.AuthResponse;
 import ecommerce.modules.auth.dto.LoginRequest;
 import ecommerce.modules.auth.dto.RegisterRequest;
-import ecommerce.modules.auth.dto.TokenResponse;
 import ecommerce.modules.auth.service.AuthService;
 import ecommerce.services.TokenValidationService;
 import ecommerce.security.JwtTokenProvider;
@@ -181,13 +180,16 @@ public class AuthServiceImpl implements AuthService {
             throw new BadRequestException("Account is not active");
         }
 
-        // Rotate tokens: issue new pair and blacklist the old refresh token
         String newAccessToken = jwtTokenProvider.generateAccessToken(
                 user.getId(), user.getEmail(), user.getRole().name(), AUTH_PROVIDER_PASSWORD);
         String newRefreshToken = jwtTokenProvider.generateRefreshToken(user.getId());
 
-        // Blacklist the old refresh token
-        return TokenResponse.builder()
+        return AuthResponse.builder()
+                .userId(user.getId())
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .role(user.getRole().name())
                 .accessToken(newAccessToken)
                 .refreshToken(newRefreshToken)
                 .expiresIn(accessTokenExpiration / 1000)
@@ -208,5 +210,39 @@ public class AuthServiceImpl implements AuthService {
         }
 
         log.info("User logged out successfully: {}", userId);
+    }
+
+    @Override
+    @Transactional
+    public void cleanupExpiredSessions() {
+        log.info("Cleaning up expired sessions");
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse oauth2Login(User user, jakarta.servlet.http.HttpServletRequest request) {
+        log.info("OAuth2 login for user: {}", user.getEmail());
+
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new BadRequestException("Account is not active");
+        }
+
+        user.setLastLoginAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        String accessToken = jwtTokenProvider.generateAccessToken(
+                user.getId(), user.getEmail(), user.getRole().name(), "GOOGLE");
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId());
+
+        return AuthResponse.builder()
+                .userId(user.getId())
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .role(user.getRole().name())
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .expiresIn(accessTokenExpiration / 1000)
+                .build();
     }
 }

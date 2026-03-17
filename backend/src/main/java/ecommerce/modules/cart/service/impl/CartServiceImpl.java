@@ -225,7 +225,7 @@ public class CartServiceImpl implements CartService {
         Cart cart = getOrCreateCart(userId);
         
         Coupon coupon = couponRepository.findByCode(couponCode)
-                .orElseThrow(() -> ResourceNotFoundException.forResource("Coupon", couponCode));
+                .orElseThrow(() -> new ResourceNotFoundException("Coupon not found with code: " + couponCode));
         
         validateCoupon(coupon, cart);
         

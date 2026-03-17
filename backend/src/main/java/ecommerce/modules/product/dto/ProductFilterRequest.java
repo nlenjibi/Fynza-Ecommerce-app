@@ -18,8 +18,8 @@ public class ProductFilterRequest {
     private String categorySlug;
     private BigDecimal minPrice;
     private BigDecimal maxPrice;
-    private Float minRating;
-    private Float maxRating;
+    private BigDecimal minRating;
+    private BigDecimal maxRating;
     private String search;
     private String keyword;
     private String name;
