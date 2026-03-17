@@ -83,9 +83,20 @@ const bottomNav = [
   { name: "Logout", href: "/", icon: LogOut },
 ]
 
-export function AdminSidebar() {
+interface AdminSidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminSidebarProps) {
   const pathname = usePathname()
   const [expandedItems, setExpandedItems] = useState<string[]>([])
+  const [internalIsOpen, setInternalIsOpen] = useState(true)
+  
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen
+  const setIsOpen = onClose ? (value: boolean) => {
+      if (!value) onClose();
+  } : setInternalIsOpen
 
   const toggleExpand = (name: string) => {
     setExpandedItems((prev) =>

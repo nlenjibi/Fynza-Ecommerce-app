@@ -41,8 +41,19 @@ const navigation = [
   },
 ];
 
-export function CustomerSidebar() {
-  const pathname = usePathname();
+interface CustomerSidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export function CustomerSidebar({ isOpen: externalIsOpen, onClose }: CustomerSidebarProps) {
+  const pathname = usePathname()
+  const [internalIsOpen, setInternalIsOpen] = useState(true)
+  
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen
+  const setIsOpen = onClose ? (value: boolean) => {
+      if (!value) onClose();
+  } : setInternalIsOpen;
 
   return (
     <aside className="w-64 border-r border-border bg-background h-screen overflow-y-auto sticky top-0">
