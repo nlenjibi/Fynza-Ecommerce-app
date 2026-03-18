@@ -26,6 +26,7 @@ import {
   LayoutTemplate,
   Plus,
   Trash2,
+  Download,
 } from "lucide-react"
 
 export default function SettingsPage() {
@@ -89,9 +90,15 @@ const [settings, setSettings] = useState({
 
   const [footerTab, setFooterTab] = useState<"general" | "payments" | "security" | "legal" | "newsletter">("general")
 
+  const [appDownloads, setAppDownloads] = useState([
+    { platform: "Apple App Store", url: "https://apps.apple.com/app/fynza", isActive: true },
+    { platform: "Google Play Store", url: "https://play.google.com/store/apps/details?id=com.fynza.app", isActive: true },
+  ])
+
   const tabs = [
     { id: "general", label: "General", icon: Building2 },
     { id: "footer", label: "Footer", icon: LayoutTemplate },
+    { id: "appDownloads", label: "App Downloads", icon: Download },
     { id: "payments", label: "Payments", icon: CreditCard },
     { id: "shipping", label: "Shipping", icon: Truck },
     { id: "taxes", label: "Taxes", icon: Percent },
@@ -388,6 +395,69 @@ const [settings, setSettings] = useState({
                           </div>
                         </div>
                       )}
+
+                      <div className="flex justify-end pt-4 border-t">
+                        <Button className="bg-orange-500 hover:bg-orange-600">
+                          <Save className="h-4 w-4 mr-2" />
+                          Save Changes
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* App Downloads Settings */}
+                {activeTab === "appDownloads" && (
+                  <Card className="border-0 shadow-sm">
+                    <CardHeader>
+                      <CardTitle>App Downloads</CardTitle>
+                      <CardDescription>Configure app store links for the footer</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="p-4 rounded-lg bg-blue-50 border border-blue-100">
+                        <p className="text-sm text-blue-700">
+                          Both Apple App Store and Google Play Store icons are always displayed in the footer. 
+                          Toggle active to show/hide links, or leave URL blank to disable.
+                        </p>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-6">
+                        {appDownloads.map((app, index) => (
+                          <div key={index} className="border rounded-lg p-4">
+                            <div className="flex items-center justify-between mb-4">
+                              <h3 className="font-medium text-gray-900">{app.platform}</h3>
+                              <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={app.isActive}
+                                  onChange={(e) => {
+                                    const updated = [...appDownloads]
+                                    updated[index].isActive = e.target.checked
+                                    setAppDownloads(updated)
+                                  }}
+                                  className="sr-only peer"
+                                />
+                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                              </label>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                App Store URL
+                              </label>
+                              <Input
+                                type="url"
+                                value={app.url}
+                                onChange={(e) => {
+                                  const updated = [...appDownloads]
+                                  updated[index].url = e.target.value
+                                  setAppDownloads(updated)
+                                }}
+                                placeholder={app.platform === "Apple App Store" ? "https://apps.apple.com/app/..." : "https://play.google.com/store/apps/..."}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
 
                       <div className="flex justify-end pt-4 border-t">
                         <Button className="bg-orange-500 hover:bg-orange-600">
