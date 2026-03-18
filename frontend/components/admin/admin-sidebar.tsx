@@ -25,6 +25,7 @@ import {
   Zap,
   DollarSign,
   TrendingUp,
+  Mail,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -67,6 +68,7 @@ const navigation = [
     title: "SUPPORT",
     items: [
       { name: "Contacts", href: "/admin/contacts", icon: MessageSquare, badge: "12", badgeColor: "blue" },
+      { name: "Subscribers", href: "/admin/subscribers", icon: Mail, badge: "5", badgeColor: "green" },
       { name: "Notifications", href: "/admin/notifications", icon: Bell },
     ],
   },
