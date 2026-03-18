@@ -34,6 +34,7 @@ const navigation = [
     items: [
       { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
       { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
+      { name: "Performance", href: "/admin/performance", icon: TrendingUp },
     ],
   },
   {
