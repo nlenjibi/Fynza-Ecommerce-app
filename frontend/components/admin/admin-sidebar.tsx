@@ -26,7 +26,7 @@ import {
   DollarSign,
   TrendingUp,
   Mail,
-  TrackChanges,
+  Activity,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -79,7 +79,7 @@ const navigation = [
     items: [
       { name: "Settings", href: "/admin/settings", icon: Settings },
       { name: "Activity Logs", href: "/admin/activity-logs", icon: TrendingUp },
-      { name: "Tracking", href: "/admin/tracking", icon: TrackChanges },
+      { name: "Tracking", href: "/admin/tracking", icon: Activity },
     ],
   },
 ]
