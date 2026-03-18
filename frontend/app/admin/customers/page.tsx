@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AdminSidebar } from "@/components/admin/admin-sidebar"
 import { AdminHeader } from "@/components/admin/admin-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { TableSkeleton } from "@/components/skeletons"
 import {
     Search,
     Filter,
@@ -113,7 +114,27 @@ export default function CustomersPage() {
     const [statusFilter, setStatusFilter] = useState("All")
     const [currentPage, setCurrentPage] = useState(1)
     const [selectedCustomer, setSelectedCustomer] = useState<typeof customers[0] | null>(null)
+    const [loading, setLoading] = useState(true)
     const totalPages = 15
+
+    useEffect(() => {
+        const timer = setTimeout(() => setLoading(false), 1500)
+        return () => clearTimeout(timer)
+    }, [])
+
+    if (loading) {
+        return (
+            <div className="flex min-h-screen bg-gray-50">
+                <AdminSidebar />
+                <div className="flex-1 ml-64">
+                    <AdminHeader title="Customers" subtitle="Manage customer accounts" />
+                    <main className="p-6">
+                        <TableSkeleton rows={8} columns={5} />
+                    </main>
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div className="flex min-h-screen bg-gray-50">
