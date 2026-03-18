@@ -19,127 +19,105 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
 import java.util.Map;
-
 
 @Slf4j
 @Component
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
-    /*
-     * A dedicated ObjectMapper is used here instead of the shared Spring-managed bean.
-     * Filter-chain components execute outside the MVC context and the shared bean may
-     * not be available during early startup phases.
-     */
     private static final ObjectMapper MAPPER = new ObjectMapper()
             .registerModule(new JavaTimeModule())
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
-    // Flag to enable generic error messages (masks specific reasons)
-    // Set to true in production for security
-    private static final boolean USE_GENERIC_ERRORS = true;
+    private static final String GENERIC_ERROR = "Authentication failed. Please sign in again to continue.";
+
+    private static final Map<Class<? extends Throwable>, String> EXCEPTION_MESSAGES = Map.ofEntries(
+            // JWT Token Issues
+            Map.entry(ExpiredJwtException.class, "Your session has expired. Please sign in again."),
+            Map.entry(MalformedJwtException.class, "Invalid authentication token format. Please sign in again."),
+            Map.entry(SignatureException.class, "Authentication token verification failed. Please sign in again."),
+            Map.entry(UnsupportedJwtException.class, "Unsupported authentication token. Please update your app or sign in again."),
+            Map.entry(JwtException.class, "Invalid authentication token. Please sign in again."),
+            Map.entry(IllegalArgumentException.class, "No authentication token provided. Please sign in to access this resource."),
+
+            // Credentials Issues
+            Map.entry(BadCredentialsException.class, "Invalid email or password. Please check your credentials and try again."),
+            Map.entry(UsernameNotFoundException.class, "No account found with this email. Please sign up first."),
+
+            // Account Status Issues
+            Map.entry(AccountExpiredException.class, "Your account has expired. Please contact support to reactivate it."),
+            Map.entry(LockedException.class, "Your account has been locked. Please contact support for assistance."),
+            Map.entry(DisabledException.class, "Your account has been disabled. Please verify your email or contact support."),
+            Map.entry(CredentialsExpiredException.class, "Your password has expired. Please reset your password to continue."),
+
+            // Authentication Process Issues
+            Map.entry(AuthenticationCredentialsNotFoundException.class, "No authentication credentials found. Please sign in again."),
+            Map.entry(InsufficientAuthenticationException.class, "Please sign in to access this resource."),
+            Map.entry(AuthenticationServiceException.class, "Unable to process authentication at this time. Please try again later.")
+    );
 
     @Override
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
                          AuthenticationException authException) throws IOException {
 
-        // JWT exceptions are often wrapped inside a BadCredentialsException or
-        // InsufficientAuthenticationException by the JwtAuthenticationFilter.
-        // Unwrap to get the real cause for accurate classification.
-        Throwable root = (authException.getCause() != null)
-                ? authException.getCause()
-                : authException;
+        Throwable root = authException.getCause() != null ? authException.getCause() : authException;
 
-        String exceptionName = root.getClass().getSimpleName();
-        String message = resolveMessage(authException, root);
-
-        // Use error-level logging for unexpected service failures; warn for normal auth failures.
-        if (root instanceof AuthenticationServiceException) {
+        // Log appropriate level based on exception type
+        if (isServerError(root)) {
             log.error("Authentication service error on '{}': {}", request.getRequestURI(), root.getMessage(), root);
+        } else if (isSecurityViolation(root)) {
+            log.warn("Security violation [{}] on '{}': {}", root.getClass().getSimpleName(), request.getRequestURI(), root.getMessage());
         } else {
-            log.warn("Authentication failure [{}] on '{}': {}", exceptionName, request.getRequestURI(), root.getMessage());
+            log.info("Authentication failure [{}] on '{}': {}", root.getClass().getSimpleName(), request.getRequestURI(), root.getMessage());
         }
 
-        writeJsonResponse(response,  HttpServletResponse.SC_UNAUTHORIZED,  message);
+        String message = resolveUserFriendlyMessage(authException, root);
+        writeJsonResponse(response, message);
     }
 
-    /**
-     * Maps each exception type to a user-friendly message.
-     * 
-     * <p>When USE_GENERIC_ERRORS is true, all security-related failures
-     * return a generic "Authentication Failed" message to avoid exposing
-     * internal security details (e.g., "Account Locked" vs "Bad Credentials").
-     */
-    private String resolveMessage(AuthenticationException authException, Throwable root) {
-        
-        // When generic errors are enabled, mask all specific reasons
-        if (USE_GENERIC_ERRORS) {
-            return "Authentication failed. Please check your credentials and try again.";
+    private boolean isServerError(Throwable root) {
+        return root instanceof AuthenticationServiceException;
+    }
+
+    private boolean isSecurityViolation(Throwable root) {
+        return root instanceof JwtException ||
+                root instanceof SignatureException ||
+                root instanceof MalformedJwtException;
+    }
+
+    private String resolveUserFriendlyMessage(AuthenticationException authException, Throwable root) {
+        // Try to get specific message for the root cause
+        String message = EXCEPTION_MESSAGES.get(root.getClass());
+        if (message != null) {
+            return message;
         }
 
-        // ── JWT Exceptions (wrapped as cause by JwtAuthenticationFilter) ──────
-        if (root instanceof ExpiredJwtException) {
-            return "Your session has expired. Please log in again.";
-        }
-        if (root instanceof MalformedJwtException) {
-            return "The provided authentication token is malformed.";
-        }
-        if (root instanceof SignatureException) {
-            return "The authentication token signature is invalid.";
-        }
-        if (root instanceof UnsupportedJwtException) {
-            return "The authentication token format is not supported.";
-        }
-        if (root instanceof JwtException) {
-            return "The authentication token is invalid.";
-        }
-        if (root instanceof IllegalArgumentException) {
-            return "No authentication token was provided in the request.";
+        // Try to get message for the auth exception
+        message = EXCEPTION_MESSAGES.get(authException.getClass());
+        if (message != null) {
+            return message;
         }
 
-        // ── Spring Security Authentication Exceptions ─────────────────────────
-        if (authException instanceof BadCredentialsException) {
-            return "Invalid username or password.";
-        }
-        if (authException instanceof UsernameNotFoundException) {
-            return "No account found for the provided credentials.";
-        }
-        if (authException instanceof AccountExpiredException) {
-            return "Your account has expired. Please contact support.";
-        }
-        if (authException instanceof LockedException) {
-            return "Your account is locked. Please contact support.";
-        }
-        if (authException instanceof DisabledException) {
-            return "Your account has been disabled. Please contact support.";
-        }
-        if (authException instanceof CredentialsExpiredException) {
-            return "Your password has expired. Please reset your password to continue.";
-        }
-        if (authException instanceof AuthenticationCredentialsNotFoundException) {
-            return "No authentication credentials were found in the request.";
-        }
+        // For InsufficientAuthenticationException, provide context about the requested resource
         if (authException instanceof InsufficientAuthenticationException) {
-            return "Full authentication is required to access this resource.";
-        }
-        if (authException instanceof AuthenticationServiceException) {
-            return "An internal authentication error occurred. Please try again later.";
+            return "Authentication required. Please sign in to access this feature.";
         }
 
-        return "Authentication failed. Please check your credentials and try again.";
+        // Log unexpected exception type for debugging
+        log.debug("Unexpected authentication exception type: {}", authException.getClass().getName());
+
+        return GENERIC_ERROR;
     }
 
-    private void writeJsonResponse(HttpServletResponse response,
-                                   int status,
-                                   String message) throws IOException {
-        response.setStatus(status);
+    private void writeJsonResponse(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("message", message);
+        Map<String, Object> errorResponse = Map.of(
+                "message", message
+        );
 
-        MAPPER.writeValue(response.getOutputStream(), body);
+        MAPPER.writeValue(response.getOutputStream(), errorResponse);
     }
 }
