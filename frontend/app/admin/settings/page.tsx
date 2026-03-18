@@ -23,7 +23,7 @@ import {
   CheckCircle,
   Eye,
   EyeOff,
-  Footer,
+  LayoutTemplate,
   Plus,
   Trash2,
 } from "lucide-react"
@@ -91,7 +91,7 @@ const [settings, setSettings] = useState({
 
   const tabs = [
     { id: "general", label: "General", icon: Building2 },
-    { id: "footer", label: "Footer", icon: Footer },
+    { id: "footer", label: "Footer", icon: LayoutTemplate },
     { id: "payments", label: "Payments", icon: CreditCard },
     { id: "shipping", label: "Shipping", icon: Truck },
     { id: "taxes", label: "Taxes", icon: Percent },
