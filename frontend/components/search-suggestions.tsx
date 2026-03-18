@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useSearch } from '@/hooks/use-search'
-import { Loader2, TrendingUp } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
+import { TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 
 interface SearchSuggestionsProps {
@@ -43,9 +44,13 @@ export function SearchSuggestions({
             aria-label="Search suggestions"
         >
             {loading ? (
-                <div className="p-4 flex items-center justify-center gap-2 text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                    <span className="text-sm">Loading suggestions...</span>
+                <div className="p-4 space-y-3">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                        <div key={i} className="flex items-center gap-2">
+                            <Skeleton className="h-4 w-4" />
+                            <Skeleton className="h-4 w-full" />
+                        </div>
+                    ))}
                 </div>
             ) : isEmpty ? (
                 <div className="p-4 text-center text-muted-foreground text-sm">

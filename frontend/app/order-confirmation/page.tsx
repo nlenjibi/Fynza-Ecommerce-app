@@ -3,6 +3,8 @@
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent } from '@/components/ui/card';
 import { CheckCircle, Truck, CreditCard, Wallet, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -109,9 +111,20 @@ export default function OrderConfirmationPage() {
       <div className="min-h-screen bg-gray-50">
         <Header />
         <main className="max-w-3xl mx-auto px-4 py-8">
-          <div className="bg-white rounded-lg shadow p-8 text-center">
-            <p className="text-gray-600">Loading order details...</p>
-          </div>
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-8">
+              <div className="text-center space-y-4">
+                <Skeleton className="h-16 w-16 mx-auto rounded-full" />
+                <Skeleton className="h-8 w-64 mx-auto" />
+                <Skeleton className="h-4 w-96 mx-auto" />
+                <div className="bg-gray-50 p-6 rounded mt-6 space-y-3">
+                  <Skeleton className="h-4 w-32 mx-auto" />
+                  <Skeleton className="h-8 w-48 mx-auto" />
+                  <Skeleton className="h-4 w-24 mx-auto" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </main>
         <Footer />
       </div>

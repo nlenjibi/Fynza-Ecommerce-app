@@ -7,11 +7,16 @@ import {
     Package,
     ShoppingCart,
     BarChart3,
-    MessageSquare,
+    Bell,
     Settings,
     LogOut,
     ChevronDown,
+    ChevronRight,
     Store,
+    Megaphone,
+    Zap,
+    Tag,
+    Star,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -23,6 +28,7 @@ interface SellerSidebarProps {
 export function SellerSidebar({ isOpen: externalIsOpen, onToggle }: SellerSidebarProps) {
     const pathname = usePathname();
     const [internalIsOpen, setInternalIsOpen] = useState(true);
+    const [marketingExpanded, setMarketingExpanded] = useState(true);
     
     const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
     
@@ -57,9 +63,24 @@ export function SellerSidebar({ isOpen: externalIsOpen, onToggle }: SellerSideba
             icon: BarChart3,
         },
         {
-            label: 'Messages',
-            href: '/seller/messages',
-            icon: MessageSquare,
+            label: 'Marketing',
+            icon: Megaphone,
+            children: [
+                { label: 'Promotions', href: '/seller/promotions', icon: Megaphone },
+                { label: 'Flash Sales', href: '/seller/flash-sales', icon: Zap },
+                { label: 'Coupons', href: '/seller/coupons', icon: Tag },
+                { label: 'Tags', href: '/seller/tags', icon: Tag },
+            ],
+        },
+        {
+            label: 'Reviews',
+            href: '/seller/reviews',
+            icon: Star,
+        },
+        {
+            label: 'Notifications',
+            href: '/seller/notifications',
+            icon: Bell,
         },
         {
             label: 'Settings',
@@ -73,6 +94,10 @@ export function SellerSidebar({ isOpen: externalIsOpen, onToggle }: SellerSideba
             return pathname === '/seller';
         }
         return pathname.startsWith(href);
+    };
+
+    const isChildActive = (children: { href: string }[]) => {
+        return children.some(child => pathname.startsWith(child.href));
     };
 
     return (
@@ -96,9 +121,60 @@ export function SellerSidebar({ isOpen: externalIsOpen, onToggle }: SellerSideba
             </div>
 
             {/* Navigation Menu */}
-            <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-                {menuItems.map((item) => {
+            <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+                {menuItems.map((item, index) => {
                     const Icon = item.icon;
+                    
+                    if (item.children) {
+                        const isExpanded = marketingExpanded;
+                        const hasActiveChild = isChildActive(item.children);
+                        
+                        return (
+                            <div key={item.label}>
+                                <button
+                                    onClick={() => setMarketingExpanded(!marketingExpanded)}
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                                        hasActiveChild ? 'bg-orange-50 text-orange-600' : 'text-gray-700 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    <Icon size={20} className="flex-shrink-0" />
+                                    {isOpen && (
+                                        <>
+                                            <span className="text-sm font-medium flex-1 text-left">{item.label}</span>
+                                            <ChevronRight
+                                                size={16}
+                                                className={`transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                                            />
+                                        </>
+                                    )}
+                                </button>
+                                {isOpen && isExpanded && (
+                                    <div className="ml-4 mt-1 space-y-1">
+                                        {item.children.map((child) => {
+                                            const ChildIcon = child.icon;
+                                            const childActive = isActive(child.href);
+                                            
+                                            return (
+                                                <Link key={child.href} href={child.href}>
+                                                    <div
+                                                        className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+                                                            childActive
+                                                                ? 'bg-orange-100 text-orange-700'
+                                                                : 'text-gray-600 hover:bg-gray-50'
+                                                        }`}
+                                                    >
+                                                        <ChildIcon size={18} className="flex-shrink-0" />
+                                                        <span className="text-sm">{child.label}</span>
+                                                    </div>
+                                                </Link>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    }
+
                     const active = isActive(item.href);
 
                     return (

@@ -13,6 +13,12 @@ import {
   LogOut,
   ChevronRight,
   User,
+  Lock,
+  Shield,
+  MessageSquare,
+  HelpCircle,
+  Settings,
+  Mail,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -36,7 +42,26 @@ const navigation = [
     items: [
       { name: 'Addresses', href: '/customer/addresses', icon: MapPin },
       { name: 'Payment Methods', href: '/customer/payments', icon: CreditCard },
-      { name: 'Notifications', href: '/customer/notifications', icon: Bell },
+      { name: 'Notification Settings', href: '/customer/notification-settings', icon: Bell },
+    ],
+  },
+  {
+    title: 'SECURITY',
+    items: [
+      { name: 'Change Password', href: '/customer/change-password', icon: Lock },
+      { name: 'Two-Factor Authentication', href: '/customer/2fa', icon: Shield },
+    ],
+  },
+  {
+    title: 'COMMUNICATION',
+    items: [
+      { name: 'Messages', href: '/customer/messages', icon: MessageSquare },
+    ],
+  },
+  {
+    title: 'SUPPORT',
+    items: [
+      { name: 'Help / Contact', href: '/customer/help', icon: HelpCircle },
     ],
   },
 ];
