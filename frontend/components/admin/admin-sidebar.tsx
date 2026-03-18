@@ -27,6 +27,8 @@ import {
   TrendingUp,
   Mail,
   Activity,
+  Star,
+  Truck,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -47,6 +49,7 @@ const navigation = [
       { name: "Products", href: "/admin/products", icon: Package, badge: "8", badgeColor: "red" },
       { name: "Customers", href: "/admin/customers", icon: Users },
       { name: "Sellers", href: "/admin/sellers", icon: Building2, badge: "5", badgeColor: "green" },
+      { name: "Delivery", href: "/admin/delivery", icon: Truck },
     ],
   },
   {
@@ -56,6 +59,7 @@ const navigation = [
       { name: "Coupons", href: "/admin/coupons", icon: Tag, badge: "12", badgeColor: "orange" },
       { name: "Flash Sales", href: "/admin/flash-sales", icon: Zap, badge: "2", badgeColor: "purple" },
       { name: "Tags", href: "/admin/tags", icon: Tag },
+      { name: "Reviews", href: "/admin/reviews", icon: Star, badge: "3", badgeColor: "yellow" },
     ],
   },
   {
