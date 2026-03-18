@@ -26,6 +26,7 @@ import {
   DollarSign,
   TrendingUp,
   Mail,
+  TrackChanges,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -54,6 +55,7 @@ const navigation = [
       { name: "Promotions", href: "/admin/promotions", icon: Percent },
       { name: "Coupons", href: "/admin/coupons", icon: Tag, badge: "12", badgeColor: "orange" },
       { name: "Flash Sales", href: "/admin/flash-sales", icon: Zap, badge: "2", badgeColor: "purple" },
+      { name: "Tags", href: "/admin/tags", icon: Tag },
     ],
   },
   {
@@ -77,6 +79,7 @@ const navigation = [
     items: [
       { name: "Settings", href: "/admin/settings", icon: Settings },
       { name: "Activity Logs", href: "/admin/activity-logs", icon: TrendingUp },
+      { name: "Tracking", href: "/admin/tracking", icon: TrackChanges },
     ],
   },
 ]
