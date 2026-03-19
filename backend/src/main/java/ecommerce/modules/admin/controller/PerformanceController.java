@@ -1,6 +1,8 @@
 package ecommerce.modules.admin.controller;
 
 import ecommerce.common.response.ApiResponse;
+import ecommerce.modules.admin.dto.ContentAnalyticsDto;
+import ecommerce.modules.admin.service.AdminService;
 import ecommerce.services.CacheStatisticsService;
 import ecommerce.services.DatabaseMetricsService;
 import ecommerce.services.MetricsService;
@@ -39,6 +41,7 @@ public class PerformanceController {
     private final TokenBlacklistService tokenBlacklistService;
     private final DatabaseMetricsService databaseMetricsService;
     private final QueryPerformanceAspect queryPerformanceAspect;
+    private final AdminService adminService;
 
     // ==================== Dashboard / Overview ====================
 
@@ -97,6 +100,24 @@ public class PerformanceController {
             log.error("Error retrieving dashboard: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().body(ApiResponse.<Map<String, Object>>builder()
                     .message("Failed to retrieve dashboard: " + e.getMessage()).build());
+        }
+    }
+
+    // ==================== Content Analytics ====================
+
+    @GetMapping("/content")
+    public ResponseEntity<ApiResponse<ContentAnalyticsDto>> getContentAnalytics(
+            @RequestParam(defaultValue = "month") String period,
+            @RequestParam(required = false) String contentType) {
+        try {
+            ContentAnalyticsDto contentAnalytics = adminService.getContentAnalytics(period, contentType);
+            return ResponseEntity.ok(ApiResponse.<ContentAnalyticsDto>builder()
+                    .data(contentAnalytics)
+                    .message("Content analytics retrieved successfully").build());
+        } catch (Exception e) {
+            log.error("Error retrieving content analytics: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(ApiResponse.<ContentAnalyticsDto>builder()
+                    .message("Failed to retrieve content analytics: " + e.getMessage()).build());
         }
     }
 
