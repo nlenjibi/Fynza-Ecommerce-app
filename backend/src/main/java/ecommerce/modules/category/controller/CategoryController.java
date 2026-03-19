@@ -13,38 +13,53 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("api/v1/categories")
+@RequestMapping("api/v1")
 @RequiredArgsConstructor
 @Tag(name = "Category Management", description = "APIs for managing product categories")
 public class CategoryController {
 
     private final CategoryService categoryService;
 
-    @GetMapping
+    @GetMapping("/categories")
     @Operation(summary = "Get all categories", description = "Retrieve all categories - public endpoint")
-    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getAllCategories() {
-        List<CategoryResponse> categories = categoryService.findAll();
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getAllCategories(
+            @RequestParam(required = false) Boolean activeOnly) {
+        List<CategoryResponse> categories;
+        if (Boolean.TRUE.equals(activeOnly)) {
+            categories = categoryService.findActiveCategories();
+        } else {
+            categories = categoryService.findAll();
+        }
         return ResponseEntity.ok(ApiResponse.success("Categories retrieved successfully", categories));
     }
 
-    @GetMapping("/tree")
+    @GetMapping("/categories/tree")
     @Operation(summary = "Get category tree", description = "Retrieve categories in a tree structure - public endpoint")
     public ResponseEntity<ApiResponse<List<CategoryResponse>>> getCategoryTree() {
         List<CategoryResponse> categories = categoryService.findTree();
         return ResponseEntity.ok(ApiResponse.success("Category tree retrieved successfully", categories));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/categories/{id}")
     @Operation(summary = "Get category by ID", description = "Retrieve category details by ID - public endpoint")
     public ResponseEntity<ApiResponse<CategoryResponse>> getCategoryById(@PathVariable UUID id) {
         CategoryResponse category = categoryService.findById(id);
         return ResponseEntity.ok(ApiResponse.success("Category retrieved successfully", category));
     }
 
-    @PostMapping
+    @GetMapping("/admin/categories/stats")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get category statistics", description = "Get category statistics - ADMIN only")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getCategoryStats() {
+        Map<String, Object> stats = categoryService.getCategoryStats();
+        return ResponseEntity.ok(ApiResponse.success("Category statistics retrieved successfully", stats));
+    }
+
+    @PostMapping("/categories")
     @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
     @Operation(summary = "Create category", description = "Create a new category - SELLER/ADMIN only")
     public ResponseEntity<ApiResponse<CategoryResponse>> createCategory(
@@ -53,7 +68,7 @@ public class CategoryController {
         return ResponseEntity.ok(ApiResponse.success("Category created successfully", category));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/categories/{id}")
     @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
     @Operation(summary = "Update category", description = "Update category details - SELLER/ADMIN only")
     public ResponseEntity<ApiResponse<CategoryResponse>> updateCategory(
@@ -63,11 +78,21 @@ public class CategoryController {
         return ResponseEntity.ok(ApiResponse.success("Category updated successfully", category));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/categories/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete category", description = "Delete category by ID - ADMIN only")
     public ResponseEntity<ApiResponse<Void>> deleteCategory(@PathVariable UUID id) {
         categoryService.delete(id);
         return ResponseEntity.ok(ApiResponse.success("Category deleted successfully", null));
+    }
+
+    @PatchMapping("/categories/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update category status", description = "Activate or deactivate category - ADMIN only")
+    public ResponseEntity<ApiResponse<CategoryResponse>> updateCategoryStatus(
+            @PathVariable UUID id,
+            @RequestParam Boolean isActive) {
+        CategoryResponse category = categoryService.updateStatus(id, isActive);
+        return ResponseEntity.ok(ApiResponse.success("Category status updated successfully", category));
     }
 }

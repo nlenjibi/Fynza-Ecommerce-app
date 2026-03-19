@@ -12,7 +12,8 @@ import java.util.List;
 @Table(name = "categories", indexes = {
         @Index(name = "idx_category_slug", columnList = "slug"),
         @Index(name = "idx_category_parent_id", columnList = "parent_category_id"),
-        @Index(name = "idx_category_name", columnList = "name")
+        @Index(name = "idx_category_name", columnList = "name"),
+        @Index(name = "idx_category_is_active", columnList = "is_active")
 })
 @Getter
 @Setter
@@ -41,6 +42,10 @@ public class Category extends BaseEntity {
     @Column(name = "featured")
     @Builder.Default
     private Boolean featured = false;
+
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
+    private Boolean isActive = true;
 
     @OneToMany(mappedBy = "parentCategory", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default

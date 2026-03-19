@@ -83,8 +83,8 @@ public class ProductFilterInput {
 
     // ==================== View/Sales Filters ====================
 
-    private Long minViews;
-    private Long maxViews;
+    private Integer minViews;
+    private Integer maxViews;
     private Long minSales;
     private Boolean popular;
     private Boolean trending;

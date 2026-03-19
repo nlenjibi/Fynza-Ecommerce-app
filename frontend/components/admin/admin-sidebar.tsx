@@ -18,7 +18,6 @@ import {
   Bell,
   Settings,
   LogOut,
-  Shield,
   Building2,
   AlertTriangle,
   ChevronDown,
@@ -26,6 +25,11 @@ import {
   Zap,
   DollarSign,
   TrendingUp,
+  Mail,
+  Activity,
+  Star,
+  Truck,
+  FileQuestion,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -35,6 +39,7 @@ const navigation = [
     items: [
       { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
       { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
+      { name: "Performance", href: "/admin/performance", icon: TrendingUp },
     ],
   },
   {
@@ -45,13 +50,17 @@ const navigation = [
       { name: "Products", href: "/admin/products", icon: Package, badge: "8", badgeColor: "red" },
       { name: "Customers", href: "/admin/customers", icon: Users },
       { name: "Sellers", href: "/admin/sellers", icon: Building2, badge: "5", badgeColor: "green" },
+      { name: "Delivery", href: "/admin/delivery", icon: Truck },
     ],
   },
   {
     title: "MARKETING",
     items: [
       { name: "Promotions", href: "/admin/promotions", icon: Percent },
+      { name: "Coupons", href: "/admin/coupons", icon: Tag, badge: "12", badgeColor: "orange" },
       { name: "Flash Sales", href: "/admin/flash-sales", icon: Zap, badge: "2", badgeColor: "purple" },
+      { name: "Tags", href: "/admin/tags", icon: Tag },
+      { name: "Reviews", href: "/admin/reviews", icon: Star, badge: "3", badgeColor: "yellow" },
     ],
   },
   {
@@ -66,6 +75,9 @@ const navigation = [
     title: "SUPPORT",
     items: [
       { name: "Contacts", href: "/admin/contacts", icon: MessageSquare, badge: "12", badgeColor: "blue" },
+      { name: "Messages", href: "/admin/messages", icon: Mail, badge: "8", badgeColor: "orange" },
+      { name: "FAQs", href: "/admin/faqs", icon: FileQuestion },
+      { name: "Subscribers", href: "/admin/subscribers", icon: Mail, badge: "5", badgeColor: "green" },
       { name: "Notifications", href: "/admin/notifications", icon: Bell },
     ],
   },
@@ -73,8 +85,8 @@ const navigation = [
     title: "SYSTEM",
     items: [
       { name: "Settings", href: "/admin/settings", icon: Settings },
-      { name: "Security", href: "/admin/security", icon: Shield },
       { name: "Activity Logs", href: "/admin/activity-logs", icon: TrendingUp },
+      { name: "Tracking", href: "/admin/tracking", icon: Activity },
     ],
   },
 ]

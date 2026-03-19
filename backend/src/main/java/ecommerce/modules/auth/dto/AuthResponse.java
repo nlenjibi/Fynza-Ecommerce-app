@@ -20,6 +20,7 @@ public class AuthResponse {
     private String refreshToken;
     private Long expiresIn;
     private String tokenType;
+    private UserInfo user;
 
     @Data
     @Builder

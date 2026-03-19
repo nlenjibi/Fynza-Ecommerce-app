@@ -52,7 +52,7 @@ public class RedisCartServiceImpl implements RedisCartService {
         }
 
         // Get product details (from cache or DB)
-        ProductResponse product = productService.findById(productId.toString());
+        ProductResponse product = productService.findById(productId);
 
         // Check stock
         int availableStock = (product.getStockCount() != null ? product.getStockCount() : 0);
@@ -214,7 +214,7 @@ public class RedisCartServiceImpl implements RedisCartService {
 
     private ProductResponse getProductSafe(UUID productId) {
         try {
-            return productService.findById(productId.toString());
+            return productService.findById(productId);
         } catch (Exception e) {
             log.warn("Product {} not found, returning minimal data", productId);
             return null;
@@ -235,12 +235,10 @@ public class RedisCartServiceImpl implements RedisCartService {
         return CartItemResponse.builder()
                 .productId(item.getProductId())
                 .productName(item.getProductName())
-                .productImage(item.getProductImage())
+                .image(item.getProductImage())
                 .quantity(item.getQuantity())
                 .price(item.getPrice())
                 .subtotal(subtotal)
-                .inStock(product.getInStock())
-                .stockCount(product.getStockCount())
                 .build();
     }
 
@@ -248,8 +246,8 @@ public class RedisCartServiceImpl implements RedisCartService {
         return CartResponse.builder()
                 .userId(userId)
                 .items(new ArrayList<>())
-                .totalItems(0)
-                .totalPrice(BigDecimal.ZERO)
+                .itemsCount(0)
+                .total(BigDecimal.ZERO)
                 .build();
     }
 
@@ -262,8 +260,8 @@ public class RedisCartServiceImpl implements RedisCartService {
         return CartResponse.builder()
                 .userId(userId)
                 .items(items)
-                .totalItems(items.size())
-                .totalPrice(totalPrice)
+                .itemsCount(items.size())
+                .total(totalPrice)
                 .build();
     }
 

@@ -92,12 +92,7 @@ management:
       prometheus:
         enabled: true
 
-flyway:
-  enabled: true
-  baseline-on-migrate: true
-  schemas: public
-
-# Production settings (sensible defaults)
+# Production settings
 # - Datasource tuned for moderate load
 # - Management endpoints on separate port for observability
 # - Graceful shutdown enabled

@@ -293,4 +293,27 @@ public class ReviewController {
         int count = reviewService.bulkRejectReviews(request.getIds(), request.getReason());
         return ResponseEntity.ok(ApiResponse.success(count + " reviews rejected successfully", count));
     }
+
+    @PostMapping("/admin/bulk-delete")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @Operation(summary = "Bulk delete reviews")
+    public ResponseEntity<ApiResponse<Integer>> bulkDeleteReviews(
+            @RequestBody BulkReviewActionRequest request) {
+        int count = reviewService.bulkDeleteReviews(request.getIds());
+        return ResponseEntity.ok(ApiResponse.success(count + " reviews deleted successfully", count));
+    }
+
+    @GetMapping("/admin/stats")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @Operation(summary = "Get admin review statistics")
+    public ResponseEntity<ApiResponse<ReviewStatsResponse>> getAdminReviewStats() {
+        return ResponseEntity.ok(ApiResponse.success(reviewService.getAdminReviewStats()));
+    }
+
+    @PutMapping("/{reviewId}/helpful")
+    @Operation(summary = "Mark review as helpful")
+    public ResponseEntity<ApiResponse<Void>> markHelpful(@PathVariable UUID reviewId) {
+        reviewService.markHelpful(reviewId);
+        return ResponseEntity.ok(ApiResponse.success("Review marked as helpful", null));
+    }
 }

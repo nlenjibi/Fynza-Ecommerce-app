@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,4 +39,13 @@ public interface OrderItemRepository extends BaseRepository<OrderItem, UUID> {
               AND oi.order.status = 'DELIVERED'
             """)
     long countTotalSoldByProduct(@Param("productId") UUID productId);
+
+    @Query("SELECT COUNT(oi) FROM OrderItem oi WHERE oi.product.seller.id = :sellerId")
+    long countByProductSellerId(@Param("sellerId") UUID sellerId);
+
+    @Query("SELECT COALESCE(SUM(oi.price * oi.quantity), 0) FROM OrderItem oi WHERE oi.product.seller.id = :sellerId AND oi.order.status IN ('DELIVERED', 'CONFIRMED')")
+    BigDecimal sumRevenueBySellerId(@Param("sellerId") UUID sellerId);
+
+    @Query("SELECT oi.product.seller.id, COUNT(oi) FROM OrderItem oi WHERE oi.order.status IN ('DELIVERED', 'CONFIRMED') GROUP BY oi.product.seller.id ORDER BY COUNT(oi) DESC")
+    List<Object[]> findTopSellerIdsByOrderCount(org.springframework.data.domain.Pageable pageable);
 }

@@ -52,6 +52,7 @@ public class ProductResponse {
     private Boolean isBestseller;
     private SellerInfo seller;
     private String status;
+    private Boolean isApproved;
     private String inventoryStatus;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

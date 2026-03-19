@@ -89,7 +89,11 @@ public class Product extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private ProductStatus status = ProductStatus.DRAFT;
+    private ProductStatus status = ProductStatus.PENDING;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isApproved = false;
 
     @Enumerated(EnumType.STRING)
     @Builder.Default

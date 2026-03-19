@@ -93,17 +93,24 @@ public class SecurityConfig {
                         .accessDeniedHandler(customAccessDeniedHandler)
                 )
 
-                // Session is STATELESS for JWT-based API authentication.
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-
                 .authorizeHttpRequests(auth -> {
+                    auth
+                            .requestMatchers("/api/api/v1/products", "/api/api/v1/products/").permitAll()
+                            .requestMatchers("/api/api/v1/products/**").permitAll();
+                    
                     if (securityRules != null) {
                         securityRules.forEach(rule -> rule.configure(auth));
                     }
                     auth.anyRequest().authenticated();
                 })
+
+                .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(endpoint -> endpoint
+                                .authorizationRequestRepository(httpSessionOAuth2AuthorizationRequestRepository())
+                        )
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
+                        .failureHandler(oAuth2AuthenticationFailureHandler)
+                )
 
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -112,6 +119,7 @@ public class SecurityConfig {
     }
 
     // ── Beans ──────────────────────────────────────────────────────────────────
+
 
     @Bean
     public HttpSessionOAuth2AuthorizationRequestRepository httpSessionOAuth2AuthorizationRequestRepository() {

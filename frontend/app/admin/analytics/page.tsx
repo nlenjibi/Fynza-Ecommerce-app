@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AdminSidebar } from "@/components/admin/admin-sidebar"
 import { AdminHeader } from "@/components/admin/admin-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { AnalyticsSkeleton } from "@/components/skeletons"
 import {
   TrendingUp,
   TrendingDown,
@@ -116,6 +117,26 @@ const colorMap: Record<string, string> = {
 
 export default function AnalyticsPage() {
   const [dateRange, setDateRange] = useState("this-month")
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1500)
+    return () => clearTimeout(timer)
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen bg-gray-50">
+        <AdminSidebar />
+        <div className="flex-1 ml-64">
+          <AdminHeader title="Analytics" subtitle="Platform performance insights" />
+          <main className="p-6">
+            <AnalyticsSkeleton />
+          </main>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-50">

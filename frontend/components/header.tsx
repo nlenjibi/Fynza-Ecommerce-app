@@ -1,6 +1,6 @@
 "use client"
 
-import { Search, ShoppingCart, User, HelpCircle, ChevronDown, Menu, Heart, Bell, Smartphone, ShoppingBag, Home, Laptop, Shirt, Dumbbell, Baby, Gamepad2, Tv, Package } from "lucide-react"
+import { Search, ShoppingCart, User, HelpCircle, ChevronDown, Menu, Heart, Bell, Smartphone, ShoppingBag, Home, Laptop, Shirt, Dumbbell, Baby, Gamepad2, Tv, Package, Store } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -215,6 +215,14 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
+
+            {/* Stores */}
+            <Link href="/stores">
+              <Button variant="ghost" className="flex items-center gap-2">
+                <Store className="h-5 w-5" />
+                <span>Stores</span>
+              </Button>
+            </Link>
 
             {/* Support */}
             <DropdownMenu>

@@ -11,8 +11,13 @@ import {
   CreditCard,
   Bell,
   LogOut,
-  ChevronRight,
   User,
+  Lock,
+  Shield,
+  HelpCircle,
+  Settings,
+  Mail,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -32,11 +37,37 @@ const navigation = [
     ],
   },
   {
+    title: 'MY STORES',
+    items: [
+      { name: 'Following', href: '/customer/follows', icon: Users, badge: '12' },
+      { name: 'Messages', href: '/customer/messages', icon: Mail, badge: '3' },
+    ],
+  },
+  {
     title: 'PREFERENCES',
     items: [
       { name: 'Addresses', href: '/customer/addresses', icon: MapPin },
       { name: 'Payment Methods', href: '/customer/payments', icon: CreditCard },
+      { name: 'Notification Settings', href: '/customer/notification-settings', icon: Bell },
+    ],
+  },
+  {
+    title: 'SECURITY',
+    items: [
+      { name: 'Change Password', href: '/customer/change-password', icon: Lock },
+      { name: 'Two-Factor Authentication', href: '/customer/2fa', icon: Shield },
+    ],
+  },
+  {
+    title: 'COMMUNICATION',
+    items: [
       { name: 'Notifications', href: '/customer/notifications', icon: Bell },
+    ],
+  },
+  {
+    title: 'SUPPORT',
+    items: [
+      { name: 'Help / Contact', href: '/customer/help', icon: HelpCircle },
     ],
   },
 ];
@@ -105,10 +136,10 @@ export function CustomerSidebar({ isOpen: externalIsOpen, onClose }: CustomerSid
         ))}
       </nav>
 
-      <div className="absolute bottom-4 left-4 right-4">
-        <button className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors border border-gray-200">
+      <div className="p-4 border-t border-border mt-auto">
+        <button className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
           <LogOut className="h-4 w-4" />
-          Sign Out
+          <span>Sign Out</span>
         </button>
       </div>
     </aside>

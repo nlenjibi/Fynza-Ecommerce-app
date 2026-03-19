@@ -7,7 +7,7 @@ import ecommerce.graphql.dto.UserResponceDto;
 import ecommerce.graphql.input.PageInput;
 import ecommerce.graphql.input.SortDirection;
 import ecommerce.graphql.input.UserFilterInput;
-import ecommerce.modules.admin.AdminDashboardDto;
+import ecommerce.modules.admin.dto.AdminDashboardDto;
 import ecommerce.modules.admin.service.AdminService;
 import ecommerce.modules.user.dto.UserCreateRequest;
 import ecommerce.modules.user.dto.UserDto;

@@ -1,6 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react"
+import { trackingService } from "@/lib/services/tracking"
 
 export interface WishlistItem {
   id: number
@@ -54,11 +55,26 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       if (existingItem) {
         return prevItems
       }
+      
+      trackingService.trackAddToWishlist({
+        id: String(newItem.id),
+        name: newItem.name,
+        price: parseFloat(newItem.price),
+      })
+      
       return [...prevItems, newItem]
     })
   }
 
   const removeItem = (id: number) => {
+    const item = items.find((item) => item.id === id)
+    if (item) {
+      trackingService.trackRemoveFromWishlist({
+        id: String(item.id),
+        name: item.name,
+        price: parseFloat(item.price),
+      })
+    }
     setItems((prevItems) => prevItems.filter((item) => item.id !== id))
   }
 
