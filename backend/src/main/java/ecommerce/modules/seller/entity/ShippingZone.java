@@ -10,7 +10,8 @@ import java.math.BigDecimal;
 
 @Entity
 @Table(name = "shipping_zones", indexes = {
-    @Index(name = "idx_shipping_zone_seller", columnList = "seller_id")
+    @Index(name = "idx_shipping_zone_seller", columnList = "seller_id"),
+    @Index(name = "idx_shipping_zone_region", columnList = "region")
 })
 @Getter
 @Setter
@@ -29,9 +30,20 @@ public class ShippingZone extends BaseEntity {
     @Column(name = "zone_description", length = 255)
     private String zoneDescription;
 
+    @Column(name = "region", length = 50)
+    private String region;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "delivery_method", length = 30)
+    @Builder.Default
+    private DeliveryMethod deliveryMethod = DeliveryMethod.DIRECT_ADDRESS;
+
     @Column(name = "shipping_cost", precision = 10, scale = 2, nullable = false)
     @Builder.Default
     private BigDecimal shippingCost = BigDecimal.ZERO;
+
+    @Column(name = "free_shipping_min", precision = 10, scale = 2)
+    private BigDecimal freeShippingMin;
 
     @Column(name = "estimated_days", length = 50)
     private String estimatedDays;
@@ -39,4 +51,10 @@ public class ShippingZone extends BaseEntity {
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;
+
+    public enum DeliveryMethod {
+        DIRECT_ADDRESS,
+        BUS_STATION,
+        SHIPPING
+    }
 }

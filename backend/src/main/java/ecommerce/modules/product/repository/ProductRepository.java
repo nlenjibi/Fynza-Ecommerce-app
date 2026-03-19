@@ -77,4 +77,13 @@ public interface ProductRepository extends BaseRepository<Product, UUID> {
 
     @Query("SELECT COUNT(p) FROM Product p WHERE p.seller.id = :sellerId AND p.inventoryStatus = 'LOW_STOCK'")
     long countBySellerIdAndLowStock(@Param("sellerId") UUID sellerId);
+
+    @EntityGraph(attributePaths = {"category", "seller"})
+    Page<Product> findByStatusAndIsApproved(ProductStatus status, Boolean isApproved, Pageable pageable);
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.status = 'PENDING'")
+    long countPendingProducts();
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.status = 'PENDING' AND p.isApproved = false")
+    long countPendingApproval();
 }

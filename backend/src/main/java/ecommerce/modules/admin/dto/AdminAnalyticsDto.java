@@ -151,4 +151,60 @@ public class AdminAnalyticsDto {
         private BigDecimal revenue;
         private Long orders;
     }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PaymentMethodBreakdown {
+        private String method;
+        private String displayName;
+        private Long transactions;
+        private BigDecimal amount;
+        private Double share;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CommissionMetrics {
+        private BigDecimal totalCommission;
+        private Double growth;
+        private BigDecimal platformCommission;
+        private BigDecimal transactionFees;
+        private BigDecimal paymentProcessing;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SellerPayoutMetrics {
+        private BigDecimal total;
+        private Double growth;
+        private BigDecimal pending;
+        private BigDecimal processing;
+        private BigDecimal completed;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class NetRevenueMetrics {
+        private BigDecimal netRevenue;
+        private Double growth;
+        private BigDecimal grossRevenue;
+        private BigDecimal refunds;
+        private BigDecimal payouts;
+    }
+
+    private List<PaymentMethodBreakdown> paymentMethodBreakdown;
+    private CommissionMetrics commissionMetrics;
+    private SellerPayoutMetrics sellerPayoutMetrics;
+    private NetRevenueMetrics netRevenueMetrics;
+    private BigDecimal todayRevenue;
+    private BigDecimal pendingPayments;
+    private BigDecimal refundsProcessed;
 }

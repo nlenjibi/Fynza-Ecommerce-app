@@ -17,7 +17,8 @@ public interface ProductMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "slug", ignore = true)
-    @Mapping(target = "status", constant = "DRAFT")
+    @Mapping(target = "status", constant = "PENDING")
+    @Mapping(target = "isApproved", constant = "false")
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "seller", ignore = true)
@@ -31,6 +32,7 @@ public interface ProductMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "status", ignore = true)
+    @Mapping(target = "isApproved", ignore = true)
     @Mapping(target = "seller", ignore = true)
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "brand", source = "brand")

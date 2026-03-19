@@ -398,7 +398,10 @@ public class SellerServiceImpl implements SellerService {
                 .seller(profile)
                 .zoneName(request.getZoneName())
                 .zoneDescription(request.getZoneDescription())
+                .region(request.getRegion())
+                .deliveryMethod(request.getDeliveryMethod())
                 .shippingCost(request.getShippingCost())
+                .freeShippingMin(request.getFreeShippingMin())
                 .estimatedDays(request.getEstimatedDays())
                 .isActive(true)
                 .build();
@@ -424,7 +427,10 @@ public class SellerServiceImpl implements SellerService {
 
         if (request.getZoneName() != null) zone.setZoneName(request.getZoneName());
         if (request.getZoneDescription() != null) zone.setZoneDescription(request.getZoneDescription());
+        if (request.getRegion() != null) zone.setRegion(request.getRegion());
+        if (request.getDeliveryMethod() != null) zone.setDeliveryMethod(request.getDeliveryMethod());
         if (request.getShippingCost() != null) zone.setShippingCost(request.getShippingCost());
+        if (request.getFreeShippingMin() != null) zone.setFreeShippingMin(request.getFreeShippingMin());
         if (request.getEstimatedDays() != null) zone.setEstimatedDays(request.getEstimatedDays());
 
         ShippingZone saved = shippingZoneRepository.save(zone);
@@ -506,7 +512,10 @@ public class SellerServiceImpl implements SellerService {
                 .id(zone.getId())
                 .zoneName(zone.getZoneName())
                 .zoneDescription(zone.getZoneDescription())
+                .region(zone.getRegion())
+                .deliveryMethod(zone.getDeliveryMethod())
                 .shippingCost(zone.getShippingCost())
+                .freeShippingMin(zone.getFreeShippingMin())
                 .estimatedDays(zone.getEstimatedDays())
                 .isActive(zone.getIsActive())
                 .updatedAt(zone.getUpdatedAt())

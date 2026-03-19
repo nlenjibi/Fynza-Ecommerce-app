@@ -339,6 +339,86 @@ public class ReviewServiceImpl implements ReviewService {
                 .build();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public ReviewStatsResponse getAdminReviewStats() {
+        log.debug("Fetching admin review statistics");
+
+        Object[] stats = reviewRepository.getAdminReviewStats();
+        long pending = reviewRepository.countPendingReviews();
+        long approved = reviewRepository.countApprovedReviews();
+        long rejected = reviewRepository.countRejectedReviews();
+
+        long total = 0;
+        Double avgRating = 0.0;
+        if (stats != null && stats.length >= 2) {
+            if (stats[0] instanceof Number) {
+                total = ((Number) stats[0]).longValue();
+            }
+            if (stats[1] instanceof Number) {
+                avgRating = ((Number) stats[1]).doubleValue();
+            }
+        }
+
+        return ReviewStatsResponse.builder()
+                .totalReviews(total)
+                .pendingReviews(pending)
+                .approvedReviews(approved)
+                .rejectedReviews(rejected)
+                .averageRating(avgRating)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ReviewStatsResponse getSellerReviewStats(UUID sellerId) {
+        log.debug("Fetching review statistics for seller {}", sellerId);
+
+        Object[] stats = reviewRepository.getSellerReviewStats(sellerId);
+        long pending = reviewRepository.countPendingSellerReviews(sellerId);
+        List<Object[]> distribution = reviewRepository.getSellerRatingDistribution(sellerId);
+
+        long total = 0;
+        Double avgRating = 0.0;
+        if (stats != null && stats.length >= 2) {
+            if (stats[0] instanceof Number) {
+                total = ((Number) stats[0]).longValue();
+            }
+            if (stats[1] instanceof Number) {
+                avgRating = ((Number) stats[1]).doubleValue();
+            }
+        }
+
+        Map<Integer, Long> ratingDist = new HashMap<>();
+        long fiveStar = 0, fourStar = 0, threeStar = 0, twoStar = 0, oneStar = 0;
+        if (distribution != null) {
+            for (Object[] row : distribution) {
+                Integer rating = (Integer) row[0];
+                Long count = ((Number) row[1]).longValue();
+                ratingDist.put(rating, count);
+                switch (rating) {
+                    case 5 -> fiveStar = count;
+                    case 4 -> fourStar = count;
+                    case 3 -> threeStar = count;
+                    case 2 -> twoStar = count;
+                    case 1 -> oneStar = count;
+                }
+            }
+        }
+
+        return ReviewStatsResponse.builder()
+                .totalReviews(total)
+                .pendingReviews(pending)
+                .averageRating(avgRating)
+                .ratingDistribution(ratingDist)
+                .fiveStarReviews(fiveStar)
+                .fourStarReviews(fourStar)
+                .threeStarReviews(threeStar)
+                .twoStarReviews(twoStar)
+                .oneStarReviews(oneStar)
+                .build();
+    }
+
     private ReviewSummaryResponse.RatingDistribution buildRatingDistribution(List<Object[]> distribution) {
         Map<Integer, Long> countMap = new HashMap<>();
         Map<Integer, Double> percentageMap = new HashMap<>();
@@ -490,7 +570,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     @CacheEvict(value = {
             "reviews",
-            "reviews-predicate",
+            "product-reviews",
             "review-stats",
             "rating-distribution",
             "review-trends",
@@ -500,6 +580,54 @@ public class ReviewServiceImpl implements ReviewService {
         log.info("Bulk rejecting {} reviews", reviewIds.size());
         return reviewRepository.rejectReviews(reviewIds, reason);
     }
+
+    @Override
+    @CacheEvict(value = {
+            "reviews",
+            "product-reviews",
+            "review-stats",
+            "rating-distribution",
+            "review-trends",
+            "admin-reviews"
+    }, allEntries = true)
+    public int bulkDeleteReviews(List<UUID> reviewIds) {
+        log.info("Bulk deleting {} reviews", reviewIds.size());
+        int count = 0;
+        for (UUID reviewId : reviewIds) {
+            Review review = reviewRepository.findById(reviewId).orElse(null);
+            if (review != null) {
+                review.softDelete();
+                reviewRepository.save(review);
+                count++;
+            }
+        }
+        return count;
+    }
+
+    @Override
+    public ReviewResponse sellerReply(UUID reviewId, UUID sellerId, String reply) {
+        log.info("Seller {} replying to review {}", sellerId, reviewId);
+
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("Review not found"));
+
+        if (review.getProduct() == null || review.getProduct().getSeller() == null) {
+            throw new BadRequestException("Review does not belong to a product");
+        }
+
+        if (!review.getProduct().getSeller().getId().equals(sellerId)) {
+            throw new AuthorizationException("You can only reply to reviews on your own products");
+        }
+
+        review.setSellerReply(reply);
+        review.setSellerRepliedAt(java.time.LocalDateTime.now());
+        
+        Review saved = reviewRepository.save(review);
+        return reviewMapper.toResponse(saved);
+    }
+
+
+}
 
 
 }

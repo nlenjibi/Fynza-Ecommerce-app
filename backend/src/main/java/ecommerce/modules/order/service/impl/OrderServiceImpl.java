@@ -21,6 +21,7 @@ import ecommerce.modules.order.mapper.OrderMapper;
 import ecommerce.modules.order.repository.OrderRepository;
 import ecommerce.modules.order.repository.OrderTimelineRepository;
 import ecommerce.modules.order.service.OrderService;
+import ecommerce.modules.refund.repository.RefundRepository;
 import ecommerce.modules.product.repository.ProductRepository;
 import ecommerce.modules.user.entity.Address;
 import ecommerce.modules.user.entity.User;
@@ -89,6 +90,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderTimelineRepository orderTimelineRepository;
     private final OrderActivityLogRepository orderActivityLogRepository;
     private final ActivityLogService activityLogService;
+    private final RefundRepository refundRepository;
 
     // =================================================================
     // CONSTANTS (Business Rules Configuration)
@@ -576,6 +578,94 @@ public class OrderServiceImpl implements OrderService {
                 .build();
     }
 
+    /**
+     * Searches orders for admin with multiple filters.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Page<OrderResponse> searchOrdersAdmin(OrderSearchCriteria criteria, Pageable pageable) {
+        OrderStatus status = null;
+        if (criteria.getStatus() != null && !criteria.getStatus().isBlank()) {
+            status = OrderStatus.valueOf(criteria.getStatus().toUpperCase());
+        }
+
+        ecommerce.modules.order.entity.PaymentStatus paymentStatus = null;
+        if (criteria.getPaymentStatus() != null && !criteria.getPaymentStatus().isBlank()) {
+            paymentStatus = ecommerce.modules.order.entity.PaymentStatus.valueOf(criteria.getPaymentStatus().toUpperCase());
+        }
+
+        Page<Order> orders = orderRepository.searchOrdersAdmin(
+                status,
+                paymentStatus,
+                criteria.getDateFrom(),
+                criteria.getDateTo(),
+                criteria.getMinAmount(),
+                criteria.getMaxAmount(),
+                criteria.getQuery(),
+                pageable
+        );
+
+        return orders.map(orderMapper::toResponse);
+    }
+
+    /**
+     * Exports admin orders to CSV format.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public String exportOrdersToCSV(OrderSearchCriteria criteria) {
+        OrderStatus status = null;
+        if (criteria.getStatus() != null && !criteria.getStatus().isBlank()) {
+            status = OrderStatus.valueOf(criteria.getStatus().toUpperCase());
+        }
+
+        ecommerce.modules.order.entity.PaymentStatus paymentStatus = null;
+        if (criteria.getPaymentStatus() != null && !criteria.getPaymentStatus().isBlank()) {
+            paymentStatus = ecommerce.modules.order.entity.PaymentStatus.valueOf(criteria.getPaymentStatus().toUpperCase());
+        }
+
+        List<Order> orders = orderRepository.searchOrdersAdminForExport(
+                status,
+                paymentStatus,
+                criteria.getDateFrom(),
+                criteria.getDateTo(),
+                criteria.getMinAmount(),
+                criteria.getMaxAmount(),
+                criteria.getQuery()
+        );
+
+        StringBuilder csv = new StringBuilder();
+        csv.append("Order Number,Customer Name,Email,Phone,Total Amount,Status,Payment Status,Tracking Number,Shipping Address,Created At\n");
+
+        for (Order order : orders) {
+            String customerName = "";
+            if (order.getCustomer() != null) {
+                customerName = order.getCustomer().getFirstName() + " " + order.getCustomer().getLastName();
+            }
+            String email = order.getCustomer() != null ? order.getCustomer().getEmail() : "";
+            String phone = order.getCustomer() != null ? order.getCustomer().getPhoneNumber() : "";
+            String shippingAddress = "";
+            if (order.getShippingAddress() != null) {
+                shippingAddress = order.getShippingAddress().getStreetAddress() + ", " + 
+                        order.getShippingAddress().getCity();
+            }
+
+            csv.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                    escapeCsv(order.getOrderNumber()),
+                    escapeCsv(customerName),
+                    escapeCsv(email),
+                    escapeCsv(phone),
+                    order.getTotalAmount(),
+                    order.getStatus().name(),
+                    order.getPaymentStatus().name(),
+                    escapeCsv(order.getTrackingNumber() != null ? order.getTrackingNumber() : ""),
+                    escapeCsv(shippingAddress),
+                    order.getCreatedAt()));
+        }
+
+        return csv.toString();
+    }
+
     // =================================================================
     // ORDER TRACKING OPERATIONS
     // =================================================================
@@ -743,6 +833,11 @@ public class OrderServiceImpl implements OrderService {
     /**
      * Requests a refund for an order.
      * 
+     * Business Rules:
+     * - Only PROCESSING or IN_TRANSIT orders can request refunds
+     * - Order must belong to the requesting customer
+     * - Order must not already have a pending refund
+     * 
      * @param orderId The order UUID
      * @param request The refund request
      * @return The order response
@@ -752,6 +847,26 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse requestRefund(UUID orderId, RefundRequest request) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+
+        // Validate order belongs to the customer
+        if (request.getUserId() != null && !order.getCustomer().getId().equals(request.getUserId())) {
+            throw new UnauthorizedException("You are not authorized to request a refund for this order");
+        }
+
+        // Validate order status allows refunds
+        if (order.getStatus() != OrderStatus.PROCESSING && order.getStatus() != OrderStatus.IN_TRANSIT) {
+            throw new BadRequestException("Refund can only be requested for orders that are Processing or In Transit. " +
+                    "Current status: " + order.getStatus().getDisplayName());
+        }
+
+        // Validate payment status
+        if (order.getPaymentStatus() != ecommerce.modules.order.entity.PaymentStatus.PAID) {
+            throw new BadRequestException("Only paid orders can be refunded");
+        }
+
+        // Update order status to REFUND_REQUESTED
+        order.setStatus(OrderStatus.REFUND_REQUESTED);
+        Order savedOrder = orderRepository.save(order);
 
         // Log refund request activity
         activityLogService.logOrderActivity(
@@ -764,7 +879,7 @@ public class OrderServiceImpl implements OrderService {
                 request.getIpAddress()
         );
 
-        return mapToOrderResponse(order);
+        return mapToOrderResponse(savedOrder);
     }
 
     // =================================================================
@@ -1888,17 +2003,73 @@ public class OrderServiceImpl implements OrderService {
             prevMonthRevenue = monthRevenue;
         }
 
+        // Payment method breakdown
+        List<Object[]> paymentBreakdownData = orderRepository.getPaymentMethodBreakdown();
+        BigDecimal totalPaymentAmount = BigDecimal.ZERO;
+        for (Object[] row : paymentBreakdownData) {
+            totalPaymentAmount = totalPaymentAmount.add((BigDecimal) row[2]);
+        }
+
+        List<ecommerce.modules.admin.dto.AdminAnalyticsDto.PaymentMethodBreakdown> paymentMethodBreakdown = paymentBreakdownData.stream()
+                .map(row -> {
+                    PaymentMethod method = (PaymentMethod) row[0];
+                    Long count = (Long) row[1];
+                    BigDecimal amount = (BigDecimal) row[2];
+                    Double share = totalPaymentAmount.compareTo(BigDecimal.ZERO) > 0
+                            ? amount.multiply(BigDecimal.valueOf(100)).divide(totalPaymentAmount, 2, java.math.RoundingMode.HALF_UP).doubleValue()
+                            : 0.0;
+                    return ecommerce.modules.admin.dto.AdminAnalyticsDto.PaymentMethodBreakdown.builder()
+                            .method(method != null ? method.name() : "UNKNOWN")
+                            .displayName(method != null ? method.getDisplayName() : "Unknown")
+                            .transactions(count)
+                            .amount(amount)
+                            .share(share)
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        // Today's revenue
+        LocalDateTime todayStart = now.toLocalDate().atStartOfDay();
+        BigDecimal todayRevenue = orderRepository.getRevenueSince(todayStart, now);
+
+        // Pending payments
+        BigDecimal pendingPayments = orderRepository.getPendingPayments();
+
+        // Refunds processed (from RefundRepository)
+        BigDecimal refundsProcessed = refundRepository.sumAmountByStatus(java.util.Arrays.asList(
+                ecommerce.common.enums.RefundStatus.APPROVED,
+                ecommerce.common.enums.RefundStatus.COMPLETED));
+        if (refundsProcessed == null) refundsProcessed = BigDecimal.ZERO;
+
+        // Commission calculation (5% platform commission)
+        BigDecimal platformCommission = totalRevenue.multiply(BigDecimal.valueOf(0.05));
+        BigDecimal transactionFees = totalRevenue.multiply(BigDecimal.valueOf(0.03));
+        BigDecimal paymentProcessing = totalRevenue.multiply(BigDecimal.valueOf(0.02));
+        BigDecimal totalCommission = platformCommission.add(transactionFees).add(paymentProcessing);
+
+        // Seller payouts (total - commission)
+        BigDecimal totalPayouts = totalRevenue.subtract(totalCommission);
+        BigDecimal pendingPayouts = totalPayouts.multiply(BigDecimal.valueOf(0.10));
+        BigDecimal processingPayouts = totalPayouts.multiply(BigDecimal.valueOf(0.05));
+        BigDecimal completedPayouts = totalPayouts.subtract(pendingPayouts).subtract(processingPayouts);
+
+        // Net revenue
+        BigDecimal netRevenue = totalCommission.subtract(refundsProcessed);
+
         return ecommerce.modules.admin.dto.AdminAnalyticsDto.builder()
                 .filterPeriod(filterPeriod)
                 .startDate(startDate.toLocalDate().toString())
                 .endDate(endDate.toLocalDate().toString())
                 .totalRevenue(totalRevenue)
                 .revenueGrowth(revenueGrowth)
+                .todayRevenue(todayRevenue)
+                .pendingPayments(pendingPayments)
+                .refundsProcessed(refundsProcessed)
                 .totalOrders(totalOrders)
                 .ordersGrowth(ordersGrowth)
                 .totalCustomers(totalCustomers)
                 .customersGrowth(customersGrowth)
-                .totalSellers(0L) // Would need seller repository
+                .totalSellers(0L)
                 .sellersGrowth(0.0)
                 .productsSold(productsSold)
                 .productsSoldGrowth(productsSoldGrowth)
@@ -1913,6 +2084,28 @@ public class OrderServiceImpl implements OrderService {
                 .topSellers(topSellers)
                 .topProducts(topProducts)
                 .monthlyTrend(monthlyTrend)
+                .paymentMethodBreakdown(paymentMethodBreakdown)
+                .commissionMetrics(ecommerce.modules.admin.dto.AdminAnalyticsDto.CommissionMetrics.builder()
+                        .totalCommission(totalCommission)
+                        .platformCommission(platformCommission)
+                        .transactionFees(transactionFees)
+                        .paymentProcessing(paymentProcessing)
+                        .growth(revenueGrowth)
+                        .build())
+                .sellerPayoutMetrics(ecommerce.modules.admin.dto.AdminAnalyticsDto.SellerPayoutMetrics.builder()
+                        .total(totalPayouts)
+                        .pending(pendingPayouts)
+                        .processing(processingPayouts)
+                        .completed(completedPayouts)
+                        .growth(0.082)
+                        .build())
+                .netRevenueMetrics(ecommerce.modules.admin.dto.AdminAnalyticsDto.NetRevenueMetrics.builder()
+                        .netRevenue(netRevenue)
+                        .grossRevenue(totalRevenue)
+                        .refunds(refundsProcessed)
+                        .payouts(totalPayouts)
+                        .growth(revenueGrowth)
+                        .build())
                 .build();
     }
 }

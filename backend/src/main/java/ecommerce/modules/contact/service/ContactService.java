@@ -5,6 +5,8 @@ import ecommerce.modules.contact.dto.ContactMessageRequest;
 import ecommerce.modules.contact.dto.ContactMessageResponse;
 import ecommerce.modules.contact.dto.ContactResponseRequest;
 import ecommerce.modules.contact.entity.ContactMessage;
+import ecommerce.modules.contact.entity.ContactMessage.ContactCategory;
+import ecommerce.modules.contact.entity.ContactMessage.ContactPriority;
 import ecommerce.modules.contact.entity.ContactMessage.ContactStatus;
 import ecommerce.modules.contact.repository.ContactMessageRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +36,9 @@ public class ContactService {
                 .phone(request.getPhone())
                 .subject(request.getSubject())
                 .message(request.getMessage())
-                .status(ContactStatus.PENDING)
+                .status(ContactStatus.OPEN)
+                .priority(ContactPriority.MEDIUM)
+                .category(request.getCategory() != null ? request.getCategory() : ContactCategory.GENERAL_INQUIRY)
                 .build();
 
         ContactMessage savedMessage = contactMessageRepository.save(message);
@@ -97,6 +101,26 @@ public class ContactService {
     }
 
     @Transactional
+    public ContactMessageResponse categorizeMessage(UUID id, ContactCategory category, ContactPriority priority) {
+        log.info("Categorizing contact message {} - category: {}, priority: {}", id, category, priority);
+
+        ContactMessage message = contactMessageRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Contact message not found with ID: " + id));
+
+        if (category != null) {
+            message.setCategory(category);
+        }
+        if (priority != null) {
+            message.setPriority(priority);
+        }
+
+        ContactMessage updatedMessage = contactMessageRepository.save(message);
+        log.info("Contact message {} categorized successfully", id);
+
+        return ContactMessageResponse.from(updatedMessage);
+    }
+
+    @Transactional
     public void deleteMessage(UUID id) {
         log.info("Deleting contact message with ID: {}", id);
 
@@ -119,6 +143,11 @@ public class ContactService {
     @Transactional(readOnly = true)
     public long countMessagesByStatus(ContactStatus status) {
         return contactMessageRepository.countByStatus(status);
+    }
+
+    @Transactional(readOnly = true)
+    public long countTotalMessages() {
+        return contactMessageRepository.count();
     }
 
     @Transactional

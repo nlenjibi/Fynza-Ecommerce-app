@@ -12,6 +12,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { trackingService } from "@/lib/services/tracking"
 
 const locations = [
   "Accra",
@@ -121,6 +122,13 @@ export default function ProductPage() {
     fetchFlashSale()
     fetchTags()
     fetchPromotions()
+    
+    trackingService.trackProductView({
+      id: "product-1",
+      name: "Shop Bekia Women's Lace Up Canvas Sports Shoes",
+      category: "Fashion",
+      price: 45.99,
+    })
   }, [])
 
   useEffect(() => {
@@ -244,6 +252,15 @@ export default function ProductPage() {
 
   const handleAddToCart = () => {
     console.log("[v0] Product added to cart:", { selectedSize, quantity })
+    
+    trackingService.trackAddToCart({
+      id: "product-1",
+      name: "Shop Bekia Women's Lace Up Canvas Sports Shoes",
+      category: "Fashion",
+      price: 45.99,
+      quantity: quantity,
+    })
+    
     setIsAdded(true)
     setTimeout(() => {
       setIsAdded(false)

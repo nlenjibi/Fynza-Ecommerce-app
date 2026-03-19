@@ -48,5 +48,7 @@ public interface ProductService {
 
     ProductResponse approveProduct(UUID id);
 
+    ProductResponse rejectProduct(UUID id, String reason);
+
     ProductResponse updateProductStatus(UUID id, ProductStatus status);
 }

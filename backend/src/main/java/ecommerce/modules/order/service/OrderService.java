@@ -177,6 +177,17 @@ public interface OrderService {
      */
     OrderStatsResponse getOrderStatistics();
 
+    /**
+     * Searches orders for admin with multiple filters.
+     */
+    Page<OrderResponse> searchOrdersAdmin(OrderSearchCriteria criteria, Pageable pageable);
+
+    /**
+     * Exports admin orders to CSV format.
+     */
+    String exportOrdersToCSV(OrderSearchCriteria criteria);
+
+
     // =================================================================
     // ORDER TRACKING OPERATIONS
     // =================================================================
@@ -383,6 +394,7 @@ public interface OrderService {
     class OrderSearchCriteria {
         private String query;
         private String status;
+        private String paymentStatus;
         private LocalDateTime dateFrom;
         private LocalDateTime dateTo;
         private BigDecimal minAmount;

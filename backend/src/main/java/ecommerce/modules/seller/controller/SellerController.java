@@ -13,6 +13,8 @@ import ecommerce.modules.product.dto.SellerProductStatsResponse;
 import ecommerce.modules.product.dto.UpdateProductRequest;
 import ecommerce.modules.product.service.ProductService;
 import ecommerce.modules.review.dto.ReviewResponse;
+import ecommerce.modules.review.dto.ReviewStatsResponse;
+import ecommerce.modules.review.service.ReviewService;
 import ecommerce.modules.seller.dto.*;
 import ecommerce.modules.seller.service.SellerService;
 import ecommerce.modules.tag.dto.TagResponse;
@@ -45,6 +47,7 @@ public class SellerController {
     private final SellerService sellerService;
     private final ProductService productService;
     private final OrderService orderService;
+    private final ReviewService reviewService;
 
     @GetMapping("/dashboard")
     @PreAuthorize("hasRole('SELLER')")
@@ -278,6 +281,28 @@ public class SellerController {
         UUID sellerId = UUID.fromString(principal.getId().toString());
         Page<ReviewResponse> reviews = sellerService.getSellerReviews(sellerId, pageable);
         return ResponseEntity.ok(ApiResponse.success("Reviews retrieved successfully", reviews));
+    }
+
+    @GetMapping("/reviews/stats")
+    @PreAuthorize("hasRole('SELLER')")
+    @Operation(summary = "Get seller review statistics", description = "Get review statistics for all products of the seller")
+    public ResponseEntity<ApiResponse<ReviewStatsResponse>> getSellerReviewStats(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        UUID sellerId = UUID.fromString(principal.getId().toString());
+        return ResponseEntity.ok(ApiResponse.success(reviewService.getSellerReviewStats(sellerId)));
+    }
+
+    @PostMapping("/reviews/{reviewId}/reply")
+    @PreAuthorize("hasRole('SELLER')")
+    @Operation(summary = "Reply to review", description = "Seller replies to a review on their product")
+    public ResponseEntity<ApiResponse<ReviewResponse>> replyToReview(
+            @PathVariable UUID reviewId,
+            @RequestBody java.util.Map<String, String> request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        UUID sellerId = UUID.fromString(principal.getId().toString());
+        String reply = request.get("reply");
+        ReviewResponse response = reviewService.sellerReply(reviewId, sellerId, reply);
+        return ResponseEntity.ok(ApiResponse.success("Reply added successfully", response));
     }
 
     @GetMapping("/tags")

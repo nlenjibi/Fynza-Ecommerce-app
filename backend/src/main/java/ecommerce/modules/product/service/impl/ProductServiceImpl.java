@@ -328,6 +328,7 @@ public class ProductServiceImpl implements ProductService {
                 .soldQuantity(product.getSoldQuantity())
                 .seller(sellerInfo)
                 .status(product.getStatus() != null ? product.getStatus().name() : null)
+                .isApproved(product.getIsApproved())
                 .inventoryStatus(product.getInventoryStatus() != null ? product.getInventoryStatus().name() : null)
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
@@ -404,6 +405,7 @@ public class ProductServiceImpl implements ProductService {
                 .soldQuantity(product.getSoldQuantity())
                 .seller(sellerInfo)
                 .status(product.getStatus() != null ? product.getStatus().name() : null)
+                .isApproved(product.getIsApproved())
                 .inventoryStatus(product.getInventoryStatus() != null ? product.getInventoryStatus().name() : null)
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
@@ -526,7 +528,7 @@ public class ProductServiceImpl implements ProductService {
     public AdminProductStatsResponse getAdminProductStats() {
         long total = productRepository.count();
         long active = productRepository.countByStatus(ProductStatus.ACTIVE);
-        long pending = productRepository.countByStatus(ProductStatus.DRAFT);
+        long pending = productRepository.countPendingApproval();
         long outOfStock = productRepository.countByInventoryStatusAndIsActiveTrue(InventoryStatus.OUT_OF_STOCK);
         long lowStock = productRepository.countByInventoryStatusAndIsActiveTrue(InventoryStatus.LOW_STOCK);
 
@@ -545,9 +547,25 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + id));
         
+        product.setIsApproved(true);
         product.setStatus(ProductStatus.ACTIVE);
         Product saved = productRepository.save(product);
         log.info("Approved product: {}", id);
+        
+        return mapToResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public ProductResponse rejectProduct(UUID id, String reason) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + id));
+        
+        product.setIsApproved(false);
+        product.setStatus(ProductStatus.DRAFT);
+        product.setDescription(product.getDescription() + "\n\n rejection reason: " + reason);
+        Product saved = productRepository.save(product);
+        log.info("Rejected product: {} with reason: {}", id, reason);
         
         return mapToResponse(saved);
     }

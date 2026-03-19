@@ -5,6 +5,8 @@ import ecommerce.common.response.PaginatedResponse;
 import ecommerce.modules.contact.dto.ContactMessageRequest;
 import ecommerce.modules.contact.dto.ContactMessageResponse;
 import ecommerce.modules.contact.dto.ContactResponseRequest;
+import ecommerce.modules.contact.entity.ContactMessage.ContactCategory;
+import ecommerce.modules.contact.entity.ContactMessage.ContactPriority;
 import ecommerce.modules.contact.entity.ContactMessage.ContactStatus;
 import ecommerce.modules.contact.service.ContactService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,6 +21,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -83,6 +87,17 @@ public class ContactController {
         return ResponseEntity.ok(ApiResponse.success("Status updated successfully", response));
     }
 
+    @PutMapping("/{id}/categorize")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Categorize message", description = "Set category and priority for contact message - ADMIN only")
+    public ResponseEntity<ApiResponse<ContactMessageResponse>> categorizeMessage(
+            @PathVariable UUID id,
+            @RequestParam(required = false) ContactCategory category,
+            @RequestParam(required = false) ContactPriority priority) {
+        ContactMessageResponse response = contactService.categorizeMessage(id, category, priority);
+        return ResponseEntity.ok(ApiResponse.success("Message categorized successfully", response));
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete message", description = "Soft delete contact message - ADMIN only")
@@ -108,8 +123,10 @@ public class ContactController {
     @GetMapping("/stats")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get message statistics", description = "Get count of messages by status - ADMIN only")
-    public ResponseEntity<ApiResponse<java.util.Map<String, Long>>> getMessageStats() {
-        java.util.Map<String, Long> stats = new java.util.HashMap<>();
+    public ResponseEntity<ApiResponse<Map<String, Long>>> getMessageStats() {
+        Map<String, Long> stats = new HashMap<>();
+        stats.put("total", contactService.countTotalMessages());
+        stats.put("open", contactService.countMessagesByStatus(ContactStatus.OPEN));
         stats.put("pending", contactService.countMessagesByStatus(ContactStatus.PENDING));
         stats.put("inProgress", contactService.countMessagesByStatus(ContactStatus.IN_PROGRESS));
         stats.put("resolved", contactService.countMessagesByStatus(ContactStatus.RESOLVED));

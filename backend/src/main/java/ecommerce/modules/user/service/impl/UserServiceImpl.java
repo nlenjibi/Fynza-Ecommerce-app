@@ -9,11 +9,14 @@ import ecommerce.modules.user.dto.*;
 import ecommerce.modules.user.entity.Role;
 import ecommerce.modules.user.entity.User;
 import ecommerce.modules.user.entity.Address;
+import ecommerce.modules.user.entity.SellerProfile;
 import ecommerce.modules.user.mapper.UserMapper;
 import ecommerce.modules.user.mapper.AddressMapper;
 import ecommerce.modules.user.repository.UserRepository;
 import ecommerce.modules.user.repository.AddressRepository;
+import ecommerce.modules.user.repository.SellerProfileRepository;
 import ecommerce.modules.user.service.UserService;
+import ecommerce.common.enums.VerificationStatus;
 import ecommerce.services.TokenValidationService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +31,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -42,6 +47,7 @@ public class UserServiceImpl implements UserService {
     private final AddressMapper addressMapper;
     private final UserRepository userRepository;
     private final AddressRepository addressRepository;
+    private final SellerProfileRepository sellerProfileRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenValidationService tokenValidationService;
     private final NotificationRepository notificationRepository;
@@ -499,5 +505,158 @@ public class UserServiceImpl implements UserService {
 
         addressRepository.delete(address);
         log.info("Address deleted for user: {}", userId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getCustomerStats() {
+        log.debug("Fetching customer statistics");
+
+        long total = userRepository.countCustomers();
+        long active = userRepository.countActiveCustomers();
+        long blocked = userRepository.countCustomersByStatus(UserStatus.BLOCKED);
+        long inactive = userRepository.countCustomersByStatus(UserStatus.INACTIVE);
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalCustomers", total);
+        stats.put("activeCustomers", active);
+        stats.put("blockedCustomers", blocked);
+        stats.put("inactiveCustomers", inactive);
+
+        return stats;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<UserDto> searchCustomers(String query, String status, Pageable pageable) {
+        log.debug("Searching customers - query: {}, status: {}", query, status);
+
+        UserStatus userStatus = null;
+        if (status != null && !status.isBlank()) {
+            userStatus = UserStatus.valueOf(status.toUpperCase());
+        }
+
+        Page<User> users = userRepository.searchCustomers(query, userStatus, pageable);
+        return users.map(userMapper::toDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String exportCustomersToCSV(String status) {
+        log.info("Exporting customers to CSV - status: {}", status);
+
+        UserStatus userStatus = null;
+        if (status != null && !status.isBlank()) {
+            userStatus = UserStatus.valueOf(status.toUpperCase());
+        }
+
+        List<User> users;
+        if (userStatus != null) {
+            users = userRepository.findByStatus(userStatus, Pageable.unpaged()).getContent();
+        } else {
+            users = userRepository.findAll();
+        }
+
+        StringBuilder csv = new StringBuilder();
+        csv.append("Name,Email,Phone,Status,Joined Date,Last Login\n");
+
+        for (User user : users) {
+            csv.append(String.format("%s,%s,%s,%s,%s,%s\n",
+                    escapeCsv(user.getFullName()),
+                    escapeCsv(user.getEmail()),
+                    escapeCsv(user.getPhoneNumber() != null ? user.getPhoneNumber() : ""),
+                    user.getStatus(),
+                    user.getCreatedAt(),
+                    user.getLastLoginAt() != null ? user.getLastLoginAt() : ""));
+        }
+
+        return csv.toString();
+    }
+
+    private String escapeCsv(String value) {
+        if (value == null) return "";
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<UserDto> searchSellers(String query, String status, Pageable pageable) {
+        log.debug("Searching sellers - query: {}, status: {}", query, status);
+
+        UserStatus userStatus = null;
+        if (status != null && !status.isBlank()) {
+            userStatus = UserStatus.valueOf(status.toUpperCase());
+        }
+
+        Page<SellerProfile> sellers = sellerProfileRepository.searchSellers(query, null, pageable);
+        return sellers.map(seller -> userMapper.toDto(seller.getUser()));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getSellerStats() {
+        log.debug("Fetching seller statistics");
+
+        long total = sellerProfileRepository.countAllSellers();
+        long active = sellerProfileRepository.countBySellerStatus(UserStatus.ACTIVE);
+        long pending = sellerProfileRepository.countBySellerStatus(UserStatus.PENDING);
+        long suspended = sellerProfileRepository.countBySellerStatus(UserStatus.SUSPENDED);
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalSellers", total);
+        stats.put("activeSellers", active);
+        stats.put("pendingSellers", pending);
+        stats.put("suspendedSellers", suspended);
+
+        return stats;
+    }
+
+    @Override
+    @Transactional
+    public UserDto approveSeller(UUID sellerId) {
+        log.info("Approving seller: {}", sellerId);
+
+        SellerProfile profile = sellerProfileRepository.findById(sellerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Seller profile not found"));
+
+        profile.setSellerStatus(UserStatus.ACTIVE);
+        profile.setVerificationStatus(VerificationStatus.VERIFIED);
+        sellerProfileRepository.save(profile);
+
+        log.info("Seller {} approved successfully", sellerId);
+        return userMapper.toDto(profile.getUser());
+    }
+
+    @Override
+    @Transactional
+    public UserDto suspendSeller(UUID sellerId) {
+        log.info("Suspending seller: {}", sellerId);
+
+        SellerProfile profile = sellerProfileRepository.findById(sellerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Seller profile not found"));
+
+        profile.setSellerStatus(UserStatus.SUSPENDED);
+        sellerProfileRepository.save(profile);
+
+        log.info("Seller {} suspended successfully", sellerId);
+        return userMapper.toDto(profile.getUser());
+    }
+
+    @Override
+    @Transactional
+    public UserDto reactivateSeller(UUID sellerId) {
+        log.info("Reactivating seller: {}", sellerId);
+
+        SellerProfile profile = sellerProfileRepository.findById(sellerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Seller profile not found"));
+
+        profile.setSellerStatus(UserStatus.ACTIVE);
+        sellerProfileRepository.save(profile);
+
+        log.info("Seller {} reactivated successfully", sellerId);
+        return userMapper.toDto(profile.getUser());
     }
 }

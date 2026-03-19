@@ -16,7 +16,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -184,5 +186,45 @@ public class CategoryServiceImpl implements CategoryService {
         log.info("Category created successfully with ID: {}", savedCategory.getId());
 
         return categoryMapper.toSimpleResponse(savedCategory);
+    }
+
+    @Override
+    @Cacheable(value = "categories", key = "'active'")
+    public List<CategoryResponse> findActiveCategories() {
+        log.debug("Fetching active categories");
+        return categoryRepository.findByIsActive(true).stream()
+                .map(categoryMapper::toSimpleResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = "categories", allEntries = true)
+    public CategoryResponse updateStatus(UUID id, Boolean isActive) {
+        log.info("Updating category {} status to: {}", id, isActive);
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with ID: " + id));
+        category.setIsActive(isActive);
+        Category saved = categoryRepository.save(category);
+        log.info("Category {} status updated to: {}", id, isActive);
+        return categoryMapper.toSimpleResponse(saved);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getCategoryStats() {
+        log.debug("Fetching category statistics");
+        long total = categoryRepository.count();
+        long active = categoryRepository.countActiveCategories();
+        long subcategories = categoryRepository.countSubcategories();
+        long parentCategories = categoryRepository.countParentCategories();
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalCategories", total);
+        stats.put("activeCategories", active);
+        stats.put("subcategories", subcategories);
+        stats.put("parentCategories", parentCategories);
+
+        return stats;
     }
 }

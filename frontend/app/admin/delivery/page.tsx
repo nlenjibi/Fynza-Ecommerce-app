@@ -53,6 +53,7 @@ const initialFees: DeliveryFee[] = [
 
 export default function DeliveryPage() {
   const [activeTab, setActiveTab] = useState<"regions" | "fees">("regions")
+  const [sidebarOpen, setSidebarOpen] = useState(true)
   const [regions, setRegions] = useState(initialRegions)
   const [fees, setFees] = useState(initialFees)
   const [success, setSuccess] = useState<string | null>(null)
@@ -150,8 +151,8 @@ export default function DeliveryPage() {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <AdminSidebar />
-      <div className="flex-1 ml-64">
+      <AdminSidebar isOpen={sidebarOpen} onToggle={(open) => setSidebarOpen(open)} />
+      <main className={`flex-1 overflow-auto ${sidebarOpen ? 'lg:ml-0' : 'lg:ml-20'}`}>
         <AdminHeader title="Delivery" subtitle="Manage regions and delivery fees" />
 
         <main className="p-6">
@@ -436,7 +437,7 @@ export default function DeliveryPage() {
             </div>
           )}
         </main>
-      </div>
+      </main>
     </div>
   )
 }

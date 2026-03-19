@@ -3,6 +3,7 @@ package ecommerce.modules.user.entity;
 import ecommerce.common.base.BaseEntity;
 import ecommerce.common.enums.PayoutSchedule;
 import ecommerce.common.enums.Region;
+import ecommerce.common.enums.SellerStatus;
 import ecommerce.common.enums.VerificationStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -14,7 +15,8 @@ import java.util.UUID;
 @Entity
 @Table(name = "seller_profiles", indexes = {
         @Index(name = "idx_seller_user_id", columnList = "user_id"),
-        @Index(name = "idx_seller_verification", columnList = "verificationStatus")
+        @Index(name = "idx_seller_verification", columnList = "verificationStatus"),
+        @Index(name = "idx_seller_status", columnList = "sellerStatus")
 })
 @Getter
 @Setter
@@ -94,6 +96,11 @@ public class SellerProfile extends BaseEntity {
     @Column(name = "verification_status")
     @Builder.Default
     private VerificationStatus verificationStatus = VerificationStatus.PENDING;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "seller_status")
+    @Builder.Default
+    private SellerStatus sellerStatus = SellerStatus.PENDING;
 
     @Column(name = "business_registration", length = 500)
     private String businessRegistration;

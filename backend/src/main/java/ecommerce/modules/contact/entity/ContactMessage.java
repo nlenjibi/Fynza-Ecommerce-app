@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "contact_messages", indexes = {
     @Index(name = "idx_contact_status", columnList = "status"),
+    @Index(name = "idx_contact_priority", columnList = "priority"),
+    @Index(name = "idx_contact_category", columnList = "category"),
     @Index(name = "idx_contact_created", columnList = "created_at")
 })
 @Getter
@@ -38,6 +40,16 @@ public class ContactMessage extends BaseEntity {
     @Builder.Default
     private ContactStatus status = ContactStatus.PENDING;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "priority", nullable = false, length = 20)
+    @Builder.Default
+    private ContactPriority priority = ContactPriority.MEDIUM;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "category", nullable = false, length = 30)
+    @Builder.Default
+    private ContactCategory category = ContactCategory.GENERAL;
+
     @Column(name = "admin_response", columnDefinition = "TEXT")
     private String adminResponse;
 
@@ -48,9 +60,26 @@ public class ContactMessage extends BaseEntity {
     private String respondedBy;
 
     public enum ContactStatus {
+        OPEN,
         PENDING,
         IN_PROGRESS,
         RESOLVED,
         CLOSED
+    }
+
+    public enum ContactPriority {
+        HIGH,
+        MEDIUM,
+        LOW
+    }
+
+    public enum ContactCategory {
+        ORDER_ISSUES,
+        SELLER_INQUIRY,
+        REFUNDS,
+        ACCOUNT,
+        SHIPPING,
+        GENERAL_INQUIRY,
+        OTHER
     }
 }

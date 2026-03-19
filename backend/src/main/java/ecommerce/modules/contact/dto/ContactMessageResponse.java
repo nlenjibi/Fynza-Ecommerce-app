@@ -1,6 +1,8 @@
 package ecommerce.modules.contact.dto;
 
 import ecommerce.modules.contact.entity.ContactMessage;
+import ecommerce.modules.contact.entity.ContactMessage.ContactCategory;
+import ecommerce.modules.contact.entity.ContactMessage.ContactPriority;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,7 +22,9 @@ public class ContactMessageResponse {
     private String phone;
     private String subject;
     private String message;
-    private ContactMessage.ContactStatus status;
+    private ContactStatus status;
+    private ContactPriority priority;
+    private ContactCategory category;
     private String adminResponse;
     private LocalDateTime respondedAt;
     private String respondedBy;
@@ -36,6 +40,8 @@ public class ContactMessageResponse {
                 .subject(message.getSubject())
                 .message(message.getMessage())
                 .status(message.getStatus())
+                .priority(message.getPriority())
+                .category(message.getCategory())
                 .adminResponse(message.getAdminResponse())
                 .respondedAt(message.getRespondedAt())
                 .respondedBy(message.getRespondedBy())

@@ -78,6 +78,12 @@ public class Review extends BaseEntity {
     @Column(name = "admin_response_by")
     private UUID adminResponseBy;
 
+    @Column(name = "seller_reply", columnDefinition = "TEXT")
+    private String sellerReply;
+
+    @Column(name = "seller_replied_at")
+    private LocalDateTime sellerRepliedAt;
+
     @Column(name = "rejection_reason")
     private String rejectionReason;
 

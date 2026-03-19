@@ -1,5 +1,6 @@
 package ecommerce.modules.contact.dto;
 
+import ecommerce.modules.contact.entity.ContactMessage.ContactCategory;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -35,4 +36,6 @@ public class ContactMessageRequest {
     private String message;
 
     private String orderId;
+
+    private ContactCategory category;
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react"
+import { trackingService } from "@/lib/services/tracking"
 
 export interface WishlistItem {
   id: number

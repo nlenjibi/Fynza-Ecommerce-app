@@ -38,6 +38,10 @@ public interface ReviewService {
 
     ReviewSummaryResponse getProductRatingStats(UUID productId);
 
+    ReviewStatsResponse getAdminReviewStats();
+
+    ReviewStatsResponse getSellerReviewStats(UUID sellerId);
+
     // ==================== Voting Operations ====================
 
     void markHelpful(UUID reviewId);
@@ -57,6 +61,8 @@ public interface ReviewService {
     int bulkApproveReviews(List<UUID> reviewIds);
 
     int bulkRejectReviews(List<UUID> reviewIds, String reason);
+
+    int bulkDeleteReviews(List<UUID> reviewIds);
 
     // ==================== Utility Operations ====================
 
@@ -78,4 +84,6 @@ public interface ReviewService {
     List<ReviewResponse> getRecentReviews(UUID productId, int limit);
 
     Page<ReviewResponse> getReviewsWithImages(UUID productId, Pageable pageable);
+
+    ReviewResponse sellerReply(UUID reviewId, UUID sellerId, String reply);
 }

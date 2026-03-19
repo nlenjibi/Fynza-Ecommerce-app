@@ -55,4 +55,25 @@ public interface ReviewRepository extends BaseRepository<Review, UUID> {
 
     @Query("UPDATE Review r SET r.approved = false, r.rejectionReason = :reason WHERE r.id IN :reviewIds")
     int rejectReviews(List<UUID> reviewIds, String reason);
+
+    @Query("SELECT COUNT(r), AVG(r.rating) FROM Review r WHERE r.deleted = false")
+    Object[] getAdminReviewStats();
+
+    @Query("SELECT COUNT(r) FROM Review r WHERE r.deleted = false AND r.approved = false")
+    long countPendingReviews();
+
+    @Query("SELECT COUNT(r) FROM Review r WHERE r.deleted = false AND r.approved = true")
+    long countApprovedReviews();
+
+    @Query("SELECT COUNT(r) FROM Review r WHERE r.deleted = false AND r.approved = false")
+    long countRejectedReviews();
+
+    @Query("SELECT r.rating, COUNT(r) FROM Review r JOIN r.product p WHERE p.seller.id = :sellerId AND r.deleted = false GROUP BY r.rating")
+    List<Object[]> getSellerRatingDistribution(@Param("sellerId") UUID sellerId);
+
+    @Query("SELECT COUNT(r), AVG(r.rating) FROM Review r JOIN r.product p WHERE p.seller.id = :sellerId AND r.deleted = false")
+    Object[] getSellerReviewStats(@Param("sellerId") UUID sellerId);
+
+    @Query("SELECT COUNT(r) FROM Review r JOIN r.product p WHERE p.seller.id = :sellerId AND r.deleted = false AND r.approved = false")
+    long countPendingSellerReviews(@Param("sellerId") UUID sellerId);
 }

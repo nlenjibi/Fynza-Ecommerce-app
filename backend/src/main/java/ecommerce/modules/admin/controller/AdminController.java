@@ -28,6 +28,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -54,6 +55,67 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success("Orders retrieved successfully",PaginatedResponse.from(orders)));
 
             }
+
+    @GetMapping("/orders/search")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Search orders", description = "Search orders with filters for admin")
+    public ResponseEntity<ApiResponse<PaginatedResponse<OrderResponse>>> searchOrders(
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String paymentStatus,
+            @RequestParam(required = false) java.time.LocalDateTime dateFrom,
+            @RequestParam(required = false) java.time.LocalDateTime dateTo,
+            @RequestParam(required = false) java.math.BigDecimal minAmount,
+            @RequestParam(required = false) java.math.BigDecimal maxAmount,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        
+        var criteria = OrderService.OrderSearchCriteria.builder()
+                .query(query)
+                .status(status)
+                .paymentStatus(paymentStatus)
+                .dateFrom(dateFrom)
+                .dateTo(dateTo)
+                .minAmount(minAmount)
+                .maxAmount(maxAmount)
+                .build();
+        
+        Page<OrderResponse> orders = orderService.searchOrdersAdmin(criteria, pageable);
+        return ResponseEntity.ok(ApiResponse.success("Orders retrieved successfully", PaginatedResponse.from(orders)));
+    }
+
+    @GetMapping("/orders/export")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Export orders to CSV", description = "Export orders as CSV file for admin")
+    public ResponseEntity<byte[]> exportOrders(
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String paymentStatus,
+            @RequestParam(required = false) java.time.LocalDateTime dateFrom,
+            @RequestParam(required = false) java.time.LocalDateTime dateTo,
+            @RequestParam(required = false) java.math.BigDecimal minAmount,
+            @RequestParam(required = false) java.math.BigDecimal maxAmount) {
+        
+        var criteria = OrderService.OrderSearchCriteria.builder()
+                .query(query)
+                .status(status)
+                .paymentStatus(paymentStatus)
+                .dateFrom(dateFrom)
+                .dateTo(dateTo)
+                .minAmount(minAmount)
+                .maxAmount(maxAmount)
+                .build();
+        
+        String csv = orderService.exportOrdersToCSV(criteria);
+        
+        return ResponseEntity.ok()
+                .header("Content-Type", "text/csv")
+                .header("Content-Disposition", "attachment; filename=orders.csv")
+                .body(csv.getBytes());
+    }
 
     @PutMapping("/orders/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
@@ -167,6 +229,41 @@ public class AdminController {
                 updatedUsers));
     }
 
+    @GetMapping("/customers/stats")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get customer statistics", description = "Get customer statistics for admin")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getCustomerStats() {
+        Map<String, Object> stats = userService.getCustomerStats();
+        return ResponseEntity.ok(ApiResponse.success("Customer statistics retrieved successfully", stats));
+    }
+
+    @GetMapping("/customers/search")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Search customers", description = "Search customers by name, email, or phone")
+    public ResponseEntity<ApiResponse<Page<UserDto>>> searchCustomers(
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        Page<UserDto> customers = userService.searchCustomers(query, status, pageable);
+        return ResponseEntity.ok(ApiResponse.success("Customers retrieved successfully", customers));
+    }
+
+    @GetMapping("/customers/export")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Export customers to CSV", description = "Export customers as CSV file")
+    public ResponseEntity<byte[]> exportCustomers(
+            @RequestParam(required = false) String status) {
+        String csv = userService.exportCustomersToCSV(status);
+        return ResponseEntity.ok()
+                .header("Content-Type", "text/csv")
+                .header("Content-Disposition", "attachment; filename=customers.csv")
+                .body(csv.getBytes());
+    }
+
     @GetMapping("/analytics")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get admin analytics", description = "Get comprehensive analytics for admin dashboard with filter support")
@@ -207,13 +304,77 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success("Product approved successfully", product));
     }
 
-    @PatchMapping("/products/{id}/status")
+    @PatchMapping("/products/{id}/reject")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Update product status", description = "Update product status (ACTIVE, DRAFT, INACTIVE, DISCONTINUED)")
-    public ResponseEntity<ApiResponse<ProductResponse>> updateProductStatus(
+    @Operation(summary = "Reject product", description = "Reject a pending product")
+    public ResponseEntity<ApiResponse<ProductResponse>> rejectProduct(
             @PathVariable UUID id,
-            @RequestParam ProductStatus status) {
-        ProductResponse product = productService.updateProductStatus(id, status);
-        return ResponseEntity.ok(ApiResponse.success("Product status updated successfully", product));
+            @RequestParam String reason) {
+        ProductResponse product = productService.rejectProduct(id, reason);
+        return ResponseEntity.ok(ApiResponse.success("Product rejected successfully", product));
     }
+
+    @GetMapping("/customers/{customerId}/orders")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get customer orders", description = "Get all orders for a specific customer")
+    public ResponseEntity<ApiResponse<Page<OrderResponse>>> getCustomerOrders(
+            @PathVariable UUID customerId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        Page<OrderResponse> orders = orderService.getUserOrders(customerId, pageable);
+        return ResponseEntity.ok(ApiResponse.success("Customer orders retrieved successfully", orders));
+    }
+
+    // ==================== Seller Management ====================
+
+    @GetMapping("/sellers")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get all sellers", description = "Get all sellers with search and filters - ADMIN only")
+    public ResponseEntity<ApiResponse<Page<UserDto>>> getAllSellers(
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        Page<UserDto> sellers = userService.searchSellers(query, status, pageable);
+        return ResponseEntity.ok(ApiResponse.success("Sellers retrieved successfully", sellers));
+    }
+
+    @GetMapping("/sellers/stats")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get seller statistics", description = "Get seller statistics for admin")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getSellerStats() {
+        Map<String, Object> stats = userService.getSellerStats();
+        return ResponseEntity.ok(ApiResponse.success("Seller statistics retrieved successfully", stats));
+    }
+
+    @PatchMapping("/sellers/{id}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Approve seller", description = "Approve a pending seller")
+    public ResponseEntity<ApiResponse<UserDto>> approveSeller(@PathVariable UUID id) {
+        UserDto seller = userService.approveSeller(id);
+        return ResponseEntity.ok(ApiResponse.success("Seller approved successfully", seller));
+    }
+
+    @PatchMapping("/sellers/{id}/suspend")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Suspend seller", description = "Suspend an active seller")
+    public ResponseEntity<ApiResponse<UserDto>> suspendSeller(@PathVariable UUID id) {
+        UserDto seller = userService.suspendSeller(id);
+        return ResponseEntity.ok(ApiResponse.success("Seller suspended successfully", seller));
+    }
+
+    @PatchMapping("/sellers/{id}/reactivate")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Reactivate seller", description = "Reactivate a suspended seller")
+    public ResponseEntity<ApiResponse<UserDto>> reactivateSeller(@PathVariable UUID id) {
+        UserDto seller = userService.reactivateSeller(id);
+        return ResponseEntity.ok(ApiResponse.success("Seller reactivated successfully", seller));
+    }
+}
 }

@@ -26,6 +26,11 @@ import {
   Clock,
   Image,
   Camera,
+  Plus,
+  Trash2,
+  Edit,
+  Save,
+  X,
 } from "lucide-react";
 import { useState as useReactState } from "react";
 
@@ -55,6 +60,87 @@ export default function SellerSettings() {
     accountNumber: "1234567890",
     branch: "Accra Main",
   });
+
+  interface ShippingZone {
+    id: string;
+    region: string;
+    city: string;
+    deliveryMethod: "DIRECT_ADDRESS" | "BUS_STATION" | "SHIPPING";
+    fee: number;
+    estimatedDays: string;
+    freeShippingMin: number;
+    enabled: boolean;
+  }
+
+  const [shippingZones, setShippingZones] = useState<ShippingZone[]>([
+    { id: "1", region: "Greater Accra", city: "Accra", deliveryMethod: "DIRECT_ADDRESS", fee: 10, estimatedDays: "1-2", freeShippingMin: 200, enabled: true },
+    { id: "2", region: "Greater Accra", city: "Accra (Bus Station)", deliveryMethod: "BUS_STATION", fee: 5, estimatedDays: "1-2", freeShippingMin: 0, enabled: true },
+    { id: "3", region: "Ashanti", city: "Kumasi", deliveryMethod: "DIRECT_ADDRESS", fee: 25, estimatedDays: "3-5", freeShippingMin: 300, enabled: true },
+  ]);
+
+  const [showZoneForm, setShowZoneForm] = useState(false);
+  const [editingZoneId, setEditingZoneId] = useState<string | null>(null);
+  const [zoneForm, setZoneForm] = useState({
+    region: "Greater Accra",
+    city: "",
+    deliveryMethod: "DIRECT_ADDRESS" as const,
+    fee: "",
+    estimatedDays: "2-3",
+    freeShippingMin: "100",
+    enabled: true,
+  });
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const ghanaRegions = ["Greater Accra", "Ashanti", "Western", "Central", "Eastern", "Volta", "Northern", "Upper East", "Upper West"];
+
+  const handleAddZone = () => {
+    setZoneForm({ region: "Greater Accra", city: "", deliveryMethod: "DIRECT_ADDRESS", fee: "", estimatedDays: "2-3", freeShippingMin: "100", enabled: true });
+    setEditingZoneId(null);
+    setShowZoneForm(true);
+  };
+
+  const handleEditZone = (zone: ShippingZone) => {
+    setZoneForm({ region: zone.region, city: zone.city, deliveryMethod: zone.deliveryMethod, fee: zone.fee.toString(), estimatedDays: zone.estimatedDays, freeShippingMin: zone.freeShippingMin.toString(), enabled: zone.enabled });
+    setEditingZoneId(zone.id);
+    setShowZoneForm(true);
+  };
+
+  const handleSaveZone = () => {
+    if (!zoneForm.city || !zoneForm.fee) { alert("Please fill in required fields"); return; }
+    const newZone: ShippingZone = { id: editingZoneId || Date.now().toString(), region: zoneForm.region, city: zoneForm.city, deliveryMethod: zoneForm.deliveryMethod, fee: Number(zoneForm.fee), estimatedDays: zoneForm.estimatedDays, freeShippingMin: Number(zoneForm.freeShippingMin), enabled: zoneForm.enabled };
+    if (editingZoneId) {
+      setShippingZones(shippingZones.map(z => z.id === editingZoneId ? newZone : z));
+      setSuccessMessage("Shipping zone updated successfully");
+    } else {
+      setShippingZones([...shippingZones, newZone]);
+      setSuccessMessage("Shipping zone added successfully");
+    }
+    setShowZoneForm(false);
+    setEditingZoneId(null);
+    setTimeout(() => setSuccessMessage(null), 3000);
+  };
+
+  const handleDeleteZone = (id: string) => {
+    if (confirm("Are you sure you want to delete this shipping zone?")) {
+      setShippingZones(shippingZones.filter(z => z.id !== id));
+      setSuccessMessage("Shipping zone deleted");
+      setTimeout(() => setSuccessMessage(null), 3000);
+    }
+  };
+
+  const handleCancelZone = () => {
+    setShowZoneForm(false);
+    setEditingZoneId(null);
+  };
+
+  const getMethodLabel = (method: string) => {
+    switch (method) {
+      case "DIRECT_ADDRESS": return "Door Delivery";
+      case "BUS_STATION": return "Bus Station";
+      case "SHIPPING": return "Shipping";
+      default: return method;
+    }
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -678,26 +764,83 @@ export default function SellerSettings() {
               {/* Shipping Zones */}
               <div className="border border-gray-300 rounded-lg p-4">
                 <h3 className="font-semibold text-gray-900 mb-4">Shipping Zones</h3>
+                
+                {successMessage && (
+                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+                    {successMessage}
+                  </div>
+                )}
+
+                {showZoneForm && (
+                  <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-orange-200">
+                    <h4 className="font-semibold text-gray-900 mb-4">{editingZoneId ? "Edit Shipping Zone" : "Add New Shipping Zone"}</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Region *</label>
+                        <select value={zoneForm.region} onChange={(e) => setZoneForm({ ...zoneForm, region: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                          {ghanaRegions.map((r) => <option key={r} value={r}>{r}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Method *</label>
+                        <select value={zoneForm.deliveryMethod} onChange={(e) => setZoneForm({ ...zoneForm, deliveryMethod: e.target.value as any })} className="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                          <option value="DIRECT_ADDRESS">Door Delivery</option>
+                          <option value="BUS_STATION">Bus Station Pickup</option>
+                          <option value="SHIPPING">Shipping</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">City/Town *</label>
+                        <input type="text" value={zoneForm.city} onChange={(e) => setZoneForm({ ...zoneForm, city: e.target.value })} placeholder="e.g., Accra" className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Shipping Fee (GH₵) *</label>
+                        <input type="number" value={zoneForm.fee} onChange={(e) => setZoneForm({ ...zoneForm, fee: e.target.value })} placeholder="0.00" className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Est. Delivery (days)</label>
+                        <input type="text" value={zoneForm.estimatedDays} onChange={(e) => setZoneForm({ ...zoneForm, estimatedDays: e.target.value })} placeholder="e.g., 2-3" className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Free Shipping Min (GH₵)</label>
+                        <input type="number" value={zoneForm.freeShippingMin} onChange={(e) => setZoneForm({ ...zoneForm, freeShippingMin: e.target.value })} placeholder="100" className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                      </div>
+                    </div>
+                    <div className="flex items-center mb-4">
+                      <input type="checkbox" checked={zoneForm.enabled} onChange={(e) => setZoneForm({ ...zoneForm, enabled: e.target.checked })} className="w-4 h-4 mr-2" />
+                      <span className="text-sm text-gray-700">Enabled</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={handleSaveZone} className="bg-orange-500">{editingZoneId ? "Update Zone" : "Add Zone"}</Button>
+                      <Button variant="outline" onClick={handleCancelZone}>Cancel</Button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium text-gray-900">Greater Accra</p>
-                      <p className="text-sm text-gray-600">GH₵ 10 - Delivery in 1-2 days</p>
+                  {shippingZones.map((zone) => (
+                    <div key={zone.id} className={`flex items-center justify-between p-3 rounded-lg ${zone.enabled ? 'bg-gray-50' : 'bg-gray-100 opacity-60'}`}>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-medium text-gray-900">{zone.city}</p>
+                          <span className="text-xs text-gray-500">({zone.region})</span>
+                          <span className={`text-xs px-2 py-0.5 rounded ${zone.deliveryMethod === 'DIRECT_ADDRESS' ? 'bg-blue-100 text-blue-700' : zone.deliveryMethod === 'BUS_STATION' ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'}`}>
+                            {getMethodLabel(zone.deliveryMethod)}
+                          </span>
+                          {!zone.enabled && <span className="text-xs bg-gray-200 px-2 py-0.5 rounded">Disabled</span>}
+                        </div>
+                        <p className="text-sm text-gray-600">GH₵ {zone.fee} - {zone.estimatedDays} days {zone.freeShippingMin > 0 && <span className="text-green-600">- Free above GH₵ {zone.freeShippingMin}</span>}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" onClick={() => handleEditZone(zone)}>Edit</Button>
+                        <Button variant="ghost" size="sm" className="text-red-500" onClick={() => handleDeleteZone(zone.id)}>Delete</Button>
+                      </div>
                     </div>
-                    <Button variant="outline" size="sm">Edit</Button>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium text-gray-900">Other Regions</p>
-                      <p className="text-sm text-gray-600">GH₵ 25 - Delivery in 3-5 days</p>
-                    </div>
-                    <Button variant="outline" size="sm">Edit</Button>
-                  </div>
+                  ))}
+                  {shippingZones.length === 0 && <div className="text-center py-6 text-gray-500">No shipping zones configured</div>}
                 </div>
-                <Button variant="outline" className="w-full mt-4">
-                  <Truck size={16} className="mr-2" />
-                  Add Shipping Zone
-                </Button>
+                
+                {!showZoneForm && <Button variant="outline" className="w-full mt-4" onClick={handleAddZone}><Plus size={16} className="mr-2" />Add Shipping Zone</Button>}
               </div>
 
               <Button className="w-full bg-orange-500 hover:bg-orange-600">
