@@ -16,148 +16,60 @@ import {
   Package,
   DollarSign,
 } from "lucide-react"
-
-interface TrackingEvent {
-  id: string
-  event: string
-  productName: string
-  productId: number
-  category: string
-  price: number
-  timestamp: string
-  sessionId?: string
-}
-
-const sampleEvents: TrackingEvent[] = [
-  {
-    id: "1",
-    event: "add_to_cart",
-    productName: "iPhone 15 Pro Max",
-    productId: 101,
-    category: "Electronics",
-    price: 1199,
-    timestamp: "2024-03-15T14:30:25Z",
-    sessionId: "sess_abc123",
-  },
-  {
-    id: "2",
-    event: "product_view",
-    productName: "Samsung Galaxy S24",
-    productId: 102,
-    category: "Electronics",
-    price: 899,
-    timestamp: "2024-03-15T14:25:10Z",
-    sessionId: "sess_def456",
-  },
-  {
-    id: "3",
-    event: "add_to_wishlist",
-    productName: "Nike Air Max 270",
-    productId: 201,
-    category: "Fashion",
-    price: 149,
-    timestamp: "2024-03-15T14:20:45Z",
-    sessionId: "sess_ghi789",
-  },
-  {
-    id: "4",
-    event: "product_click",
-    productName: "MacBook Pro 16",
-    productId: 103,
-    category: "Electronics",
-    price: 2499,
-    timestamp: "2024-03-15T14:15:30Z",
-    sessionId: "sess_jkl012",
-  },
-  {
-    id: "5",
-    event: "add_to_cart",
-    productName: "Sony WH-1000XM5",
-    productId: 104,
-    category: "Electronics",
-    price: 399,
-    timestamp: "2024-03-15T14:10:15Z",
-    sessionId: "sess_mno345",
-  },
-  {
-    id: "6",
-    event: "product_view",
-    productName: "Adidas Ultraboost",
-    productId: 202,
-    category: "Fashion",
-    price: 179,
-    timestamp: "2024-03-15T14:05:00Z",
-    sessionId: "sess_pqr678",
-  },
-  {
-    id: "7",
-    event: "add_to_wishlist",
-    productName: "Apple Watch Series 9",
-    productId: 105,
-    category: "Electronics",
-    price: 429,
-    timestamp: "2024-03-15T14:00:25Z",
-    sessionId: "sess_stu901",
-  },
-  {
-    id: "8",
-    event: "purchase",
-    productName: "iPad Pro 12.9",
-    productId: 106,
-    category: "Electronics",
-    price: 1199,
-    timestamp: "2024-03-15T13:55:10Z",
-    sessionId: "sess_vwx234",
-  },
-]
+import { trackingService, TrackingEvent as LocalTrackingEvent, TrackingEventType } from "@/lib/services/tracking"
 
 export default function TrackingPage() {
-  const [events, setEvents] = useState(sampleEvents)
+  const [events, setEvents] = useState<LocalTrackingEvent[]>([])
   const [currentTime, setCurrentTime] = useState("")
   const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
+    const storedEvents = trackingService.getEvents()
+    setEvents(storedEvents)
     setCurrentTime(new Date().toLocaleTimeString())
   }, [refreshKey])
 
   const handleRefresh = () => {
+    const storedEvents = trackingService.getEvents()
+    setEvents(storedEvents)
     setRefreshKey((prev) => prev + 1)
   }
 
   const handleClear = () => {
     if (confirm("Are you sure you want to clear all tracking events?")) {
+      trackingService.clearEvents()
       setEvents([])
     }
   }
 
-  const getEventIcon = (eventType: string) => {
+  const getEventIcon = (eventType: TrackingEventType) => {
     switch (eventType) {
-      case "add_to_cart":
+      case "ADD_TO_CART":
         return ShoppingCart
-      case "product_click":
+      case "PRODUCT_CLICK":
         return MousePointerClick
-      case "add_to_wishlist":
+      case "ADD_TO_WISHLIST":
         return Heart
-      case "product_view":
+      case "PRODUCT_VIEW":
         return Eye
-      case "purchase":
+      case "PURCHASE":
         return DollarSign
       default:
         return Package
     }
   }
 
-  const getEventColor = (eventType: string) => {
+  const getEventColor = (eventType: TrackingEventType) => {
     switch (eventType) {
-      case "add_to_cart":
+      case "ADD_TO_CART":
         return "bg-green-100 text-green-700 border-green-200"
-      case "product_click":
+      case "PRODUCT_CLICK":
         return "bg-blue-100 text-blue-700 border-blue-200"
-      case "add_to_wishlist":
+      case "ADD_TO_WISHLIST":
         return "bg-red-100 text-red-700 border-red-200"
-      case "product_view":
+      case "PRODUCT_VIEW":
         return "bg-purple-100 text-purple-700 border-purple-200"
-      case "purchase":
+      case "PURCHASE":
         return "bg-orange-100 text-orange-700 border-orange-200"
       default:
         return "bg-gray-100 text-gray-700 border-gray-200"
@@ -166,9 +78,9 @@ export default function TrackingPage() {
 
   const eventStats = {
     total: events.length,
-    cart: events.filter((e) => e.event === "add_to_cart").length,
-    views: events.filter((e) => e.event === "product_view").length,
-    wishlist: events.filter((e) => e.event === "add_to_wishlist").length,
+    cart: events.filter((e) => e.eventType === "ADD_TO_CART").length,
+    views: events.filter((e) => e.eventType === "PRODUCT_VIEW").length,
+    wishlist: events.filter((e) => e.eventType === "ADD_TO_WISHLIST").length,
   }
 
   return (
@@ -243,7 +155,7 @@ export default function TrackingPage() {
               ) : (
                 <div className="space-y-3">
                   {[...events].reverse().map((event) => {
-                    const Icon = getEventIcon(event.event)
+                    const Icon = getEventIcon(event.eventType)
                     return (
                       <div
                         key={event.id}
@@ -251,13 +163,13 @@ export default function TrackingPage() {
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex items-start gap-3">
-                            <div className={`p-2 rounded-lg ${getEventColor(event.event)}`}>
+                            <div className={`p-2 rounded-lg ${getEventColor(event.eventType)}`}>
                               <Icon className="h-5 w-5" />
                             </div>
                             <div>
                               <div className="flex items-center gap-2 mb-2">
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getEventColor(event.event)}`}>
-                                  {event.event.replace(/_/g, " ").toUpperCase()}
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getEventColor(event.eventType)}`}>
+                                  {event.eventType.replace(/_/g, " ")}
                                 </span>
                                 <span className="text-sm text-gray-500">
                                   {new Date(event.timestamp).toLocaleString()}
@@ -266,19 +178,19 @@ export default function TrackingPage() {
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
                                 <div>
                                   <span className="font-medium text-gray-700">Product:</span>
-                                  <span className="ml-2 text-gray-900">{event.productName}</span>
+                                  <span className="ml-2 text-gray-900">{event.productName || '-'}</span>
                                 </div>
                                 <div>
                                   <span className="font-medium text-gray-700">ID:</span>
-                                  <span className="ml-2 text-gray-900">#{event.productId}</span>
+                                  <span className="ml-2 text-gray-900">#{event.productId || '-'}</span>
                                 </div>
                                 <div>
                                   <span className="font-medium text-gray-700">Category:</span>
-                                  <span className="ml-2 text-gray-900">{event.category}</span>
+                                  <span className="ml-2 text-gray-900">{event.category || '-'}</span>
                                 </div>
                                 <div>
                                   <span className="font-medium text-gray-700">Price:</span>
-                                  <span className="ml-2 text-gray-900">${event.price}</span>
+                                  <span className="ml-2 text-gray-900">{event.price ? `$${event.price}` : '-'}</span>
                                 </div>
                                 {event.sessionId && (
                                   <div className="md:col-span-2">

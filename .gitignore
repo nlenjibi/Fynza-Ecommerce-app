@@ -54,3 +54,7 @@ IMPROVEMENTS_CHECKLIST.md
 QUICK_REFRENCE.md
 QUICK_START.md
 /docs
+.idea
+.kiro
+.vscode
+/-p

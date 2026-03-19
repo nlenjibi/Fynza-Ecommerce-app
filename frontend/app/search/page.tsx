@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Search, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { ProductGridSkeleton } from '@/components/skeletons';
+import { trackingService } from '@/lib/services/tracking';
 
 interface SearchProduct {
     id: string;
@@ -43,6 +44,8 @@ export default function SearchPage() {
 
         setLoading(true);
         setError(null);
+
+        trackingService.trackSearch(query, 0)
 
         // Simulate API call
         const timer = setTimeout(() => {
