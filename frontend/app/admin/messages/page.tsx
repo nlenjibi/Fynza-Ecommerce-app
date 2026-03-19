@@ -59,7 +59,6 @@ export default function AdminMessagesPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [selectedChat, setSelectedChat] = useState<Conversation | null>(null)
-  const [selectedChat, setSelectedChat] = useState<Conversation | null>(null)
   const [replyText, setReplyText] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [filterPriority, setFilterPriority] = useState<string>("all")
@@ -202,7 +201,7 @@ export default function AdminMessagesPage() {
     <div className="flex min-h-screen bg-gray-50">
       <AdminSidebar isOpen={sidebarOpen} onToggle={(open) => setSidebarOpen(open)} />
       
-      <main className={`flex-1 overflow-auto ${sidebarOpen ? 'lg:ml-0' : 'lg:ml-20'}`}>
+      <div className="flex-1 ml-64">
         <AdminHeader />
         
         <div className="p-6">
@@ -224,94 +223,94 @@ export default function AdminMessagesPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Conversations List */}
             <Card className="lg:col-span-1">
-            <CardHeader className="border-b pb-3">
-              <div className="relative mb-3">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search conversations..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <div className="flex gap-2">
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="text-sm border rounded px-2 py-1"
-                >
-                  <option value="all">All Status</option>
-                  <option value="open">Open</option>
-                  <option value="pending">Pending</option>
-                  <option value="resolved">Resolved</option>
-                  <option value="closed">Closed</option>
-                </select>
-                <select
-                  value={filterPriority}
-                  onChange={(e) => setFilterPriority(e.target.value)}
-                  className="text-sm border rounded px-2 py-1"
-                >
-                  <option value="all">All Priority</option>
-                  <option value="urgent">Urgent</option>
-                  <option value="high">High</option>
-                  <option value="medium">Medium</option>
-                  <option value="low">Low</option>
-                </select>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="divide-y max-h-[calc(100vh-300px)] overflow-y-auto">
-                {filteredConversations.map((chat) => (
-                  <button
-                    key={chat.id}
-                    onClick={() => setSelectedChat(chat)}
-                    className={`w-full text-left p-4 hover:bg-gray-50 transition-colors ${
-                      selectedChat?.id === chat.id ? 'bg-orange-50' : ''
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-full ${chat.userType === 'seller' ? 'bg-purple-100' : chat.userType === 'customer' ? 'bg-blue-100' : 'bg-gray-100'}`}>
-                        {getUserTypeIcon(chat.userType)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <p className={`text-sm ${chat.unread > 0 ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
-                            {chat.userName}
-                          </p>
-                          <div className="flex items-center gap-1">
-                            <span className="text-xs text-gray-500">{chat.time}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <Badge className={`text-xs ${getStatusColor(chat.status)}`}>
-                            {chat.status}
-                          </Badge>
-                          <Badge className={`text-xs ${getPriorityColor(chat.priority)}`}>
-                            {chat.priority}
-                          </Badge>
-                        </div>
-                        <p className={`text-sm truncate ${chat.unread > 0 ? 'font-medium text-gray-900' : 'text-gray-600'}`}>
-                          {chat.lastMessage}
-                        </p>
-                      </div>
-                      {chat.unread > 0 && (
-                        <div className="h-5 w-5 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
-                          <span className="text-white text-xs font-medium">{chat.unread}</span>
-                        </div>
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              {filteredConversations.length === 0 && (
-                <div className="p-8 text-center">
-                  <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">No messages found</p>
+              <CardHeader className="border-b pb-3">
+                <div className="relative mb-3">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search conversations..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
                 </div>
-              )}
-            </CardContent>
-          </Card>
+                <div className="flex gap-2">
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="text-sm border rounded px-2 py-1"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="open">Open</option>
+                    <option value="pending">Pending</option>
+                    <option value="resolved">Resolved</option>
+                    <option value="closed">Closed</option>
+                  </select>
+                  <select
+                    value={filterPriority}
+                    onChange={(e) => setFilterPriority(e.target.value)}
+                    className="text-sm border rounded px-2 py-1"
+                  >
+                    <option value="all">All Priority</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="divide-y max-h-[calc(100vh-300px)] overflow-y-auto">
+                  {filteredConversations.map((chat) => (
+                    <button
+                      key={chat.id}
+                      onClick={() => setSelectedChat(chat)}
+                      className={`w-full text-left p-4 hover:bg-gray-50 transition-colors ${
+                        selectedChat?.id === chat.id ? 'bg-orange-50' : ''
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`p-2 rounded-full ${chat.userType === 'seller' ? 'bg-purple-100' : chat.userType === 'customer' ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                          {getUserTypeIcon(chat.userType)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <p className={`text-sm ${chat.unread > 0 ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
+                              {chat.userName}
+                            </p>
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs text-gray-500">{chat.time}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge className={`text-xs ${getStatusColor(chat.status)}`}>
+                              {chat.status}
+                            </Badge>
+                            <Badge className={`text-xs ${getPriorityColor(chat.priority)}`}>
+                              {chat.priority}
+                            </Badge>
+                          </div>
+                          <p className={`text-sm truncate ${chat.unread > 0 ? 'font-medium text-gray-900' : 'text-gray-600'}`}>
+                            {chat.lastMessage}
+                          </p>
+                        </div>
+                        {chat.unread > 0 && (
+                          <div className="h-5 w-5 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-white text-xs font-medium">{chat.unread}</span>
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {filteredConversations.length === 0 && (
+                  <div className="p-8 text-center">
+                    <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">No messages found</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
           {/* Chat Detail */}
           <Card className="lg:col-span-2">
@@ -386,7 +385,6 @@ export default function AdminMessagesPage() {
                     ))}
                   </div>
 
-                  {/* Quick Responses */}
                   <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
                     {["Thank you for contacting us!", "We'll look into this immediately", "Is there anything else I can help with?"].map((quick) => (
                       <Button
@@ -401,7 +399,6 @@ export default function AdminMessagesPage() {
                     ))}
                   </div>
 
-                  {/* Reply Input */}
                   <div className="border-t pt-4">
                     <div className="flex gap-2 items-end">
                       <Button variant="outline" size="icon">
@@ -426,17 +423,20 @@ export default function AdminMessagesPage() {
                 </CardContent>
               </>
             ) : (
-              <CardContent className="flex items-center justify-center h-96">
-                <div className="text-center">
-                  <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Select a conversation</h3>
-                  <p className="text-gray-500">Choose a chat to view details</p>
-                </div>
-              </CardContent>
+              <Card className="h-full flex items-center justify-center border-0 shadow-none">
+                <CardContent className="flex items-center justify-center h-96">
+                  <div className="text-center">
+                    <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Select a conversation</h3>
+                    <p className="text-gray-500">Choose a chat to view details</p>
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </Card>
         </div>
-      </main>
+      </div>
+    </div>
     </div>
   )
 }

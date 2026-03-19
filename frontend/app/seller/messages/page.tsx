@@ -334,11 +334,7 @@ export default function SellerMessagesPage() {
                   } ${chat.unread > 0 ? 'bg-blue-50/50' : ''}`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-orange-600 font-semibold">
-                        {getInitials(chat.customerName)}
-                      </span>
-                    </div>
+                    {getConversationIcon(chat)}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
                         <p className={`text-sm ${chat.unread > 0 ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
@@ -346,11 +342,7 @@ export default function SellerMessagesPage() {
                         </p>
                         <span className="text-xs text-gray-500">{chat.time}</span>
                       </div>
-                      {chat.orderId && (
-                        <Badge variant="outline" className="text-xs mb-1">
-                          Order: {chat.orderId}
-                        </Badge>
-                      )}
+                      {getStatusBadge(chat)}
                       <p className={`text-sm truncate ${chat.unread > 0 ? 'font-medium text-gray-900' : 'text-gray-600'}`}>
                         {chat.lastMessage}
                       </p>
@@ -380,25 +372,47 @@ export default function SellerMessagesPage() {
                 <CardHeader className="border-b pb-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                        <span className="text-orange-600 font-semibold">
-                          {getInitials(selectedChat.customerName)}
-                        </span>
-                      </div>
+                      {selectedChat.type === "support" ? (
+                        <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                          <Headphones className="text-purple-600 h-5 w-5" />
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                          <span className="text-orange-600 font-semibold">
+                            {getInitials(selectedChat.customerName)}
+                          </span>
+                        </div>
+                      )}
                       <div>
                         <CardTitle className="text-lg">{selectedChat.customerName}</CardTitle>
                         <p className="text-sm text-gray-500">
-                          {selectedChat.productName || "General Inquiry"}
+                          {selectedChat.type === "support" 
+                            ? selectedChat.category || "Support" 
+                            : selectedChat.productName || "General Inquiry"}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="icon">
-                        <Phone className="h-4 w-4" />
-                      </Button>
-                      <Button variant="outline" size="icon">
-                        <Video className="h-4 w-4" />
-                      </Button>
+                      {selectedChat.type !== "support" && (
+                        <>
+                          <Button variant="outline" size="icon">
+                            <Phone className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="icon">
+                            <Video className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                      {selectedChat.type === "support" && selectedChat.status && (
+                        <Badge className={`text-xs ${
+                          selectedChat.status === "open" ? "bg-green-100 text-green-700" :
+                          selectedChat.status === "pending" ? "bg-yellow-100 text-yellow-700" :
+                          selectedChat.status === "resolved" ? "bg-blue-100 text-blue-700" :
+                          "bg-gray-100 text-gray-700"
+                        }`}>
+                          {selectedChat.status}
+                        </Badge>
+                      )}
                       <Button variant="outline" size="sm">
                         <Star className="h-4 w-4" />
                       </Button>
@@ -407,6 +421,19 @@ export default function SellerMessagesPage() {
                       </Button>
                     </div>
                   </div>
+                  {selectedChat.type === "support" && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="text-xs text-gray-500">Priority:</span>
+                      <Badge variant="outline" className={`text-xs ${
+                        selectedChat.priority === "urgent" ? "bg-red-100 text-red-700" :
+                        selectedChat.priority === "high" ? "bg-orange-100 text-orange-700" :
+                        selectedChat.priority === "medium" ? "bg-yellow-100 text-yellow-700" :
+                        "bg-green-100 text-green-700"
+                      }`}>
+                        {selectedChat.priority}
+                      </Badge>
+                    </div>
+                  )}
                 </CardHeader>
                 
                 {/* Order Info */}
@@ -501,6 +528,82 @@ export default function SellerMessagesPage() {
           </Card>
         </div>
       </main>
+
+      {/* Contact Support Modal */}
+      {showSupportModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-lg mx-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Headphones className="h-5 w-5 text-purple-600" />
+                Contact Fynza Support
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700">Category</label>
+                <select 
+                  className="w-full mt-1 px-3 py-2 border rounded-lg"
+                  value={supportCategory}
+                  onChange={(e) => setSupportCategory(e.target.value)}
+                >
+                  <option value="">Select a category</option>
+                  {supportCategories.map((cat) => (
+                    <option key={cat.value} value={cat.value}>{cat.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Priority</label>
+                <div className="flex gap-2 mt-1">
+                  {priorityOptions.map((pri) => (
+                    <Button
+                      key={pri.value}
+                      variant={supportPriority === pri.value ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSupportPriority(pri.value)}
+                      className={supportPriority === pri.value ? "bg-purple-500 hover:bg-purple-600" : ""}
+                    >
+                      {pri.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Subject</label>
+                <Input 
+                  placeholder="Brief description of your issue"
+                  className="mt-1"
+                  value={supportSubject}
+                  onChange={(e) => setSupportSubject(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Message</label>
+                <textarea 
+                  placeholder="Describe your issue in detail..."
+                  className="w-full mt-1 px-3 py-2 border rounded-lg min-h-[120px]"
+                  value={supportMessage}
+                  onChange={(e) => setSupportMessage(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2 justify-end pt-2">
+                <Button variant="outline" onClick={() => setShowSupportModal(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  className="bg-purple-500 hover:bg-purple-600"
+                  onClick={handleSendSupportMessage}
+                  disabled={!supportSubject.trim() || !supportMessage.trim() || !supportCategory}
+                >
+                  <Send className="h-4 w-4 mr-2" />
+                  Submit Ticket
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }
