@@ -2,11 +2,13 @@ package ecommerce.modules.admin.controller;
 
 import ecommerce.common.response.ApiResponse;
 import ecommerce.common.response.PaginatedResponse;
+import ecommerce.common.enums.ProductStatus;
 import ecommerce.modules.admin.dto.AdminAnalyticsDto;
 import ecommerce.modules.admin.service.AdminService;
 import ecommerce.modules.order.dto.OrderResponse;
 import ecommerce.modules.order.dto.OrderStatusUpdateRequest;
 import ecommerce.modules.order.service.OrderService;
+import ecommerce.modules.product.dto.AdminProductStatsResponse;
 import ecommerce.modules.product.dto.ProductResponse;
 import ecommerce.modules.product.service.ProductService;
 import ecommerce.modules.user.dto.UserDto;
@@ -172,5 +174,46 @@ public class AdminController {
             @RequestParam(defaultValue = "month") String filter) {
         AdminAnalyticsDto analytics = adminService.getAnalytics(filter);
         return ResponseEntity.ok(ApiResponse.success("Analytics retrieved successfully", analytics));
+    }
+
+    @GetMapping("/products")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get all products", description = "Get all products for admin with filters")
+    public ResponseEntity<ApiResponse<Page<ProductResponse>>> getAllProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction,
+            @RequestParam(required = false) ProductStatus status,
+            @RequestParam(required = false) String search) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        Page<ProductResponse> products = productService.findBySellerId(null, status, null, search, pageable);
+        return ResponseEntity.ok(ApiResponse.success("Products retrieved successfully", products));
+    }
+
+    @GetMapping("/products/stats")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get product stats", description = "Get product statistics for admin")
+    public ResponseEntity<ApiResponse<AdminProductStatsResponse>> getProductStats() {
+        AdminProductStatsResponse stats = productService.getAdminProductStats();
+        return ResponseEntity.ok(ApiResponse.success("Product stats retrieved successfully", stats));
+    }
+
+    @PatchMapping("/products/{id}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Approve product", description = "Approve a pending product")
+    public ResponseEntity<ApiResponse<ProductResponse>> approveProduct(@PathVariable UUID id) {
+        ProductResponse product = productService.approveProduct(id);
+        return ResponseEntity.ok(ApiResponse.success("Product approved successfully", product));
+    }
+
+    @PatchMapping("/products/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update product status", description = "Update product status (ACTIVE, DRAFT, INACTIVE, DISCONTINUED)")
+    public ResponseEntity<ApiResponse<ProductResponse>> updateProductStatus(
+            @PathVariable UUID id,
+            @RequestParam ProductStatus status) {
+        ProductResponse product = productService.updateProductStatus(id, status);
+        return ResponseEntity.ok(ApiResponse.success("Product status updated successfully", product));
     }
 }

@@ -191,10 +191,18 @@ public class SiteSettingsService {
         SiteSettings settings = getOrCreateSettings();
         return NotificationSettingsResponse.builder()
                 .id(settings.getId())
-                .emailNotifications(settings.getEmailNotifications())
-                .orderNotifications(settings.getOrderNotifications())
-                .refundNotifications(settings.getRefundNotifications())
-                .sellerNotifications(settings.getSellerNotifications())
+                .orderUpdates(settings.getEnableOrderUpdates())
+                .paymentConfirmation(settings.getEnablePaymentConfirmation())
+                .shippingUpdates(settings.getEnableShippingUpdates())
+                .promotionalEmails(settings.getEnablePromotionalEmails())
+                .newProductAlerts(settings.getEnableNewProductAlerts())
+                .priceDropAlerts(settings.getEnablePriceDropAlerts())
+                .wishlistUpdates(settings.getEnableWishlistUpdates())
+                .reviewRequests(settings.getEnableReviewRequests())
+                .newsletter(settings.getEnableNewsletter())
+                .promotionalSms(settings.getEnablePromotionalSms())
+                .browserNotifications(settings.getEnableBrowserNotifications())
+                .appNotifications(settings.getEnableAppNotifications())
                 .updatedAt(settings.getUpdatedAt())
                 .build();
     }
@@ -203,17 +211,33 @@ public class SiteSettingsService {
     @Transactional
     public NotificationSettingsResponse updateNotificationSettings(NotificationSettingsRequest request) {
         SiteSettings settings = getOrCreateSettings();
-        settings.setEmailNotifications(request.getEmailNotifications());
-        settings.setOrderNotifications(request.getOrderNotifications());
-        settings.setRefundNotifications(request.getRefundNotifications());
-        settings.setSellerNotifications(request.getSellerNotifications());
+        if (request.getOrderUpdates() != null) settings.setEnableOrderUpdates(request.getOrderUpdates());
+        if (request.getPaymentConfirmation() != null) settings.setEnablePaymentConfirmation(request.getPaymentConfirmation());
+        if (request.getShippingUpdates() != null) settings.setEnableShippingUpdates(request.getShippingUpdates());
+        if (request.getPromotionalEmails() != null) settings.setEnablePromotionalEmails(request.getPromotionalEmails());
+        if (request.getNewProductAlerts() != null) settings.setEnableNewProductAlerts(request.getNewProductAlerts());
+        if (request.getPriceDropAlerts() != null) settings.setEnablePriceDropAlerts(request.getPriceDropAlerts());
+        if (request.getWishlistUpdates() != null) settings.setEnableWishlistUpdates(request.getWishlistUpdates());
+        if (request.getReviewRequests() != null) settings.setEnableReviewRequests(request.getReviewRequests());
+        if (request.getNewsletter() != null) settings.setEnableNewsletter(request.getNewsletter());
+        if (request.getPromotionalSms() != null) settings.setEnablePromotionalSms(request.getPromotionalSms());
+        if (request.getBrowserNotifications() != null) settings.setEnableBrowserNotifications(request.getBrowserNotifications());
+        if (request.getAppNotifications() != null) settings.setEnableAppNotifications(request.getAppNotifications());
         settings = siteSettingsRepository.save(settings);
         return NotificationSettingsResponse.builder()
                 .id(settings.getId())
-                .emailNotifications(settings.getEmailNotifications())
-                .orderNotifications(settings.getOrderNotifications())
-                .refundNotifications(settings.getRefundNotifications())
-                .sellerNotifications(settings.getSellerNotifications())
+                .orderUpdates(settings.getEnableOrderUpdates())
+                .paymentConfirmation(settings.getEnablePaymentConfirmation())
+                .shippingUpdates(settings.getEnableShippingUpdates())
+                .promotionalEmails(settings.getEnablePromotionalEmails())
+                .newProductAlerts(settings.getEnableNewProductAlerts())
+                .priceDropAlerts(settings.getEnablePriceDropAlerts())
+                .wishlistUpdates(settings.getEnableWishlistUpdates())
+                .reviewRequests(settings.getEnableReviewRequests())
+                .newsletter(settings.getEnableNewsletter())
+                .promotionalSms(settings.getEnablePromotionalSms())
+                .browserNotifications(settings.getEnableBrowserNotifications())
+                .appNotifications(settings.getEnableAppNotifications())
                 .updatedAt(settings.getUpdatedAt())
                 .build();
     }

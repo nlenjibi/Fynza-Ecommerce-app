@@ -120,4 +120,9 @@ public class ContactService {
     public long countMessagesByStatus(ContactStatus status) {
         return contactMessageRepository.countByStatus(status);
     }
+
+    @Transactional
+    public ContactMessageResponse submitMessage(ContactMessageRequest request) {
+        return createMessage(request);
+    }
 }

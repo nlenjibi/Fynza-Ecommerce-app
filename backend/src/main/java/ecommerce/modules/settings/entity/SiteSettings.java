@@ -103,4 +103,52 @@ public class SiteSettings extends BaseEntity {
     @Column(name = "login_notifications")
     @Builder.Default
     private Boolean loginNotifications = true;
+
+    @Column(name = "enable_order_updates")
+    @Builder.Default
+    private Boolean enableOrderUpdates = true;
+
+    @Column(name = "enable_payment_confirmation")
+    @Builder.Default
+    private Boolean enablePaymentConfirmation = true;
+
+    @Column(name = "enable_shipping_updates")
+    @Builder.Default
+    private Boolean enableShippingUpdates = true;
+
+    @Column(name = "enable_promotional_emails")
+    @Builder.Default
+    private Boolean enablePromotionalEmails = true;
+
+    @Column(name = "enable_new_product_alerts")
+    @Builder.Default
+    private Boolean enableNewProductAlerts = true;
+
+    @Column(name = "enable_price_drop_alerts")
+    @Builder.Default
+    private Boolean enablePriceDropAlerts = true;
+
+    @Column(name = "enable_wishlist_updates")
+    @Builder.Default
+    private Boolean enableWishlistUpdates = true;
+
+    @Column(name = "enable_review_requests")
+    @Builder.Default
+    private Boolean enableReviewRequests = true;
+
+    @Column(name = "enable_newsletter")
+    @Builder.Default
+    private Boolean enableNewsletter = true;
+
+    @Column(name = "enable_promotional_sms")
+    @Builder.Default
+    private Boolean enablePromotionalSms = false;
+
+    @Column(name = "enable_browser_notifications")
+    @Builder.Default
+    private Boolean enableBrowserNotifications = true;
+
+    @Column(name = "enable_app_notifications")
+    @Builder.Default
+    private Boolean enableAppNotifications = true;
 }

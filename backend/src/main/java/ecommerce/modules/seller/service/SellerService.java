@@ -1,13 +1,10 @@
 package ecommerce.modules.seller.service;
 
+import ecommerce.modules.notification.dto.NotificationSettingsResponse;
 import ecommerce.modules.order.dto.OrderResponse;
 import ecommerce.modules.order.dto.OrderStatusUpdateRequest;
 import ecommerce.modules.review.dto.ReviewResponse;
-import ecommerce.modules.seller.dto.SellerAnalyticsDto;
-import ecommerce.modules.seller.dto.SellerAnalyticsResponse;
-import ecommerce.modules.seller.dto.SellerDashboardResponse;
-import ecommerce.modules.seller.dto.StoreResponse;
-import ecommerce.modules.seller.dto.UpdateStoreRequest;
+import ecommerce.modules.seller.dto.*;
 import ecommerce.modules.tag.dto.TagResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,4 +33,24 @@ public interface SellerService {
     List<TagResponse> getTags();
 
     void assignTagsToProduct(UUID productId, List<String> tagNames, UUID sellerId);
+
+    SellerPaymentSettingsResponse getPaymentSettings(UUID sellerId);
+
+    SellerPaymentSettingsResponse updatePaymentSettings(UUID sellerId, SellerPaymentSettingsRequest request);
+
+    SellerShippingSettingsResponse getShippingSettings(UUID sellerId);
+
+    SellerShippingSettingsResponse updateShippingSettings(UUID sellerId, SellerShippingSettingsRequest request);
+
+    ShippingZoneResponse createShippingZone(UUID sellerId, ShippingZoneRequest request);
+
+    ShippingZoneResponse updateShippingZone(UUID sellerId, UUID zoneId, ShippingZoneRequest request);
+
+    void deleteShippingZone(UUID sellerId, UUID zoneId);
+
+    List<ShippingZoneResponse> getShippingZones(UUID sellerId);
+
+    SellerNotificationSettingsResponse getNotificationSettings(UUID sellerId);
+
+    SellerNotificationSettingsResponse updateNotificationSettings(UUID sellerId, SellerNotificationSettingsRequest request);
 }

@@ -1,18 +1,19 @@
 package ecommerce.modules.seller.controller;
 
 import ecommerce.common.response.ApiResponse;
+import ecommerce.common.enums.OrderStatus;
+import ecommerce.common.enums.ProductStatus;
 import ecommerce.modules.order.dto.OrderResponse;
 import ecommerce.modules.order.dto.OrderStatusUpdateRequest;
+import ecommerce.modules.order.dto.SellerOrderStatsResponse;
+import ecommerce.modules.order.service.OrderService;
 import ecommerce.modules.product.dto.CreateProductRequest;
 import ecommerce.modules.product.dto.ProductResponse;
+import ecommerce.modules.product.dto.SellerProductStatsResponse;
 import ecommerce.modules.product.dto.UpdateProductRequest;
 import ecommerce.modules.product.service.ProductService;
 import ecommerce.modules.review.dto.ReviewResponse;
-import ecommerce.modules.seller.dto.SellerAnalyticsDto;
-import ecommerce.modules.seller.dto.SellerAnalyticsResponse;
-import ecommerce.modules.seller.dto.SellerDashboardResponse;
-import ecommerce.modules.seller.dto.StoreResponse;
-import ecommerce.modules.seller.dto.UpdateStoreRequest;
+import ecommerce.modules.seller.dto.*;
 import ecommerce.modules.seller.service.SellerService;
 import ecommerce.modules.tag.dto.TagResponse;
 import ecommerce.security.UserPrincipal;
@@ -33,6 +34,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
 import java.util.UUID;
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/v1/sellers")
@@ -42,6 +44,7 @@ public class SellerController {
 
     private final SellerService sellerService;
     private final ProductService productService;
+    private final OrderService orderService;
 
     @GetMapping("/dashboard")
     @PreAuthorize("hasRole('SELLER')")
@@ -54,17 +57,30 @@ public class SellerController {
 
     @GetMapping("/products")
     @PreAuthorize("hasRole('SELLER')")
-    @Operation(summary = "Get seller products", description = "Get all products for the authenticated seller")
+    @Operation(summary = "Get seller products", description = "Get all products for the authenticated seller with filters")
     public ResponseEntity<ApiResponse<Page<ProductResponse>>> getProducts(
             @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction,
+            @RequestParam(required = false) ProductStatus status,
+            @RequestParam(required = false) UUID categoryId,
+            @RequestParam(required = false) String search) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         UUID sellerId = UUID.fromString(principal.getId().toString());
-        Page<ProductResponse> products = productService.findBySellerId(sellerId, pageable);
+        Page<ProductResponse> products = productService.findBySellerId(sellerId, status, categoryId, search, pageable);
         return ResponseEntity.ok(ApiResponse.success("Products retrieved successfully", products));
+    }
+
+    @GetMapping("/products/stats")
+    @PreAuthorize("hasRole('SELLER')")
+    @Operation(summary = "Get seller product stats", description = "Get product statistics for the authenticated seller")
+    public ResponseEntity<ApiResponse<SellerProductStatsResponse>> getProductStats(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        UUID sellerId = UUID.fromString(principal.getId().toString());
+        SellerProductStatsResponse stats = productService.getSellerProductStats(sellerId);
+        return ResponseEntity.ok(ApiResponse.success("Product stats retrieved successfully", stats));
     }
 
     @PostMapping("/products")
@@ -124,17 +140,77 @@ public class SellerController {
 
     @GetMapping("/orders")
     @PreAuthorize("hasRole('SELLER')")
-    @Operation(summary = "Get seller orders", description = "Get all orders for the authenticated seller")
+    @Operation(summary = "Get seller orders", description = "Get all orders for the authenticated seller with filters")
     public ResponseEntity<ApiResponse<Page<OrderResponse>>> getOrders(
             @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction,
+            @RequestParam(required = false) OrderStatus status,
+            @RequestParam(required = false) String dateFilter,
+            @RequestParam(required = false) String search) {
+        
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         UUID sellerId = UUID.fromString(principal.getId().toString());
-        Page<OrderResponse> orders = sellerService.getSellerOrders(sellerId, pageable);
+        
+        java.time.LocalDateTime dateFrom = null;
+        java.time.LocalDateTime dateTo = null;
+        
+        if (dateFilter != null) {
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            switch (dateFilter.toLowerCase()) {
+                case "today" -> dateFrom = now.toLocalDate().atStartOfDay();
+                case "week" -> dateFrom = now.minusWeeks(1);
+                case "month" -> dateFrom = now.minusMonths(1);
+                case "year" -> dateFrom = now.minusYears(1);
+            }
+        }
+        
+        Page<OrderResponse> orders = orderService.getSellerOrders(sellerId, status, dateFrom, dateTo, search, pageable);
         return ResponseEntity.ok(ApiResponse.success("Orders retrieved successfully", orders));
+    }
+
+    @GetMapping("/orders/stats")
+    @PreAuthorize("hasRole('SELLER')")
+    @Operation(summary = "Get seller order stats", description = "Get order statistics for the authenticated seller")
+    public ResponseEntity<ApiResponse<SellerOrderStatsResponse>> getOrderStats(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        UUID sellerId = UUID.fromString(principal.getId().toString());
+        SellerOrderStatsResponse stats = orderService.getSellerOrderStats(sellerId);
+        return ResponseEntity.ok(ApiResponse.success("Order stats retrieved successfully", stats));
+    }
+
+    @GetMapping("/orders/export")
+    @PreAuthorize("hasRole('SELLER')")
+    @Operation(summary = "Export seller orders", description = "Export seller orders to CSV")
+    public ResponseEntity<String> exportOrders(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestParam(required = false) OrderStatus status,
+            @RequestParam(required = false) String dateFilter,
+            @RequestParam(required = false) String search) {
+        
+        UUID sellerId = UUID.fromString(principal.getId().toString());
+        
+        java.time.LocalDateTime dateFrom = null;
+        java.time.LocalDateTime dateTo = null;
+        
+        if (dateFilter != null) {
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            switch (dateFilter.toLowerCase()) {
+                case "today" -> dateFrom = now.toLocalDate().atStartOfDay();
+                case "week" -> dateFrom = now.minusWeeks(1);
+                case "month" -> dateFrom = now.minusMonths(1);
+                case "year" -> dateFrom = now.minusYears(1);
+            }
+        }
+        
+        String csv = orderService.exportSellerOrdersToCSV(sellerId, status, dateFrom, dateTo, search);
+        
+        return ResponseEntity.ok()
+                .header("Content-Type", "text/csv")
+                .header("Content-Disposition", "attachment; filename=orders.csv")
+                .body(csv);
     }
 
     @PatchMapping("/orders/{id}/status")
@@ -223,5 +299,113 @@ public class SellerController {
         UUID sellerId = UUID.fromString(principal.getId().toString());
         sellerService.assignTagsToProduct(id, tags, sellerId);
         return ResponseEntity.ok(ApiResponse.success("Tags assigned successfully", null));
+    }
+
+    @GetMapping("/settings/payment")
+    @PreAuthorize("hasRole('SELLER')")
+    @Operation(summary = "Get payment settings", description = "Get seller payment settings")
+    public ResponseEntity<ApiResponse<SellerPaymentSettingsResponse>> getPaymentSettings(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        UUID sellerId = UUID.fromString(principal.getId().toString());
+        return ResponseEntity.ok(ApiResponse.success("Payment settings retrieved", 
+                sellerService.getPaymentSettings(sellerId)));
+    }
+
+    @PutMapping("/settings/payment")
+    @PreAuthorize("hasRole('SELLER')")
+    @Operation(summary = "Update payment settings", description = "Update seller payment settings")
+    public ResponseEntity<ApiResponse<SellerPaymentSettingsResponse>> updatePaymentSettings(
+            @Valid @RequestBody SellerPaymentSettingsRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        UUID sellerId = UUID.fromString(principal.getId().toString());
+        return ResponseEntity.ok(ApiResponse.success("Payment settings updated", 
+                sellerService.updatePaymentSettings(sellerId, request)));
+    }
+
+    @GetMapping("/settings/shipping")
+    @PreAuthorize("hasRole('SELLER')")
+    @Operation(summary = "Get shipping settings", description = "Get seller shipping settings")
+    public ResponseEntity<ApiResponse<SellerShippingSettingsResponse>> getShippingSettings(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        UUID sellerId = UUID.fromString(principal.getId().toString());
+        return ResponseEntity.ok(ApiResponse.success("Shipping settings retrieved", 
+                sellerService.getShippingSettings(sellerId)));
+    }
+
+    @PutMapping("/settings/shipping")
+    @PreAuthorize("hasRole('SELLER')")
+    @Operation(summary = "Update shipping settings", description = "Update seller shipping settings")
+    public ResponseEntity<ApiResponse<SellerShippingSettingsResponse>> updateShippingSettings(
+            @Valid @RequestBody SellerShippingSettingsRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        UUID sellerId = UUID.fromString(principal.getId().toString());
+        return ResponseEntity.ok(ApiResponse.success("Shipping settings updated", 
+                sellerService.updateShippingSettings(sellerId, request)));
+    }
+
+    @GetMapping("/settings/shipping/zones")
+    @PreAuthorize("hasRole('SELLER')")
+    @Operation(summary = "Get shipping zones", description = "Get seller shipping zones")
+    public ResponseEntity<ApiResponse<List<ShippingZoneResponse>>> getShippingZones(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        UUID sellerId = UUID.fromString(principal.getId().toString());
+        return ResponseEntity.ok(ApiResponse.success("Shipping zones retrieved", 
+                sellerService.getShippingZones(sellerId)));
+    }
+
+    @PostMapping("/settings/shipping/zones")
+    @PreAuthorize("hasRole('SELLER')")
+    @Operation(summary = "Create shipping zone", description = "Create a new shipping zone")
+    public ResponseEntity<ApiResponse<ShippingZoneResponse>> createShippingZone(
+            @Valid @RequestBody ShippingZoneRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        UUID sellerId = UUID.fromString(principal.getId().toString());
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Shipping zone created", 
+                        sellerService.createShippingZone(sellerId, request)));
+    }
+
+    @PutMapping("/settings/shipping/zones/{zoneId}")
+    @PreAuthorize("hasRole('SELLER')")
+    @Operation(summary = "Update shipping zone", description = "Update an existing shipping zone")
+    public ResponseEntity<ApiResponse<ShippingZoneResponse>> updateShippingZone(
+            @PathVariable UUID zoneId,
+            @Valid @RequestBody ShippingZoneRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        UUID sellerId = UUID.fromString(principal.getId().toString());
+        return ResponseEntity.ok(ApiResponse.success("Shipping zone updated", 
+                sellerService.updateShippingZone(sellerId, zoneId, request)));
+    }
+
+    @DeleteMapping("/settings/shipping/zones/{zoneId}")
+    @PreAuthorize("hasRole('SELLER')")
+    @Operation(summary = "Delete shipping zone", description = "Delete a shipping zone")
+    public ResponseEntity<ApiResponse<Void>> deleteShippingZone(
+            @PathVariable UUID zoneId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        UUID sellerId = UUID.fromString(principal.getId().toString());
+        sellerService.deleteShippingZone(sellerId, zoneId);
+        return ResponseEntity.ok(ApiResponse.success("Shipping zone deleted", null));
+    }
+
+    @GetMapping("/settings/notifications")
+    @PreAuthorize("hasRole('SELLER')")
+    @Operation(summary = "Get notification settings", description = "Get seller notification settings")
+    public ResponseEntity<ApiResponse<SellerNotificationSettingsResponse>> getNotificationSettings(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        UUID sellerId = UUID.fromString(principal.getId().toString());
+        return ResponseEntity.ok(ApiResponse.success("Notification settings retrieved", 
+                sellerService.getNotificationSettings(sellerId)));
+    }
+
+    @PutMapping("/settings/notifications")
+    @PreAuthorize("hasRole('SELLER')")
+    @Operation(summary = "Update notification settings", description = "Update seller notification settings")
+    public ResponseEntity<ApiResponse<SellerNotificationSettingsResponse>> updateNotificationSettings(
+            @RequestBody SellerNotificationSettingsRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        UUID sellerId = UUID.fromString(principal.getId().toString());
+        return ResponseEntity.ok(ApiResponse.success("Notification settings updated", 
+                sellerService.updateNotificationSettings(sellerId, request)));
     }
 }

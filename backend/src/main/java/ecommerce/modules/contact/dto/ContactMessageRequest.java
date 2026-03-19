@@ -33,4 +33,6 @@ public class ContactMessageRequest {
     @NotBlank(message = "Message is required")
     @Size(min = 10, max = 5000, message = "Message must be between 10 and 5000 characters")
     private String message;
+
+    private String orderId;
 }

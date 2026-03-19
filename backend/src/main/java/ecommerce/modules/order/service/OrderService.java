@@ -293,6 +293,23 @@ public interface OrderService {
      */
     ecommerce.modules.admin.dto.AdminAnalyticsDto getAdminAnalytics(String filterPeriod);
 
+    /**
+     * Retrieves seller orders with filters.
+     */
+    Page<OrderResponse> getSellerOrders(UUID sellerId, OrderStatus status, LocalDateTime dateFrom, 
+            LocalDateTime dateTo, String query, Pageable pageable);
+
+    /**
+     * Retrieves order statistics for a seller.
+     */
+    SellerOrderStatsResponse getSellerOrderStats(UUID sellerId);
+
+    /**
+     * Exports seller orders to CSV format.
+     */
+    String exportSellerOrdersToCSV(UUID sellerId, OrderStatus status, LocalDateTime dateFrom,
+            LocalDateTime dateTo, String query);
+
     // =================================================================
     // ADMIN DASHBOARD OPERATIONS
     // =================================================================

@@ -1,5 +1,6 @@
 package ecommerce.modules.seller.dto;
 
+import ecommerce.common.enums.Region;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,6 +19,16 @@ public class StoreResponse {
     private String storeDescription;
     private String storeWebsite;
     private String storeLogo;
+    private String storeBanner;
+    private String email;
+    private String phone;
+    private Region region;
+    private String city;
+    private String businessAddress;
+    private String workingHours;
+    private String facebookUrl;
+    private String instagramUrl;
+    private String twitterUrl;
     private BigDecimal rating;
     private Integer totalReviews;
     private Integer totalProducts;

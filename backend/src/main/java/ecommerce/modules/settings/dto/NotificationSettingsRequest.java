@@ -10,8 +10,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class NotificationSettingsRequest {
-    private Boolean emailNotifications;
-    private Boolean orderNotifications;
-    private Boolean refundNotifications;
-    private Boolean sellerNotifications;
+    private Boolean orderUpdates;
+    private Boolean paymentConfirmation;
+    private Boolean shippingUpdates;
+    private Boolean promotionalEmails;
+    private Boolean newProductAlerts;
+    private Boolean priceDropAlerts;
+    private Boolean wishlistUpdates;
+    private Boolean reviewRequests;
+    private Boolean newsletter;
+    private Boolean promotionalSms;
+    private Boolean browserNotifications;
+    private Boolean appNotifications;
 }

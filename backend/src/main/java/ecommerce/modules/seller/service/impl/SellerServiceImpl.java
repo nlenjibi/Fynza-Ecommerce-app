@@ -1,6 +1,10 @@
 package ecommerce.modules.seller.service.impl;
 
+import ecommerce.exception.BadRequestException;
 import ecommerce.exception.ResourceNotFoundException;
+import ecommerce.modules.notification.dto.NotificationSettingsResponse;
+import ecommerce.modules.notification.entity.SellerNotificationSettings;
+import ecommerce.modules.notification.repository.SellerNotificationSettingsRepository;
 import ecommerce.modules.order.dto.OrderResponse;
 import ecommerce.modules.order.dto.OrderStatusUpdateRequest;
 import ecommerce.modules.order.dto.SellerOrderDto;
@@ -12,11 +16,9 @@ import ecommerce.modules.product.repository.ProductRepository;
 import ecommerce.modules.review.dto.ReviewResponse;
 import ecommerce.modules.review.entity.Review;
 import ecommerce.modules.review.repository.ReviewRepository;
-import ecommerce.modules.seller.dto.SellerAnalyticsDto;
-import ecommerce.modules.seller.dto.SellerAnalyticsResponse;
-import ecommerce.modules.seller.dto.SellerDashboardResponse;
-import ecommerce.modules.seller.dto.StoreResponse;
-import ecommerce.modules.seller.dto.UpdateStoreRequest;
+import ecommerce.modules.seller.dto.*;
+import ecommerce.modules.seller.entity.ShippingZone;
+import ecommerce.modules.seller.repository.ShippingZoneRepository;
 import ecommerce.modules.seller.service.SellerService;
 import ecommerce.modules.tag.dto.TagResponse;
 import ecommerce.modules.tag.service.TagService;
@@ -52,6 +54,8 @@ public class SellerServiceImpl implements SellerService {
     private final SellerProfileRepository sellerProfileRepository;
     private final ReviewRepository reviewRepository;
     private final TagService tagService;
+    private final ShippingZoneRepository shippingZoneRepository;
+    private final SellerNotificationSettingsRepository sellerNotificationSettingsRepository;
 
     @Override
     public SellerDashboardResponse getDashboard(UUID sellerId) {
@@ -187,6 +191,16 @@ public class SellerServiceImpl implements SellerService {
         if (request.getStoreDescription() != null) profile.setStoreDescription(request.getStoreDescription());
         if (request.getStoreWebsite() != null) profile.setStoreWebsite(request.getStoreWebsite());
         if (request.getStoreLogo() != null) profile.setStoreLogo(request.getStoreLogo());
+        if (request.getStoreBanner() != null) profile.setStoreBanner(request.getStoreBanner());
+        if (request.getEmail() != null) profile.setEmail(request.getEmail());
+        if (request.getPhone() != null) profile.setPhone(request.getPhone());
+        if (request.getRegion() != null) profile.setRegion(request.getRegion());
+        if (request.getCity() != null) profile.setCity(request.getCity());
+        if (request.getBusinessAddress() != null) profile.setBusinessAddress(request.getBusinessAddress());
+        if (request.getWorkingHours() != null) profile.setWorkingHours(request.getWorkingHours());
+        if (request.getFacebookUrl() != null) profile.setFacebookUrl(request.getFacebookUrl());
+        if (request.getInstagramUrl() != null) profile.setInstagramUrl(request.getInstagramUrl());
+        if (request.getTwitterUrl() != null) profile.setTwitterUrl(request.getTwitterUrl());
         if (request.getBusinessRegistration() != null) profile.setBusinessRegistration(request.getBusinessRegistration());
         if (request.getBankName() != null) profile.setBankName(request.getBankName());
         if (request.getAccountHolderName() != null) profile.setAccountHolderName(request.getAccountHolderName());
@@ -249,6 +263,16 @@ public class SellerServiceImpl implements SellerService {
                 .storeDescription(profile.getStoreDescription())
                 .storeWebsite(profile.getStoreWebsite())
                 .storeLogo(profile.getStoreLogo())
+                .storeBanner(profile.getStoreBanner())
+                .email(profile.getEmail())
+                .phone(profile.getPhone())
+                .region(profile.getRegion())
+                .city(profile.getCity())
+                .businessAddress(profile.getBusinessAddress())
+                .workingHours(profile.getWorkingHours())
+                .facebookUrl(profile.getFacebookUrl())
+                .instagramUrl(profile.getInstagramUrl())
+                .twitterUrl(profile.getTwitterUrl())
                 .rating(profile.getRating())
                 .totalReviews(profile.getTotalReviews())
                 .totalProducts(profile.getTotalProducts())
@@ -276,6 +300,245 @@ public class SellerServiceImpl implements SellerService {
                 .approved(review.getApproved())
                 .helpfulCount(review.getHelpful())
                 .createdAt(review.getCreatedAt())
+                .build();
+    }
+
+    @Override
+    public SellerPaymentSettingsResponse getPaymentSettings(UUID sellerId) {
+        SellerProfile profile = sellerProfileRepository.findByUserId(sellerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Seller profile not found"));
+        return SellerPaymentSettingsResponse.builder()
+                .id(profile.getId())
+                .bankName(profile.getBankName())
+                .accountHolderName(profile.getAccountHolderName())
+                .accountNumber(maskAccountNumber(profile.getAccountNumber()))
+                .branch(profile.getBranch())
+                .payoutSchedule(profile.getPayoutSchedule())
+                .updatedAt(profile.getUpdatedAt())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public SellerPaymentSettingsResponse updatePaymentSettings(UUID sellerId, SellerPaymentSettingsRequest request) {
+        SellerProfile profile = sellerProfileRepository.findByUserId(sellerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Seller profile not found"));
+
+        if (request.getBankName() != null) profile.setBankName(request.getBankName());
+        if (request.getAccountHolderName() != null) profile.setAccountHolderName(request.getAccountHolderName());
+        if (request.getAccountNumber() != null) profile.setAccountNumber(request.getAccountNumber());
+        if (request.getBranch() != null) profile.setBranch(request.getBranch());
+        if (request.getPayoutSchedule() != null) profile.setPayoutSchedule(request.getPayoutSchedule());
+
+        SellerProfile saved = sellerProfileRepository.save(profile);
+        log.info("Updated payment settings for seller: {}", sellerId);
+
+        return SellerPaymentSettingsResponse.builder()
+                .id(saved.getId())
+                .bankName(saved.getBankName())
+                .accountHolderName(saved.getAccountHolderName())
+                .accountNumber(maskAccountNumber(saved.getAccountNumber()))
+                .branch(saved.getBranch())
+                .payoutSchedule(saved.getPayoutSchedule())
+                .updatedAt(saved.getUpdatedAt())
+                .build();
+    }
+
+    @Override
+    public SellerShippingSettingsResponse getShippingSettings(UUID sellerId) {
+        SellerProfile profile = sellerProfileRepository.findByUserId(sellerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Seller profile not found"));
+
+        List<ShippingZoneResponse> zones = shippingZoneRepository.findBySellerIdAndIsActiveTrue(profile.getId())
+                .stream()
+                .map(this::mapToShippingZoneResponse)
+                .collect(Collectors.toList());
+
+        return SellerShippingSettingsResponse.builder()
+                .id(profile.getId())
+                .returnPolicy(profile.getReturnPolicy())
+                .shippingZones(zones)
+                .updatedAt(profile.getUpdatedAt())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public SellerShippingSettingsResponse updateShippingSettings(UUID sellerId, SellerShippingSettingsRequest request) {
+        SellerProfile profile = sellerProfileRepository.findByUserId(sellerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Seller profile not found"));
+
+        if (request.getReturnPolicy() != null) {
+            profile.setReturnPolicy(request.getReturnPolicy());
+        }
+
+        SellerProfile saved = sellerProfileRepository.save(profile);
+        log.info("Updated shipping settings for seller: {}", sellerId);
+
+        List<ShippingZoneResponse> zones = shippingZoneRepository.findBySellerIdAndIsActiveTrue(saved.getId())
+                .stream()
+                .map(this::mapToShippingZoneResponse)
+                .collect(Collectors.toList());
+
+        return SellerShippingSettingsResponse.builder()
+                .id(saved.getId())
+                .returnPolicy(saved.getReturnPolicy())
+                .shippingZones(zones)
+                .updatedAt(saved.getUpdatedAt())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public ShippingZoneResponse createShippingZone(UUID sellerId, ShippingZoneRequest request) {
+        SellerProfile profile = sellerProfileRepository.findByUserId(sellerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Seller profile not found"));
+
+        ShippingZone zone = ShippingZone.builder()
+                .seller(profile)
+                .zoneName(request.getZoneName())
+                .zoneDescription(request.getZoneDescription())
+                .shippingCost(request.getShippingCost())
+                .estimatedDays(request.getEstimatedDays())
+                .isActive(true)
+                .build();
+
+        ShippingZone saved = shippingZoneRepository.save(zone);
+        log.info("Created shipping zone {} for seller: {}", saved.getId(), sellerId);
+
+        return mapToShippingZoneResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public ShippingZoneResponse updateShippingZone(UUID sellerId, UUID zoneId, ShippingZoneRequest request) {
+        SellerProfile profile = sellerProfileRepository.findByUserId(sellerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Seller profile not found"));
+
+        ShippingZone zone = shippingZoneRepository.findById(zoneId)
+                .orElseThrow(() -> new ResourceNotFoundException("Shipping zone not found"));
+
+        if (!zone.getSeller().getId().equals(profile.getId())) {
+            throw new BadRequestException("Shipping zone does not belong to this seller");
+        }
+
+        if (request.getZoneName() != null) zone.setZoneName(request.getZoneName());
+        if (request.getZoneDescription() != null) zone.setZoneDescription(request.getZoneDescription());
+        if (request.getShippingCost() != null) zone.setShippingCost(request.getShippingCost());
+        if (request.getEstimatedDays() != null) zone.setEstimatedDays(request.getEstimatedDays());
+
+        ShippingZone saved = shippingZoneRepository.save(zone);
+        log.info("Updated shipping zone {} for seller: {}", zoneId, sellerId);
+
+        return mapToShippingZoneResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public void deleteShippingZone(UUID sellerId, UUID zoneId) {
+        SellerProfile profile = sellerProfileRepository.findByUserId(sellerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Seller profile not found"));
+
+        ShippingZone zone = shippingZoneRepository.findById(zoneId)
+                .orElseThrow(() -> new ResourceNotFoundException("Shipping zone not found"));
+
+        if (!zone.getSeller().getId().equals(profile.getId())) {
+            throw new BadRequestException("Shipping zone does not belong to this seller");
+        }
+
+        zone.setIsActive(false);
+        shippingZoneRepository.save(zone);
+        log.info("Deleted shipping zone {} for seller: {}", zoneId, sellerId);
+    }
+
+    @Override
+    public List<ShippingZoneResponse> getShippingZones(UUID sellerId) {
+        SellerProfile profile = sellerProfileRepository.findByUserId(sellerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Seller profile not found"));
+
+        return shippingZoneRepository.findBySellerId(profile.getId())
+                .stream()
+                .map(this::mapToShippingZoneResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public SellerNotificationSettingsResponse getNotificationSettings(UUID sellerId) {
+        SellerProfile profile = sellerProfileRepository.findByUserId(sellerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Seller profile not found"));
+
+        SellerNotificationSettings settings = sellerNotificationSettingsRepository.findBySellerId(profile.getId())
+                .orElseGet(() -> createDefaultNotificationSettings(profile));
+
+        return mapToSellerNotificationSettingsResponse(settings);
+    }
+
+    @Override
+    @Transactional
+    public SellerNotificationSettingsResponse updateNotificationSettings(UUID sellerId, SellerNotificationSettingsRequest request) {
+        SellerProfile profile = sellerProfileRepository.findByUserId(sellerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Seller profile not found"));
+
+        SellerNotificationSettings settings = sellerNotificationSettingsRepository.findBySellerId(profile.getId())
+                .orElseGet(() -> createDefaultNotificationSettings(profile));
+
+        if (request.getNewOrders() != null) settings.setNewOrders(request.getNewOrders());
+        if (request.getOrderUpdates() != null) settings.setOrderUpdates(request.getOrderUpdates());
+        if (request.getCustomerMessages() != null) settings.setCustomerMessages(request.getCustomerMessages());
+        if (request.getStockAlerts() != null) settings.setStockAlerts(request.getStockAlerts());
+        if (request.getPaymentUpdates() != null) settings.setPaymentUpdates(request.getPaymentUpdates());
+        if (request.getRefundRequests() != null) settings.setRefundRequests(request.getRefundRequests());
+        if (request.getPromotionalEmails() != null) settings.setPromotionalEmails(request.getPromotionalEmails());
+
+        SellerNotificationSettings saved = sellerNotificationSettingsRepository.save(settings);
+        log.info("Updated notification settings for seller: {}", sellerId);
+
+        return mapToSellerNotificationSettingsResponse(saved);
+    }
+
+    private String maskAccountNumber(String accountNumber) {
+        if (accountNumber == null || accountNumber.length() < 4) return accountNumber;
+        return "****" + accountNumber.substring(accountNumber.length() - 4);
+    }
+
+    private ShippingZoneResponse mapToShippingZoneResponse(ShippingZone zone) {
+        return ShippingZoneResponse.builder()
+                .id(zone.getId())
+                .zoneName(zone.getZoneName())
+                .zoneDescription(zone.getZoneDescription())
+                .shippingCost(zone.getShippingCost())
+                .estimatedDays(zone.getEstimatedDays())
+                .isActive(zone.getIsActive())
+                .updatedAt(zone.getUpdatedAt())
+                .build();
+    }
+
+    private SellerNotificationSettings createDefaultNotificationSettings(SellerProfile profile) {
+        return sellerNotificationSettingsRepository.save(
+                SellerNotificationSettings.builder()
+                        .seller(profile)
+                        .newOrders(true)
+                        .orderUpdates(true)
+                        .customerMessages(true)
+                        .stockAlerts(true)
+                        .paymentUpdates(true)
+                        .refundRequests(true)
+                        .promotionalEmails(false)
+                        .build()
+        );
+    }
+
+    private SellerNotificationSettingsResponse mapToSellerNotificationSettingsResponse(SellerNotificationSettings settings) {
+        return SellerNotificationSettingsResponse.builder()
+                .id(settings.getId())
+                .newOrders(settings.getNewOrders())
+                .orderUpdates(settings.getOrderUpdates())
+                .customerMessages(settings.getCustomerMessages())
+                .stockAlerts(settings.getStockAlerts())
+                .paymentUpdates(settings.getPaymentUpdates())
+                .refundRequests(settings.getRefundRequests())
+                .promotionalEmails(settings.getPromotionalEmails())
+                .updatedAt(settings.getUpdatedAt())
                 .build();
     }
 }

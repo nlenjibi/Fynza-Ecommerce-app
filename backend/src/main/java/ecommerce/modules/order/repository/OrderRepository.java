@@ -80,4 +80,25 @@ public interface OrderRepository extends BaseRepository<Order, UUID> {
             @Param("query") String query,
             Pageable pageable
     );
+
+    @Query("SELECT o FROM Order o JOIN o.orderItems oi JOIN oi.product p " +
+           "WHERE p.seller.id = :sellerId " +
+           "AND (:status IS NULL OR o.status = :status) " +
+           "AND (:dateFrom IS NULL OR o.createdAt >= :dateFrom) " +
+           "AND (:dateTo IS NULL OR o.createdAt <= :dateTo) " +
+           "AND (:query IS NULL OR LOWER(o.orderNumber) LIKE LOWER(CONCAT('%', :query, '%')) " +
+           "OR LOWER(o.customer.firstName) LIKE LOWER(CONCAT('%', :query, '%')) " +
+           "OR LOWER(o.customer.lastName) LIKE LOWER(CONCAT('%', :query, '%')))")
+    Page<Order> findSellerOrdersWithFilters(
+            @Param("sellerId") UUID sellerId,
+            @Param("status") OrderStatus status,
+            @Param("dateFrom") LocalDateTime dateFrom,
+            @Param("dateTo") LocalDateTime dateTo,
+            @Param("query") String query,
+            Pageable pageable
+    );
+
+    @Query("SELECT o.status, COUNT(o) FROM Order o JOIN o.orderItems oi JOIN oi.product p " +
+           "WHERE p.seller.id = :sellerId GROUP BY o.status")
+    List<Object[]> countSellerOrdersByStatusGrouped(@Param("sellerId") UUID sellerId);
 }

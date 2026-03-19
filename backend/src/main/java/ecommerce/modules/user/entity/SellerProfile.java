@@ -1,6 +1,8 @@
 package ecommerce.modules.user.entity;
 
 import ecommerce.common.base.BaseEntity;
+import ecommerce.common.enums.PayoutSchedule;
+import ecommerce.common.enums.Region;
 import ecommerce.common.enums.VerificationStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -36,6 +38,37 @@ public class SellerProfile extends BaseEntity {
 
     @Column(name = "store_logo", length = 500)
     private String storeLogo;
+
+    @Column(name = "store_banner", length = 500)
+    private String storeBanner;
+
+    @Column(name = "email", length = 255)
+    private String email;
+
+    @Column(name = "phone", length = 50)
+    private String phone;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "region")
+    private Region region;
+
+    @Column(name = "city", length = 100)
+    private String city;
+
+    @Column(name = "business_address", length = 500)
+    private String businessAddress;
+
+    @Column(name = "working_hours", length = 255)
+    private String workingHours;
+
+    @Column(name = "facebook_url", length = 500)
+    private String facebookUrl;
+
+    @Column(name = "instagram_url", length = 500)
+    private String instagramUrl;
+
+    @Column(name = "twitter_url", length = 500)
+    private String twitterUrl;
 
     @Column(precision = 3, scale = 2)
     @Builder.Default
@@ -76,4 +109,15 @@ public class SellerProfile extends BaseEntity {
 
     @Column(name = "account_number", length = 100)
     private String accountNumber;
+
+    @Column(name = "branch", length = 255)
+    private String branch;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payout_schedule")
+    @Builder.Default
+    private PayoutSchedule payoutSchedule = PayoutSchedule.MONTHLY;
+
+    @Column(name = "return_policy", columnDefinition = "TEXT")
+    private String returnPolicy;
 }

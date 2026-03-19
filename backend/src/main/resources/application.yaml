@@ -30,7 +30,10 @@ spring:
   # application.yml
 
   flyway:
-    enabled: false
+    enabled: true
+    baseline-on-migrate: true
+    schemas: public
+    locations: classpath:db/migration
 
   graphql:
     graphiql:

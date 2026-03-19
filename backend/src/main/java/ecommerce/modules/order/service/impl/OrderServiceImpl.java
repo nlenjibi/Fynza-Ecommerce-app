@@ -961,6 +961,110 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
+     * Retrieves seller orders with filters.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Page<OrderResponse> getSellerOrders(UUID sellerId, OrderStatus status, LocalDateTime dateFrom,
+            LocalDateTime dateTo, String query, Pageable pageable) {
+        return orderRepository.findSellerOrdersWithFilters(sellerId, status, dateFrom, dateTo, query, pageable)
+                .map(orderMapper::toResponse);
+    }
+
+    /**
+     * Retrieves order statistics for a seller.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public SellerOrderStatsResponse getSellerOrderStats(UUID sellerId) {
+        List<Object[]> stats = orderRepository.countSellerOrdersByStatusGrouped(sellerId);
+        
+        long total = 0;
+        long pending = 0, confirmed = 0, processing = 0, shipped = 0, delivered = 0, cancelled = 0, refunded = 0;
+        
+        for (Object[] row : stats) {
+            OrderStatus status = (OrderStatus) row[0];
+            long count = (Long) row[1];
+            total += count;
+            
+            switch (status) {
+                case PENDING -> pending = count;
+                case CONFIRMED -> confirmed = count;
+                case PROCESSING -> processing = count;
+                case SHIPPED -> shipped = count;
+                case DELIVERED -> delivered = count;
+                case CANCELLED -> cancelled = count;
+                case REFUNDED -> refunded = count;
+                default -> {}
+            }
+        }
+        
+        return SellerOrderStatsResponse.builder()
+                .totalOrders(total)
+                .pending(pending)
+                .confirmed(confirmed)
+                .processing(processing)
+                .shipped(shipped)
+                .delivered(delivered)
+                .cancelled(cancelled)
+                .refunded(refunded)
+                .build();
+    }
+
+    /**
+     * Exports seller orders to CSV format.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public String exportSellerOrdersToCSV(UUID sellerId, OrderStatus status, LocalDateTime dateFrom,
+            LocalDateTime dateTo, String query) {
+        List<Order> orders = orderRepository.findBySellerId(sellerId);
+        
+        StringBuilder csv = new StringBuilder();
+        csv.append("Order Number,Customer Name,Email,Phone,Total Amount,Status,Payment Status,Tracking Number,Created At\n");
+        
+        for (Order order : orders) {
+            boolean matches = true;
+            
+            if (status != null && order.getStatus() != status) matches = false;
+            if (dateFrom != null && order.getCreatedAt().isBefore(dateFrom)) matches = false;
+            if (dateTo != null && order.getCreatedAt().isAfter(dateTo)) matches = false;
+            if (query != null && !query.isEmpty()) {
+                String q = query.toLowerCase();
+                boolean matchOrder = order.getOrderNumber().toLowerCase().contains(q);
+                boolean matchCustomer = order.getCustomer() != null && 
+                    (order.getCustomer().getFirstName() != null && order.getCustomer().getFirstName().toLowerCase().contains(q) ||
+                     order.getCustomer().getLastName() != null && order.getCustomer().getLastName().toLowerCase().contains(q));
+                if (!matchOrder && !matchCustomer) matches = false;
+            }
+            
+            if (matches) {
+                csv.append(String.format("%s,%s %s,%s,%s,%.2f,%s,%s,%s,%s\n",
+                        escapeCsv(order.getOrderNumber()),
+                        escapeCsv(order.getCustomer().getFirstName()),
+                        escapeCsv(order.getCustomer().getLastName()),
+                        escapeCsv(order.getCustomer().getEmail()),
+                        order.getCustomer().getPhone() != null ? escapeCsv(order.getCustomer().getPhone()) : "",
+                        order.getTotalAmount(),
+                        order.getStatus(),
+                        order.getPaymentStatus(),
+                        order.getTrackingNumber() != null ? escapeCsv(order.getTrackingNumber()) : "",
+                        order.getCreatedAt()));
+            }
+        }
+        
+        return csv.toString();
+    }
+
+    private String escapeCsv(String value) {
+        if (value == null) return "";
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
+    }
+
+    /**
      * Updates the status of an order for a specific seller.
      */
     @Override

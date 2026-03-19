@@ -1,5 +1,7 @@
 package ecommerce.modules.product.service.impl;
 
+import ecommerce.common.enums.InventoryStatus;
+import ecommerce.common.enums.ProductStatus;
 import ecommerce.exception.ResourceNotFoundException;
 import ecommerce.modules.category.entity.Category;
 import ecommerce.modules.category.repository.CategoryRepository;
@@ -486,5 +488,80 @@ public class ProductServiceImpl implements ProductService {
         productRepository.save(product);
         log.info("Updated rating to {} for product {}", rating, id);
         return mapToResponse(product);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductResponse> findBySellerId(UUID sellerId, ProductStatus status, UUID categoryId, String search, Pageable pageable) {
+        ProductFilterRequest filter = ProductFilterRequest.builder()
+                .sellerId(sellerId)
+                .status(status != null ? status.name() : null)
+                .categoryId(categoryId)
+                .search(search)
+                .keyword(search)
+                .build();
+        return findAll(filter, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SellerProductStatsResponse getSellerProductStats(UUID sellerId) {
+        long total = productRepository.countBySellerId(sellerId);
+        long active = productRepository.countBySellerIdAndStatus(sellerId, ProductStatus.ACTIVE);
+        long draft = productRepository.countBySellerIdAndStatus(sellerId, ProductStatus.DRAFT);
+        long outOfStock = productRepository.countBySellerIdAndInventoryStatus(sellerId, InventoryStatus.OUT_OF_STOCK);
+        long lowStock = productRepository.countBySellerIdAndLowStock(sellerId);
+
+        return SellerProductStatsResponse.builder()
+                .totalProducts(total)
+                .activeProducts(active)
+                .draftProducts(draft)
+                .outOfStockProducts(outOfStock)
+                .lowStockProducts(lowStock)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AdminProductStatsResponse getAdminProductStats() {
+        long total = productRepository.count();
+        long active = productRepository.countByStatus(ProductStatus.ACTIVE);
+        long pending = productRepository.countByStatus(ProductStatus.DRAFT);
+        long outOfStock = productRepository.countByInventoryStatusAndIsActiveTrue(InventoryStatus.OUT_OF_STOCK);
+        long lowStock = productRepository.countByInventoryStatusAndIsActiveTrue(InventoryStatus.LOW_STOCK);
+
+        return AdminProductStatsResponse.builder()
+                .totalProducts(total)
+                .activeProducts(active)
+                .pendingProducts(pending)
+                .outOfStockProducts(outOfStock)
+                .lowStockProducts(lowStock)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public ProductResponse approveProduct(UUID id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + id));
+        
+        product.setStatus(ProductStatus.ACTIVE);
+        Product saved = productRepository.save(product);
+        log.info("Approved product: {}", id);
+        
+        return mapToResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public ProductResponse updateProductStatus(UUID id, ProductStatus status) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + id));
+        
+        product.setStatus(status);
+        Product saved = productRepository.save(product);
+        log.info("Updated product {} status to {}", id, status);
+        
+        return mapToResponse(saved);
     }
 }
