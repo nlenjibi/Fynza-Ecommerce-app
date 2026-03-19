@@ -18,6 +18,14 @@ import {
   EyeOff,
   Check,
   Upload,
+  MapPin,
+  Facebook,
+  Instagram,
+  Twitter,
+  Globe,
+  Clock,
+  Image,
+  Camera,
 } from "lucide-react";
 import { useState as useReactState } from "react";
 
@@ -26,17 +34,24 @@ export default function SellerSettings() {
   const [showPassword, setShowPassword] = useState(false);
 
   const [storeInfo, setStoreInfo] = useState({
-    storeName: "Tech Store",
-    storeDescription: "Premium technology products and accessories at competitive prices. We specialize in electronics, gadgets, and accessories.",
-    email: "contact@techstore.com",
+    storeName: "BEKIA FASHION",
+    storeDescription: "Premium fashion store offering the latest trends in footwear and apparel. We specialize in quality shoes, bags, and accessories for the modern consumer.",
+    email: "contact@bekiafashion.com",
     phone: "+233 24 123 4567",
     address: "123 Main Street, Accra, Ghana",
     returnPolicy: "We offer a 30-day return policy for all eligible products.",
+    location: "Accra, Ghana",
+    city: "Accra",
+    region: "Greater Accra",
+    facebook: "https://facebook.com/bekiafashion",
+    instagram: "https://instagram.com/bekiafashion",
+    twitter: "",
+    workingHours: "Monday - Saturday: 9:00 AM - 6:00 PM",
   });
 
   const [bankInfo, setBankInfo] = useState({
     bankName: "Ghana Commercial Bank",
-    accountName: "Tech Store Ltd",
+    accountName: "BEKIA FASHION Ltd",
     accountNumber: "1234567890",
     branch: "Accra Main",
   });
@@ -162,10 +177,34 @@ export default function SellerSettings() {
                   <Store size={24} className="text-orange-500" />
                   Store Information
                 </h2>
-                <div className="space-y-4">
+                <div className="space-y-6">
+                  {/* Store Banner */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Store Banner
+                    </label>
+                    <div className="relative h-40 bg-gradient-to-r from-orange-400 to-orange-600 rounded-lg overflow-hidden">
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-white text-center">
+                          <Camera className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                          <p className="text-sm opacity-80">Click to upload banner image</p>
+                          <p className="text-xs opacity-60">Recommended: 1200x300px, JPG or PNG</p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="absolute bottom-3 right-3 bg-white/90 hover:bg-white"
+                      >
+                        <Upload size={14} className="mr-1" />
+                        Change Banner
+                      </Button>
+                    </div>
+                  </div>
+
                   {/* Store Logo */}
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-20 h-20 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <div className="flex items-center gap-4">
+                    <div className="w-20 h-20 bg-orange-100 rounded-lg flex items-center justify-center overflow-hidden">
                       <Store className="text-orange-600 w-10 h-10" />
                     </div>
                     <div>
@@ -179,9 +218,10 @@ export default function SellerSettings() {
                     </div>
                   </div>
 
+                  {/* Store Name */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Store Name
+                      Store Name <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -189,8 +229,11 @@ export default function SellerSettings() {
                       value={storeInfo.storeName}
                       onChange={handleChange}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500"
+                      required
                     />
                   </div>
+
+                  {/* Store Description */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Store Description
@@ -201,12 +244,18 @@ export default function SellerSettings() {
                       onChange={handleChange}
                       rows={4}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500 resize-none"
+                      placeholder="Describe your store, products, and services..."
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                      This will be displayed on your store page
+                    </p>
                   </div>
+
+                  {/* Contact Info */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Email Address
+                        Email Address <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="email"
@@ -214,11 +263,12 @@ export default function SellerSettings() {
                         value={storeInfo.email}
                         onChange={handleChange}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500"
+                        required
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Phone Number
+                        Phone Number <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="tel"
@@ -226,9 +276,50 @@ export default function SellerSettings() {
                         value={storeInfo.phone}
                         onChange={handleChange}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500"
+                        required
                       />
                     </div>
                   </div>
+
+                  {/* Location */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <MapPin size={16} className="inline mr-1" />
+                      Store Location
+                    </label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <select
+                          name="region"
+                          value={storeInfo.region}
+                          onChange={handleChange}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500"
+                        >
+                          <option value="Greater Accra">Greater Accra</option>
+                          <option value="Ashanti">Ashanti</option>
+                          <option value="Western">Western</option>
+                          <option value="Central">Central</option>
+                          <option value="Eastern">Eastern</option>
+                          <option value="Volta">Volta</option>
+                          <option value="Northern">Northern</option>
+                          <option value="Upper East">Upper East</option>
+                          <option value="Upper West">Upper West</option>
+                        </select>
+                      </div>
+                      <div>
+                        <input
+                          type="text"
+                          name="city"
+                          value={storeInfo.city}
+                          onChange={handleChange}
+                          placeholder="City/Town"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Address */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Business Address
@@ -239,8 +330,78 @@ export default function SellerSettings() {
                       value={storeInfo.address}
                       onChange={handleChange}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500"
+                      placeholder="Street address, landmark, etc."
                     />
                   </div>
+
+                  {/* Working Hours */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <Clock size={16} className="inline mr-1" />
+                      Working Hours
+                    </label>
+                    <input
+                      type="text"
+                      name="workingHours"
+                      value={storeInfo.workingHours}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500"
+                      placeholder="Monday - Friday: 9:00 AM - 6:00 PM"
+                    />
+                  </div>
+
+                  {/* Social Links */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      <Globe size={16} className="inline mr-1" />
+                      Social Media Links
+                    </label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                          <Facebook className="text-white h-5 w-5" />
+                        </div>
+                        <input
+                          type="url"
+                          name="facebook"
+                          value={storeInfo.facebook}
+                          onChange={handleChange}
+                          placeholder="Facebook URL"
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500 text-sm"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 bg-pink-600 rounded-lg flex items-center justify-center">
+                          <Instagram className="text-white h-5 w-5" />
+                        </div>
+                        <input
+                          type="url"
+                          name="instagram"
+                          value={storeInfo.instagram}
+                          onChange={handleChange}
+                          placeholder="Instagram URL"
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500 text-sm"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 bg-sky-500 rounded-lg flex items-center justify-center">
+                          <Twitter className="text-white h-5 w-5" />
+                        </div>
+                        <input
+                          type="url"
+                          name="twitter"
+                          value={storeInfo.twitter}
+                          onChange={handleChange}
+                          placeholder="Twitter/X URL"
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500 text-sm"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Add your social media links to help customers connect with you
+                    </p>
+                  </div>
+
                   <Button className="w-full bg-orange-500 hover:bg-orange-600">
                     <Check size={16} className="mr-2" />
                     Save Changes

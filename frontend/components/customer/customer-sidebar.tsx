@@ -11,13 +11,13 @@ import {
   CreditCard,
   Bell,
   LogOut,
-  ChevronRight,
   User,
   Lock,
   Shield,
   HelpCircle,
   Settings,
   Mail,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -34,6 +34,13 @@ const navigation = [
     items: [
       { name: 'My Orders', href: '/customer/orders', icon: ShoppingBag, badge: '2' },
       { name: 'Wishlist', href: '/customer/wishlist', icon: Heart, badge: '5' },
+    ],
+  },
+  {
+    title: 'MY STORES',
+    items: [
+      { name: 'Following', href: '/customer/follows', icon: Users, badge: '12' },
+      { name: 'Messages', href: '/customer/messages', icon: Mail, badge: '3' },
     ],
   },
   {

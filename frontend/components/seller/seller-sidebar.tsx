@@ -17,6 +17,8 @@ import {
     Zap,
     Tag,
     Star,
+    Users,
+    MessageCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -56,6 +58,14 @@ export function SellerSidebar({ isOpen: externalIsOpen, onToggle }: SellerSideba
             label: 'Orders',
             href: '/seller/orders',
             icon: ShoppingCart,
+        },
+        {
+            label: 'Customers',
+            icon: Users,
+            children: [
+                { label: 'Followers', href: '/seller/followers', icon: Users },
+                { label: 'Messages', href: '/seller/messages', icon: MessageCircle, badge: '5' },
+            ],
         },
         {
             label: 'Analytics',

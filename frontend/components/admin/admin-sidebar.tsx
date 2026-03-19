@@ -75,6 +75,7 @@ const navigation = [
     title: "SUPPORT",
     items: [
       { name: "Contacts", href: "/admin/contacts", icon: MessageSquare, badge: "12", badgeColor: "blue" },
+      { name: "Messages", href: "/admin/messages", icon: Mail, badge: "8", badgeColor: "orange" },
       { name: "FAQs", href: "/admin/faqs", icon: FileQuestion },
       { name: "Subscribers", href: "/admin/subscribers", icon: Mail, badge: "5", badgeColor: "green" },
       { name: "Notifications", href: "/admin/notifications", icon: Bell },
