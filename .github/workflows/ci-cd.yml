@@ -7,8 +7,9 @@ on:
       - dev
       - 'feature/**'
       - 'fix/**'
-      - 'backend-only/**'
-      - 'frontend-only/**'
+      - 'backend-only'
+      - 'frontend-only'
+
   pull_request:
     branches:
       - main
@@ -490,7 +491,6 @@ jobs:
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     environment:
       name: development
-      url: ${{ secrets.DEV_URL }}
     env:
       DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
     steps:
