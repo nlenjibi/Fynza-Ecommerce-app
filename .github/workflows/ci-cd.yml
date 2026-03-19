@@ -9,6 +9,7 @@ on:
       - 'fix/**'
       - 'backend-only'
       - 'frontend-only'
+
   pull_request:
     branches:
       - main
