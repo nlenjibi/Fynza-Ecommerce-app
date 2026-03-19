@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -44,7 +45,7 @@ public interface OrderRepository extends BaseRepository<Order, UUID> {
     @Query("SELECT DISTINCT o FROM Order o LEFT JOIN FETCH o.orderItems oi LEFT JOIN FETCH oi.product WHERE o.id IN :orderIds")
     List<Order> findByIdIn(@Param("orderIds") List<UUID> orderIds);
 
-    @Query("SELECT COUNT(o) FROM Order o WHERE o.payment.status = :paymentStatus AND o.isActive = true")
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.paymentStatus = :paymentStatus AND o.isActive = true")
     long countByPaymentStatusAndIsActiveTrue(@Param("paymentStatus") PaymentStatus paymentStatus);
 
     @Query("SELECT COALESCE(SUM(o.totalAmount), 0) FROM Order o WHERE o.status = 'COMPLETED' OR o.status = 'PAID'")
@@ -55,4 +56,28 @@ public interface OrderRepository extends BaseRepository<Order, UUID> {
 
     @EntityGraph(attributePaths = {"customer", "orderItems", "orderItems.product", "shippingAddress", "billingAddress"})
     List<Order> findBySellerId(@Param("sellerId") UUID sellerId);
+
+    @Query("SELECT o.status, COUNT(o) FROM Order o WHERE o.isActive = true GROUP BY o.status")
+    List<Object[]> countByStatusGrouped();
+
+    @Query("SELECT o FROM Order o WHERE o.isActive = true ORDER BY o.createdAt DESC")
+    List<Order> findRecentOrders(org.springframework.data.domain.Pageable pageable);
+
+    @Query("SELECT o FROM Order o JOIN o.customer c WHERE c.id = :customerId " +
+           "AND (:status IS NULL OR o.status = :status) " +
+           "AND (:dateFrom IS NULL OR o.createdAt >= :dateFrom) " +
+           "AND (:dateTo IS NULL OR o.createdAt <= :dateTo) " +
+           "AND (:minAmount IS NULL OR o.totalAmount >= :minAmount) " +
+           "AND (:maxAmount IS NULL OR o.totalAmount <= :maxAmount) " +
+           "AND (:query IS NULL OR LOWER(o.orderNumber) LIKE LOWER(CONCAT('%', :query, '%')))")
+    Page<Order> searchOrders(
+            @Param("customerId") UUID customerId,
+            @Param("status") String status,
+            @Param("dateFrom") LocalDateTime dateFrom,
+            @Param("dateTo") LocalDateTime dateTo,
+            @Param("minAmount") BigDecimal minAmount,
+            @Param("maxAmount") BigDecimal maxAmount,
+            @Param("query") String query,
+            Pageable pageable
+    );
 }

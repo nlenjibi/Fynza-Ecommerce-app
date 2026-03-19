@@ -27,14 +27,17 @@ import java.util.UUID;
  * 
  * PURPOSE:
  * Unified service for all activity logging operations across the application.
- * Handles general activity logs, order-specific logs, and payment-specific logs.
+ * Handles:
+ * - General activity logs (business events)
+ * - Order-specific activity logs
+ * - Payment-specific activity logs
+ * - Audit logs (technical CRUD operations)
  * 
  * LAYER: Service (Business Logic)
  * 
  * ARCHITECTURE:
- * - General ActivityLog: Tracks user actions, product changes, etc.
- * - OrderActivityLog: Detailed order lifecycle tracking
- * - PaymentActivityLog: Detailed payment lifecycle tracking
+ * All activity/audit data is consolidated into the ActivityLog entity
+ * and this single service for unified access.
  * 
  * @author Fynza Backend Team
  * @version 2.1
@@ -54,15 +57,6 @@ public class ActivityLogService {
 
     /**
      * Logs a general activity asynchronously.
-     * 
-     * @param type        The type of activity
-     * @param description Human-readable description
-     * @param entityType  The entity type affected (e.g., "USER", "PRODUCT")
-     * @param entityId    The affected entity's ID
-     * @param userId      The user who performed the action
-     * @param userName    The user's name
-     * @param userEmail   The user's email
-     * @param ipAddress   The client's IP address
      */
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -81,6 +75,27 @@ public class ActivityLogService {
                 .createdAt(LocalDateTime.now())
                 .build();
         activityLogRepository.save(activityLog);
+    }
+
+    /**
+     * Logs a general activity synchronously (for transactional contexts).
+     */
+    @Transactional
+    public ActivityLog logActivitySync(ActivityLog.ActivityType type, String description, 
+                                       String entityType, UUID entityId, UUID userId, 
+                                       String userName, String userEmail, String ipAddress) {
+        ActivityLog activityLog = ActivityLog.builder()
+                .userId(userId)
+                .userName(userName)
+                .userEmail(userEmail)
+                .activityType(type)
+                .description(description)
+                .entityType(entityType)
+                .entityId(entityId)
+                .ipAddress(ipAddress)
+                .createdAt(LocalDateTime.now())
+                .build();
+        return activityLogRepository.save(activityLog);
     }
 
     /**
@@ -132,19 +147,128 @@ public class ActivityLogService {
     }
 
     // =================================================================
+    // AUDIT LOG METHODS (from AuditLog)
+    // =================================================================
+
+    /**
+     * Logs an audit entry asynchronously.
+     * 
+     * @param auditLog The pre-built audit log entry
+     * @return The saved audit log
+     */
+    @Async
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void logAudit(ActivityLog auditLog) {
+        try {
+            auditLog.setCreatedAt(LocalDateTime.now());
+            activityLogRepository.save(auditLog);
+            log.debug("Audit log persisted: {} - {}", auditLog.getAction(), auditLog.getStatus());
+        } catch (Exception e) {
+            log.error("Failed to persist audit log: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Logs an audit action asynchronously.
+     * 
+     * @param userId      The user performing the action
+     * @param username   The username
+     * @param action      The action performed (CREATE, UPDATE, DELETE, etc.)
+     * @param entityType The type of entity affected
+     * @param entityId   The ID of the affected entity
+     * @param status     The outcome (SUCCESS, FAILURE, ATTEMPTED)
+     * @param details    Additional details
+     * @param ipAddress  The client's IP address
+     */
+    @Async
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void logAuditAction(UUID userId, String username, String action, String entityType, 
+                                UUID entityId, String status, String details, String ipAddress) {
+        try {
+            ActivityLog auditLog = ActivityLog.builder()
+                    .userId(userId)
+                    .userName(username)
+                    .action(action)
+                    .entityType(entityType)
+                    .entityId(entityId)
+                    .status(status)
+                    .description(details)
+                    .ipAddress(ipAddress)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            activityLogRepository.save(auditLog);
+            log.debug("Audit action logged: {} by user {}", action, username);
+        } catch (Exception e) {
+            log.error("Failed to log audit action: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Logs an audit action synchronously.
+     */
+    @Transactional
+    public ActivityLog logAuditActionSync(UUID userId, String username, String action, String entityType, 
+                                          UUID entityId, String status, String details, String ipAddress) {
+        ActivityLog auditLog = ActivityLog.builder()
+                .userId(userId)
+                .userName(username)
+                .action(action)
+                .entityType(entityType)
+                .entityId(entityId)
+                .status(status)
+                .description(details)
+                .ipAddress(ipAddress)
+                .createdAt(LocalDateTime.now())
+                .build();
+        return activityLogRepository.save(auditLog);
+    }
+
+    /**
+     * Retrieves audit logs for a specific user.
+     */
+    @Transactional(readOnly = true)
+    public Page<ActivityLog> getAuditLogsByUserId(UUID userId, Pageable pageable) {
+        return activityLogRepository.findByUserId(userId, pageable);
+    }
+
+    /**
+     * Retrieves audit logs by action type.
+     */
+    @Transactional(readOnly = true)
+    public Page<ActivityLog> getAuditLogsByAction(String action, Pageable pageable) {
+        return activityLogRepository.findByAction(action, pageable);
+    }
+
+    /**
+     * Retrieves audit logs by status.
+     */
+    @Transactional(readOnly = true)
+    public Page<ActivityLog> getAuditLogsByStatus(String status, Pageable pageable) {
+        return activityLogRepository.findByStatus(status, pageable);
+    }
+
+    /**
+     * Retrieves audit logs within a date range.
+     */
+    @Transactional(readOnly = true)
+    public Page<ActivityLog> getAuditLogsByDateRange(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+        return activityLogRepository.findByDateRange(startDate, endDate, pageable);
+    }
+
+    /**
+     * Retrieves audit logs for a specific entity.
+     */
+    @Transactional(readOnly = true)
+    public List<ActivityLog> getAuditLogsForEntity(String entityType, UUID entityId) {
+        return activityLogRepository.findByEntityTypeAndEntityId(entityType, entityId);
+    }
+
+    // =================================================================
     // ORDER ACTIVITY LOG METHODS
     // =================================================================
 
     /**
      * Logs an order activity asynchronously.
-     * 
-     * @param orderId     The order ID
-     * @param type        The order activity type
-     * @param description Human-readable description
-     * @param userId      The user who performed the action
-     * @param oldValue    The previous value (e.g., old status)
-     * @param newValue    The new value (e.g., new status)
-     * @param ipAddress   The client's IP address
      */
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -211,15 +335,6 @@ public class ActivityLogService {
 
     /**
      * Logs a payment activity asynchronously.
-     * 
-     * @param userId       The user ID
-     * @param type         The payment activity type
-     * @param description  Human-readable description
-     * @param amount      The payment amount
-     * @param paymentMethod The payment method used
-     * @param status      The payment status
-     * @param paymentId   The payment ID
-     * @param ipAddress   The client's IP address
      */
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)

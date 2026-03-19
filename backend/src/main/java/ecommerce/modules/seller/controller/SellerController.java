@@ -7,9 +7,14 @@ import ecommerce.modules.product.dto.CreateProductRequest;
 import ecommerce.modules.product.dto.ProductResponse;
 import ecommerce.modules.product.dto.UpdateProductRequest;
 import ecommerce.modules.product.service.ProductService;
+import ecommerce.modules.review.dto.ReviewResponse;
+import ecommerce.modules.seller.dto.SellerAnalyticsDto;
 import ecommerce.modules.seller.dto.SellerAnalyticsResponse;
 import ecommerce.modules.seller.dto.SellerDashboardResponse;
+import ecommerce.modules.seller.dto.StoreResponse;
+import ecommerce.modules.seller.dto.UpdateStoreRequest;
 import ecommerce.modules.seller.service.SellerService;
+import ecommerce.modules.tag.dto.TagResponse;
 import ecommerce.security.UserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,6 +31,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -152,5 +158,70 @@ public class SellerController {
         UUID sellerId = UUID.fromString(principal.getId().toString());
         SellerAnalyticsResponse analytics = sellerService.getSalesAnalytics(sellerId, days);
         return ResponseEntity.ok(ApiResponse.success("Sales analytics retrieved successfully", analytics));
+    }
+
+    @GetMapping("/analytics")
+    @PreAuthorize("hasRole('SELLER')")
+    @Operation(summary = "Get seller analytics", description = "Get comprehensive analytics for seller dashboard")
+    public ResponseEntity<ApiResponse<SellerAnalyticsDto>> getAnalytics(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        UUID sellerId = UUID.fromString(principal.getId().toString());
+        SellerAnalyticsDto analytics = sellerService.getSellerAnalytics(sellerId);
+        return ResponseEntity.ok(ApiResponse.success("Analytics retrieved successfully", analytics));
+    }
+
+    @GetMapping("/store")
+    @PreAuthorize("hasRole('SELLER')")
+    @Operation(summary = "Get store info", description = "Get store information for the authenticated seller")
+    public ResponseEntity<ApiResponse<StoreResponse>> getStore(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        UUID sellerId = UUID.fromString(principal.getId().toString());
+        StoreResponse store = sellerService.getStore(sellerId);
+        return ResponseEntity.ok(ApiResponse.success("Store retrieved successfully", store));
+    }
+
+    @PutMapping("/store")
+    @PreAuthorize("hasRole('SELLER')")
+    @Operation(summary = "Update store info", description = "Update store information for the authenticated seller")
+    public ResponseEntity<ApiResponse<StoreResponse>> updateStore(
+            @Valid @RequestBody UpdateStoreRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        UUID sellerId = UUID.fromString(principal.getId().toString());
+        StoreResponse store = sellerService.updateStore(sellerId, request);
+        return ResponseEntity.ok(ApiResponse.success("Store updated successfully", store));
+    }
+
+    @GetMapping("/reviews")
+    @PreAuthorize("hasRole('SELLER')")
+    @Operation(summary = "Get seller reviews", description = "Get reviews for all products of the authenticated seller")
+    public ResponseEntity<ApiResponse<Page<ReviewResponse>>> getSellerReviews(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        UUID sellerId = UUID.fromString(principal.getId().toString());
+        Page<ReviewResponse> reviews = sellerService.getSellerReviews(sellerId, pageable);
+        return ResponseEntity.ok(ApiResponse.success("Reviews retrieved successfully", reviews));
+    }
+
+    @GetMapping("/tags")
+    @PreAuthorize("hasRole('SELLER')")
+    @Operation(summary = "Get available tags", description = "Get all available tags for products")
+    public ResponseEntity<ApiResponse<List<TagResponse>>> getTags() {
+        return ResponseEntity.ok(ApiResponse.success(
+                "Tags retrieved successfully",
+                sellerService.getTags()));
+    }
+
+    @PostMapping("/products/{id}/tags")
+    @PreAuthorize("hasRole('SELLER')")
+    @Operation(summary = "Assign tags to product", description = "Assign tags to a product")
+    public ResponseEntity<ApiResponse<Void>> assignTags(
+            @PathVariable UUID id,
+            @RequestBody List<String> tags,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        UUID sellerId = UUID.fromString(principal.getId().toString());
+        sellerService.assignTagsToProduct(id, tags, sellerId);
+        return ResponseEntity.ok(ApiResponse.success("Tags assigned successfully", null));
     }
 }

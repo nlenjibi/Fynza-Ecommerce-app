@@ -1,4 +1,4 @@
-package ecommerce.modules.admin;
+package ecommerce.modules.admin.controller;
 
 import ecommerce.common.response.ApiResponse;
 import ecommerce.services.CacheStatisticsService;

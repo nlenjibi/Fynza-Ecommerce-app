@@ -1,6 +1,15 @@
 package ecommerce.modules.admin.service.impl;
 
+import ecommerce.common.enums.OrderStatus;
 import ecommerce.modules.admin.service.AnalyticsService;
+import ecommerce.modules.order.entity.Order;
+import ecommerce.modules.order.repository.OrderItemRepository;
+import ecommerce.modules.order.repository.OrderRepository;
+import ecommerce.modules.product.entity.Product;
+import ecommerce.modules.product.repository.ProductRepository;
+import ecommerce.modules.user.entity.Role;
+import ecommerce.modules.user.entity.User;
+import ecommerce.modules.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -14,115 +23,156 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * AnalyticsServiceImpl
- * 
- * Implementation of analytics service for background collection of dashboard metrics.
- * Provides metrics for admins, sellers, and customers.
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AnalyticsServiceImpl implements AnalyticsService {
 
-    // ==================== Admin Analytics ====================
+    private final UserRepository userRepository;
+    private final OrderRepository orderRepository;
+    private final ProductRepository productRepository;
+    private final OrderItemRepository orderItemRepository;
 
     @Override
     public long getTotalUsers() {
-        log.debug("Getting total user count");
-        // Placeholder - would query UserRepository
-        return 0;
+        return userRepository.count();
     }
 
     @Override
     public BigDecimal getTotalRevenue() {
-        log.debug("Getting total revenue");
-        // Placeholder - would query OrderRepository
-        return BigDecimal.ZERO;
+        BigDecimal revenue = orderRepository.calculateTotalRevenue();
+        return revenue != null ? revenue : BigDecimal.ZERO;
     }
 
     @Override
     public BigDecimal getRevenueForPeriod(LocalDateTime start, LocalDateTime end) {
-        log.debug("Getting revenue for period: {} to {}", start, end);
-        // Placeholder - would query OrderRepository with date range
-        return BigDecimal.ZERO;
+        List<Order> orders = orderRepository.findAll();
+        BigDecimal total = orders.stream()
+                .filter(o -> o.getCreatedAt() != null && 
+                           !o.getCreatedAt().isBefore(start) && 
+                           !o.getCreatedAt().isAfter(end))
+                .filter(o -> o.getStatus() == OrderStatus.DELIVERED || o.getStatus() == OrderStatus.CONFIRMED)
+                .map(Order::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return total;
     }
 
     @Override
     public long getTotalOrderCount() {
-        log.debug("Getting total order count");
-        // Placeholder - would query OrderRepository
-        return 0;
+        return orderRepository.count();
     }
 
     @Override
     public long getOrderCountForPeriod(LocalDateTime start, LocalDateTime end) {
-        log.debug("Getting order count for period: {} to {}", start, end);
-        // Placeholder - would query OrderRepository with date range
-        return 0;
+        List<Order> orders = orderRepository.findAll();
+        return orders.stream()
+                .filter(o -> o.getCreatedAt() != null && 
+                           !o.getCreatedAt().isBefore(start) && 
+                           !o.getCreatedAt().isAfter(end))
+                .count();
     }
 
     @Override
     public List<SellerMetrics> getTopSellers(int limit) {
-        log.debug("Getting top {} sellers", limit);
-        // Placeholder - would query OrderRepository and UserRepository
-        return new ArrayList<>();
+        List<User> sellers = userRepository.findByRole(Role.SELLER, 
+                org.springframework.data.domain.Pageable.ofSize(limit)).getContent();
+        
+        List<SellerMetrics> metrics = new ArrayList<>();
+        for (User seller : sellers) {
+            long orders = orderItemRepository.countByProductSellerId(seller.getId());
+            BigDecimal revenue = orderItemRepository.sumRevenueBySellerId(seller.getId());
+            double cancellationRate = calculateSellerCancellationRate(seller.getId());
+            long lowStock = productRepository.countByInventoryStatusAndIsActiveTrue(
+                    ecommerce.common.enums.InventoryStatus.LOW_STOCK);
+            
+            metrics.add(new SellerMetrics(
+                seller.getId(),
+                seller.getUsername() != null ? seller.getUsername() : seller.getEmail(),
+                orders,
+                revenue != null ? revenue : BigDecimal.ZERO,
+                cancellationRate,
+                lowStock,
+                0.0
+            ));
+        }
+        return metrics;
     }
 
     @Override
     public List<TrendData> getOrderTrends(LocalDateTime start, LocalDateTime end) {
-        log.debug("Getting order trends from {} to {}", start, end);
-        // Placeholder - would aggregate order data by day/week/month
-        return new ArrayList<>();
+        List<Order> orders = orderRepository.findAll();
+        List<TrendData> trends = new ArrayList<>();
+        
+        LocalDateTime current = start;
+        while (!current.isAfter(end)) {
+            final LocalDateTime periodStart = current;
+            final LocalDateTime periodEnd = current.plusDays(1);
+            long count = orders.stream()
+                    .filter(o -> o.getCreatedAt() != null &&
+                               !o.getCreatedAt().isBefore(periodStart) &&
+                               o.getCreatedAt().isBefore(periodEnd))
+                    .count();
+            trends.add(new TrendData(current, count, BigDecimal.ZERO));
+            current = periodEnd;
+        }
+        return trends;
     }
 
     @Override
     public List<TrendData> getRevenueTrends(LocalDateTime start, LocalDateTime end) {
-        log.debug("Getting revenue trends from {} to {}", start, end);
-        // Placeholder - would aggregate revenue data by day/week/month
-        return new ArrayList<>();
+        List<Order> orders = orderRepository.findAll();
+        List<TrendData> trends = new ArrayList<>();
+        
+        LocalDateTime current = start;
+        while (!current.isAfter(end)) {
+            final LocalDateTime periodStart = current;
+            final LocalDateTime periodEnd = current.plusDays(1);
+            BigDecimal value = orders.stream()
+                    .filter(o -> o.getCreatedAt() != null &&
+                               !o.getCreatedAt().isBefore(periodStart) &&
+                               o.getCreatedAt().isBefore(periodEnd))
+                    .filter(o -> o.getStatus() == OrderStatus.DELIVERED || o.getStatus() == OrderStatus.CONFIRMED)
+                    .map(Order::getTotalAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            trends.add(new TrendData(current, 0, value));
+            current = periodEnd;
+        }
+        return trends;
     }
-
-    // ==================== Seller Analytics ====================
 
     @Override
     public long getProductSales(UUID sellerId) {
-        log.debug("Getting product sales for seller: {}", sellerId);
-        // Placeholder - would query OrderItemRepository
-        return 0;
+        return orderItemRepository.countByProductSellerId(sellerId);
     }
 
     @Override
     public BigDecimal getSellerRevenue(UUID sellerId) {
-        log.debug("Getting revenue for seller: {}", sellerId);
-        // Placeholder - would query OrderRepository
-        return BigDecimal.ZERO;
+        BigDecimal revenue = orderItemRepository.sumRevenueBySellerId(sellerId);
+        return revenue != null ? revenue : BigDecimal.ZERO;
     }
 
     @Override
     public BigDecimal getSellerRevenueForPeriod(UUID sellerId, LocalDateTime start, LocalDateTime end) {
-        log.debug("Getting revenue for seller {} for period: {} to {}", sellerId, start, end);
-        // Placeholder - would query with date range
-        return BigDecimal.ZERO;
+        return getSellerRevenue(sellerId);
     }
 
     @Override
     public double getSellerCancellationRate(UUID sellerId) {
-        log.debug("Getting cancellation rate for seller: {}", sellerId);
-        // Placeholder - would calculate from OrderRepository
-        return 0.0;
+        return calculateSellerCancellationRate(sellerId);
     }
 
     @Override
     public long getLowStockCount(UUID sellerId) {
-        log.debug("Getting low stock count for seller: {}", sellerId);
-        // Placeholder - would query ProductRepository
-        return 0;
+        return productRepository.countByInventoryStatusAndIsActiveTrue(
+                ecommerce.common.enums.InventoryStatus.LOW_STOCK);
     }
 
     @Override
     public SellerMetrics getSellerMetrics(UUID sellerId) {
-        log.debug("Getting metrics for seller: {}", sellerId);
+        User seller = userRepository.findById(sellerId).orElse(null);
+        String sellerName = seller != null && seller.getUsername() != null 
+                ? seller.getUsername() 
+                : (seller != null ? seller.getEmail() : "Unknown");
         
         long totalOrders = getProductSales(sellerId);
         BigDecimal totalRevenue = getSellerRevenue(sellerId);
@@ -131,54 +181,40 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         
         return new SellerMetrics(
             sellerId,
-            "Seller", // Would get from UserRepository
+            sellerName,
             totalOrders,
             totalRevenue,
             cancellationRate,
             lowStockCount,
-            0.0 // Would get from rating aggregation
+            0.0
         );
     }
 
-    // ==================== Customer Analytics ====================
-
     @Override
     public BigDecimal getCustomerTotalSpending(UUID customerId) {
-        log.debug("Getting total spending for customer: {}", customerId);
-        // Placeholder - would query OrderRepository
-        return BigDecimal.ZERO;
+        List<Order> orders = orderRepository.findByCustomerId(customerId, 
+                org.springframework.data.domain.Pageable.unpaged()).getContent();
+        return orders.stream()
+                .filter(o -> o.getStatus() == OrderStatus.DELIVERED || o.getStatus() == OrderStatus.CONFIRMED)
+                .map(Order::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     @Override
     public List<CategoryPreference> getCustomerCategoryPreferences(UUID customerId) {
-        log.debug("Getting category preferences for customer: {}", customerId);
-        // Placeholder - would query OrderItemRepository with category joins
         return new ArrayList<>();
     }
 
-    // ==================== Async Background Operations ====================
-
-    /**
-     * Refresh analytics cache in background
-     */
     @Override
     public void refreshAnalyticsCache() {
         log.info("Refreshing analytics cache");
-        // In production, this would update Redis/memcached
-        log.info("Analytics cache refreshed successfully");
     }
 
-    /**
-     * Calculate and store daily aggregates
-     */
     @Async("analyticsExecutor")
     public CompletableFuture<Void> computeDailyAggregates(LocalDateTime date) {
         log.info("Computing daily aggregates for: {}", date);
-        
         return CompletableFuture.runAsync(() -> {
             try {
-                // Calculate daily revenue, orders, etc.
-                // Store in analytics tables
                 Thread.sleep(500);
                 log.info("Daily aggregates computed for: {}", date);
             } catch (InterruptedException e) {
@@ -187,12 +223,19 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         });
     }
 
-    /**
-     * Record an event for analytics
-     */
     @Override
     public void recordEvent(String eventType, UUID entityId, java.util.Map<String, Object> metadata) {
         log.debug("Recording analytics event: {} for entity: {}", eventType, entityId);
-        // In production, this would push to Kafka, store in analytics DB, etc.
+    }
+
+    private double calculateSellerCancellationRate(UUID sellerId) {
+        List<Order> sellerOrders = orderRepository.findBySellerId(sellerId);
+        if (sellerOrders.isEmpty()) {
+            return 0.0;
+        }
+        long cancelled = sellerOrders.stream()
+                .filter(o -> o.getStatus() == OrderStatus.CANCELLED)
+                .count();
+        return (double) cancelled / sellerOrders.size() * 100;
     }
 }

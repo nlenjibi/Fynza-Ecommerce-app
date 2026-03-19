@@ -1,7 +1,11 @@
 package ecommerce.modules.contact.dto;
 
 import ecommerce.modules.contact.entity.ContactMessage;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -16,7 +20,7 @@ public class ContactMessageResponse {
     private String phone;
     private String subject;
     private String message;
-    private String status;
+    private ContactMessage.ContactStatus status;
     private String adminResponse;
     private LocalDateTime respondedAt;
     private String respondedBy;
@@ -31,7 +35,7 @@ public class ContactMessageResponse {
                 .phone(message.getPhone())
                 .subject(message.getSubject())
                 .message(message.getMessage())
-                .status(message.getStatus().name())
+                .status(message.getStatus())
                 .adminResponse(message.getAdminResponse())
                 .respondedAt(message.getRespondedAt())
                 .respondedBy(message.getRespondedBy())

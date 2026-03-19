@@ -1,4 +1,5 @@
-import type { Metadata } from "next"
+"use client"
+
 import { useState, useEffect } from "react"
 import { AdminSidebar } from "@/components/admin/admin-sidebar"
 import { AdminHeader } from "@/components/admin/admin-header"
@@ -28,10 +29,11 @@ import {
   AlertTriangle
 } from "lucide-react"
 
-export const metadata: Metadata = {
-  title: "Admin Dashboard - Fynza",
-  description: "Comprehensive marketplace admin dashboard",
-}
+// Server-side metadata export
+// export const metadata: Metadata = {
+//   title: "Admin Dashboard - Fynza",
+//   description: "Comprehensive marketplace admin dashboard",
+// }
 
 // Mock data for dashboard
 const statsCards = [

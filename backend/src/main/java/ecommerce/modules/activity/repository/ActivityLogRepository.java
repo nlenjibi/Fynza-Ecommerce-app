@@ -11,8 +11,19 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Repository for ActivityLog entity.
+ * 
+ * Provides data access for:
+ * - General activity logs (business events)
+ * - Audit logs (technical CRUD operations)
+ */
 @Repository
 public interface ActivityLogRepository extends JpaRepository<ActivityLog, UUID> {
+
+    // =================================================================
+    // GENERAL ACTIVITY QUERIES
+    // =================================================================
 
     Page<ActivityLog> findByUserId(UUID userId, Pageable pageable);
 
@@ -29,4 +40,19 @@ public interface ActivityLogRepository extends JpaRepository<ActivityLog, UUID> 
 
     @Query("SELECT a.activityType, COUNT(a) FROM ActivityLog a WHERE a.createdAt >= :since GROUP BY a.activityType")
     List<Object[]> countByActivityTypeGrouped(LocalDateTime since);
+
+    // =================================================================
+    // AUDIT LOG QUERIES (from AuditLog)
+    // =================================================================
+
+    Page<ActivityLog> findByAction(String action, Pageable pageable);
+
+    Page<ActivityLog> findByStatus(String status, Pageable pageable);
+
+    @Query("SELECT a FROM ActivityLog a WHERE a.userId = :userId AND a.createdAt >= :startDate AND a.createdAt <= :endDate")
+    List<ActivityLog> findByUserIdAndDateRange(
+            UUID userId, LocalDateTime startDate, LocalDateTime endDate);
+
+    @Query("SELECT a FROM ActivityLog a WHERE a.entityType = :entityType AND a.entityId = :entityId ORDER BY a.createdAt DESC")
+    List<ActivityLog> findByEntityTypeAndEntityId(String entityType, UUID entityId);
 }

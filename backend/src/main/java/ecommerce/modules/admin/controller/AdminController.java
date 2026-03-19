@@ -2,6 +2,8 @@ package ecommerce.modules.admin.controller;
 
 import ecommerce.common.response.ApiResponse;
 import ecommerce.common.response.PaginatedResponse;
+import ecommerce.modules.admin.dto.AdminAnalyticsDto;
+import ecommerce.modules.admin.service.AdminService;
 import ecommerce.modules.order.dto.OrderResponse;
 import ecommerce.modules.order.dto.OrderStatusUpdateRequest;
 import ecommerce.modules.order.service.OrderService;
@@ -32,6 +34,7 @@ import java.util.UUID;
 @Tag(name = "Admin Management", description = "Admin management endpoints")
 public class AdminController {
 
+    private final AdminService adminService;
     private final OrderService orderService;
     private final ProductService productService;
     private final UserService userService;
@@ -160,5 +163,14 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success(
                 "Bulk update completed successfully. Updated " + updatedUsers.size() + " users.", 
                 updatedUsers));
+    }
+
+    @GetMapping("/analytics")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get admin analytics", description = "Get comprehensive analytics for admin dashboard with filter support")
+    public ResponseEntity<ApiResponse<AdminAnalyticsDto>> getAnalytics(
+            @RequestParam(defaultValue = "month") String filter) {
+        AdminAnalyticsDto analytics = adminService.getAnalytics(filter);
+        return ResponseEntity.ok(ApiResponse.success("Analytics retrieved successfully", analytics));
     }
 }

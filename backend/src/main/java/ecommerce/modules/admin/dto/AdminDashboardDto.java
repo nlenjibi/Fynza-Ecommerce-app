@@ -1,4 +1,4 @@
-package ecommerce.modules.admin;
+package ecommerce.modules.admin.dto;
 
 import lombok.*;
 

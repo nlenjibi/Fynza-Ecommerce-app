@@ -83,7 +83,7 @@ export function AdminHeader({ title = "Dashboard", subtitle = "Overview" }: Admi
 
         {/* Notifications */}
         <DropdownMenu>
-          <DropdownMenuTrigger className="relative focus:outline-none">
+          <DropdownMenuTrigger asChild>
             <button className="relative rounded-lg p-2 text-gray-600 hover:bg-gray-100">
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
@@ -116,7 +116,7 @@ export function AdminHeader({ title = "Dashboard", subtitle = "Overview" }: Admi
 
         {/* Admin Profile */}
         <DropdownMenu>
-          <DropdownMenuTrigger className="focus:outline-none">
+          <DropdownMenuTrigger asChild>
             <div className="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-gray-100 transition-colors cursor-pointer">
               <Avatar className="h-8 w-8">
                 <AvatarImage src="/placeholder-user.jpg" alt="Admin" />

@@ -2,10 +2,11 @@ package ecommerce.modules.order.controller;
 
 import ecommerce.common.response.ApiResponse;
 import ecommerce.modules.order.dto.CartOrderRequest;
+import ecommerce.modules.order.dto.CreateOrderRequest;
 import ecommerce.modules.order.dto.OrderResponse;
 import ecommerce.modules.order.dto.PaymentProcessRequest;
-import ecommerce.security.UserPrincipal;
 import ecommerce.modules.order.service.OrderService;
+import ecommerce.security.UserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,23 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+/**
+ * =================================================================
+ * CHECKOUT CONTROLLER
+ * =================================================================
+ * 
+ * PURPOSE:
+ * Handles HTTP requests for checkout and payment processing operations.
+ * Uses the consolidated OrderService for all operations.
+ * 
+ * LAYER: Controller (HTTP handling only, no business logic)
+ * 
+ * SECURITY:
+ * - All endpoints require CUSTOMER role
+ * 
+ * @author Fynza Backend Team
+ * @version 2.1
+ */
 @RestController
 @RequestMapping("api/v1")
 @RequiredArgsConstructor
@@ -27,6 +45,19 @@ public class CheckoutController {
 
     private final OrderService orderService;
 
+    /**
+     * Creates an order from the customer's cart.
+     * 
+     * This endpoint is used for the checkout flow where:
+     * 1. User has items in cart
+     * 2. User selects shipping address and payment method
+     * 3. Order is created and cart is cleared
+     * 
+     * @param cartId    The cart UUID to checkout
+     * @param request   Optional checkout metadata (shipping address, payment method, etc.)
+     * @param principal The authenticated user principal
+     * @return The created order
+     */
     @PostMapping("/checkout")
     @PreAuthorize("hasRole('CUSTOMER')")
     @Operation(summary = "Create order from cart", description = "Create an order from the customer's cart")
@@ -34,22 +65,61 @@ public class CheckoutController {
             @RequestParam UUID cartId,
             @RequestBody(required = false) CartOrderRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
-        log.info("POST /api/v1/checkout — cartId={}, user={}", cartId, principal.getId());
-        // Note: Assuming createOrderFromCart is available or should be mapped to a suitable service method
-        // For now, fixing the signature to use UUID and correct service import
-        OrderResponse order = orderService.getOrderById(cartId, principal.getId()); 
+        
+        log.info("POST /api/v1/checkout - cartId={}, user={}", cartId, principal.getId());
+        
+        // Build the create order request from cart and optional metadata
+        CreateOrderRequest createRequest = CreateOrderRequest.builder()
+                .shippingAddressId(request != null && request.getShippingAddress() != null 
+                        ? extractAddressId(request.getShippingAddress()) : null)
+                .paymentMethod(request != null && request.getPaymentMethod() != null 
+                        ? request.getPaymentMethod().name() : null)
+                .build();
+        
+        OrderResponse order = orderService.createOrder(createRequest, principal.getId());
+        
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Order created successfully", order));
     }
 
+    /**
+     * Processes payment for an order.
+     * 
+     * This endpoint confirms the order and updates payment status to PAID.
+     * In a real implementation, this would integrate with a payment gateway.
+     * 
+     * @param request   The payment processing request
+     * @param principal The authenticated user principal
+     * @return The updated order with confirmed status
+     */
     @PostMapping("/payments/process")
     @PreAuthorize("hasRole('CUSTOMER')")
     @Operation(summary = "Process payment", description = "Process payment for an order")
     public ResponseEntity<ApiResponse<OrderResponse>> processPayment(
             @RequestBody PaymentProcessRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
-        log.info("POST /api/v1/payments/process — orderId={}, user={}", request.getOrderId(), principal.getId());
-        OrderResponse order = orderService.updateOrderStatus(request.getOrderId(), ecommerce.common.enums.OrderStatus.CONFIRMED);
+        
+        log.info("POST /api/v1/payments/process - orderId={}, user={}", request.getOrderId(), principal.getId());
+        
+        // Update order status to CONFIRMED (which also sets payment status to PAID)
+        OrderResponse order = orderService.updateOrderStatus(request.getOrderId(), 
+                ecommerce.common.enums.OrderStatus.CONFIRMED);
+        
         return ResponseEntity.ok(ApiResponse.success("Payment processed successfully", order));
+    }
+
+    /**
+     * Extracts address ID from shipping address string.
+     * 
+     * In a real implementation, this would parse or look up the address.
+     * For now, returns null as address selection is handled separately.
+     * 
+     * @param shippingAddress The shipping address string
+     * @return The address UUID, or null if not parseable
+     */
+    private UUID extractAddressId(String shippingAddress) {
+        // This is a placeholder - in real implementation, this would
+        // either parse the address string or lookup from user's saved addresses
+        return null;
     }
 }
