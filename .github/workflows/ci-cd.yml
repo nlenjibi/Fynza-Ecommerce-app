@@ -20,8 +20,8 @@ env:
   REGISTRY: ghcr.io
   BACKEND_IMAGE: ${{ github.repository }}/backend
   FRONTEND_IMAGE: ${{ github.repository }}/frontend
-  NODE_VERSION: '20'
-  JAVA_VERSION: '17'
+  NODE_VERSION: '24.11.1'
+  JAVA_VERSION: '21'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -29,7 +29,7 @@ concurrency:
 
 jobs:
   # ═══════════════════════════════════════════════════════════════
-  # Stage 1: Setup & Change Detection
+  # Job 1: Setup & Change Detection
   # ═══════════════════════════════════════════════════════════════
   setup:
     runs-on: ubuntu-latest
@@ -219,7 +219,7 @@ jobs:
         run: npm run build
         working-directory: frontend
         env:
-          NEXT_PUBLIC_API_URL: http://localhost:8080
+          NEXT_PUBLIC_API_URL: ${{ vars.API_URL || 'http://localhost:8080' }}
 
       - name: Run tests
         run: npm test -- --run --coverage --passWithNoTests || true
@@ -460,13 +460,12 @@ jobs:
 
       - name: Deploy preview to Vercel
         id: vercel-preview
-        uses: vercel/action@v5
+        uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          scope: ${{ secrets.VERCEL_ORG_ID }}
-          production: false
+          vercel-args: '--prod=false'
         env:
           NEXT_PUBLIC_API_URL: ${{ secrets.PREVIEW_API_URL }}
 
@@ -644,7 +643,90 @@ jobs:
           file: ./backend/Dockerfile
 
   # ═══════════════════════════════════════════════════════════════
-  # Stage 12: Notify Failure
+  # Job 12: Separate Deployment Job (Can be triggered manually)
+  # ═══════════════════════════════════════════════════════════════
+  deploy:
+    needs: [docker-build-scan, integration-tests]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    environment:
+      name: deployment
+    env:
+      DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Determine deployment target
+        id: deploy-target
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "target=production" >> $GITHUB_OUTPUT
+          else
+            echo "target=development" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1
+        if: steps.deploy-target.outputs.target == 'development'
+        with:
+          host: ${{ secrets.DEV_HOST }}
+          username: ${{ secrets.DEV_USER }}
+          key: ${{ secrets.DEV_SSH_KEY }}
+          script: |
+            cd /opt/fynza
+            git pull origin dev
+            docker compose pull
+            docker compose up -d --build
+            docker system prune -f
+            echo "Dev deployment complete at $(date)"
+
+      - name: Deploy to production
+        uses: appleboy/ssh-action@v1
+        if: steps.deploy-target.outputs.target == 'production'
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            cd /opt/fynza
+            git pull origin main
+            docker compose pull
+            docker compose up -d --build
+            docker system prune -f
+            echo "Production deployment complete at $(date)"
+
+      - name: Run smoke tests
+        run: |
+          sleep 20
+          DEPLOY_URL="${{ steps.deploy-target.outputs.target == 'production' && secrets.PROD_URL || secrets.DEV_URL }}"
+          curl -f "$DEPLOY_URL/actuator/health" || exit 1
+        continue-on-error: true
+
+  # ═══════════════════════════════════════════════════════════════
+  # Job 13: Notify Success
+  # ═══════════════════════════════════════════════════════════════
+  notify-success:
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    if: always() && needs.deploy.result == 'success'
+    permissions:
+      contents: read
+    steps:
+      - name: Notify Slack on success
+        if: vars.SLACK_BOT_TOKEN != ''
+        uses: slackapi/slack-github-action@v1
+        with:
+          channel-id: ${{ secrets.SLACK_DEV_CHANNEL }}
+          payload: |
+            {
+              "text": "Deployment Successful: ${{ github.repository }} on ${{ github.ref }}"
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+  # ═══════════════════════════════════════════════════════════════
+  # Job 14: Notify Failure
   # ═══════════════════════════════════════════════════════════════
   notify-failure:
     needs: [backend-ci, frontend-ci, security-scan, docker-build-scan, integration-tests]
