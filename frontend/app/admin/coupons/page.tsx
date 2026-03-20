@@ -18,6 +18,8 @@ import {
   Tag,
   Calendar,
   DollarSign,
+  ChevronLeft,
+  ChevronRight,
   Users,
   Copy,
   CheckCircle,
