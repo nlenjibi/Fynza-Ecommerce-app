@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/components/auth-context"
 
@@ -22,8 +22,28 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
-  const { signup } = useAuth()
+  const [userType, setUserType] = useState<"user" | "seller" | "consultant">("user")
+  const { signup, user } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const type = searchParams.get("type")
+    if (type === "seller" || type === "consultant") {
+      setUserType(type)
+    }
+  }, [searchParams])
+
+  useEffect(() => {
+    if (user && (searchParams.get("type") === "seller" || searchParams.get("type") === "consultant")) {
+      const type = searchParams.get("type")
+      if (type === "seller") {
+        router.push("/sell?apply=seller")
+      } else if (type === "consultant") {
+        router.push("/become-consultant?apply=consultant")
+      }
+    }
+  }, [user, searchParams, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -45,7 +65,13 @@ export default function SignupPage() {
     try {
       const success = await signup(name, email, password)
       if (success) {
-        router.push("/")
+        if (userType === "seller") {
+          router.push("/sell")
+        } else if (userType === "consultant") {
+          router.push("/become-consultant")
+        } else {
+          router.push("/")
+        }
       } else {
         setError("Registration failed. Please try again.")
       }
@@ -62,7 +88,11 @@ export default function SignupPage() {
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-orange-600 mb-2">Fynza</h1>
-            <p className="text-gray-600">Create Your Account</p>
+            <p className="text-gray-600">
+              {userType === "seller" && "Become a Seller"}
+              {userType === "consultant" && "Become a Consultant"}
+              {userType === "user" && "Create Your Account"}
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">

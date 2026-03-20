@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/components/auth-context"
 
@@ -21,8 +21,18 @@ export default function LoginPage() {
     const [rememberMe, setRememberMe] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
+    const [applyType, setApplyType] = useState<string | null>(null)
     const { login } = useAuth()
     const router = useRouter()
+    const searchParams = useSearchParams()
+
+    useEffect(() => {
+        const redirect = searchParams.get("redirect")
+        const apply = searchParams.get("apply")
+        if (apply === "seller" || apply === "consultant") {
+            setApplyType(apply)
+        }
+    }, [searchParams])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -32,7 +42,18 @@ export default function LoginPage() {
         try {
             const success = await login(email, password)
             if (success) {
-                router.push("/")
+                const redirect = searchParams.get("redirect")
+                const apply = searchParams.get("apply")
+                
+                if (apply === "seller") {
+                    router.push("/sell")
+                } else if (apply === "consultant") {
+                    router.push("/become-consultant")
+                } else if (redirect) {
+                    router.push(redirect)
+                } else {
+                    router.push("/")
+                }
             } else {
                 setError("Invalid email or password")
             }
@@ -50,6 +71,13 @@ export default function LoginPage() {
                     <div className="text-center mb-8">
                         <h1 className="text-3xl font-bold text-orange-600 mb-2">Fynza</h1>
                         <p className="text-gray-600">Welcome Back</p>
+                        {applyType && (
+                            <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                                <p className="text-sm text-orange-800">
+                                    Sign in to complete your {applyType === "seller" ? "seller" : "consultant"} application
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">

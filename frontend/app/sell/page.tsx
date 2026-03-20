@@ -1,10 +1,55 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Users, TrendingUp, Shield, Gift, BarChart3, Headphones } from "lucide-react"
+import { Users, TrendingUp, Shield, Gift, BarChart3, Headphones, ArrowLeft } from "lucide-react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useAuth } from "@/components/auth-context"
+import { ApplyForm } from "@/components/apply-form"
 
 export default function SellPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const { user } = useAuth()
+  const [showApplyForm, setShowApplyForm] = useState(false)
+
+  useEffect(() => {
+    const apply = searchParams.get("apply")
+    if (apply === "seller" && user) {
+      setShowApplyForm(true)
+    }
+  }, [searchParams, user])
+
+  const handleStartSelling = () => {
+    if (!user) {
+      router.push("/login?redirect=/sell&apply=seller")
+      return
+    }
+    setShowApplyForm(true)
+  }
+
+  if (showApplyForm && user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <button 
+            onClick={() => setShowApplyForm(false)}
+            className="flex items-center text-orange-600 hover:text-orange-700 mb-6"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Sell Page
+          </button>
+          <ApplyForm type="seller" />
+        </div>
+        <Footer />
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -17,7 +62,11 @@ export default function SellPage() {
             <div className="max-w-2xl text-white">
               <h1 className="text-5xl font-bold mb-4">MAKE MONEY</h1>
               <p className="text-2xl mb-6">Sell To Over 20,000,000+ Customers</p>
-              <Button size="lg" className="bg-white text-[oklch(0.65_0.18_45)] hover:bg-white/90 text-lg h-14 px-8">
+              <Button 
+                onClick={handleStartSelling}
+                size="lg" 
+                className="bg-white text-[oklch(0.65_0.18_45)] hover:bg-white/90 text-lg h-14 px-8"
+              >
                 Start Selling On Fynza
               </Button>
             </div>
@@ -209,7 +258,11 @@ export default function SellPage() {
           <div className="text-center bg-gradient-to-r from-[oklch(0.65_0.18_45)] to-[oklch(0.55_0.22_10)] text-white rounded-lg p-12">
             <h2 className="text-3xl font-bold mb-4">Ready to start selling?</h2>
             <p className="text-xl mb-8">Join thousands of successful sellers on Fynza</p>
-            <Button size="lg" className="bg-white text-[oklch(0.65_0.18_45)] hover:bg-white/90 text-lg h-14 px-8">
+            <Button 
+              onClick={handleStartSelling}
+              size="lg" 
+              className="bg-white text-[oklch(0.65_0.18_45)] hover:bg-white/90 text-lg h-14 px-8"
+            >
               Start Selling On Fynza
             </Button>
           </div>
