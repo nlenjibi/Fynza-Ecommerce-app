@@ -219,7 +219,7 @@ jobs:
         run: npm run build
         working-directory: frontend
         env:
-          NEXT_PUBLIC_API_URL: ${{ vars.API_URL || 'http://localhost:8080' }}
+          NEXT_PUBLIC_API_URL: ${{ vars.API_URL }}
 
       - name: Run tests
         run: npm test -- --run --coverage --passWithNoTests || true
