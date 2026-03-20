@@ -18,6 +18,7 @@ import {
   Settings,
   Mail,
   Users,
+  Home,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -25,6 +26,7 @@ const navigation = [
   {
     title: 'MY ACCOUNT',
     items: [
+      { name: 'Home', href: '/', icon: Home },
       { name: 'Dashboard', href: '/customer/dashboard', icon: LayoutDashboard },
       { name: 'Profile', href: '/customer/profile', icon: User },
     ],

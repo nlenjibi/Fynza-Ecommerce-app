@@ -30,6 +30,8 @@ import {
   Star,
   Truck,
   FileQuestion,
+  Home,
+  Briefcase,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -37,12 +39,13 @@ const navigation = [
   {
     title: "MAIN",
     items: [
+      { name: "Home", href: "/", icon: Home },
       { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
       { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
       { name: "Performance", href: "/admin/performance", icon: TrendingUp },
     ],
   },
-  {
+{
     title: "COMMERCE",
     items: [
       { name: "Orders", href: "/admin/orders", icon: ShoppingCart, badge: "24", badgeColor: "orange" },
@@ -50,6 +53,7 @@ const navigation = [
       { name: "Products", href: "/admin/products", icon: Package, badge: "8", badgeColor: "red" },
       { name: "Customers", href: "/admin/customers", icon: Users },
       { name: "Sellers", href: "/admin/sellers", icon: Building2, badge: "5", badgeColor: "green" },
+      { name: "Consultants", href: "/admin/consultants", icon: Users, badge: "3", badgeColor: "purple" },
       { name: "Delivery", href: "/admin/delivery", icon: Truck },
     ],
   },
@@ -71,7 +75,7 @@ const navigation = [
       { name: "Reports", href: "/admin/reports", icon: FileText },
     ],
   },
-  {
+{
     title: "SUPPORT",
     items: [
       { name: "Contacts", href: "/admin/contacts", icon: MessageSquare, badge: "12", badgeColor: "blue" },
@@ -79,6 +83,7 @@ const navigation = [
       { name: "FAQs", href: "/admin/faqs", icon: FileQuestion },
       { name: "Subscribers", href: "/admin/subscribers", icon: Mail, badge: "5", badgeColor: "green" },
       { name: "Notifications", href: "/admin/notifications", icon: Bell },
+      { name: "Careers", href: "/admin/careers", icon: Briefcase, badge: "4", badgeColor: "purple" },
     ],
   },
   {

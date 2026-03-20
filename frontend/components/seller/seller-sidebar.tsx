@@ -19,6 +19,7 @@ import {
     Star,
     Users,
     MessageCircle,
+    Home,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -44,6 +45,11 @@ export function SellerSidebar({ isOpen: externalIsOpen, onToggle }: SellerSideba
     };
 
     const menuItems = [
+        {
+            label: 'Home',
+            href: '/',
+            icon: Home,
+        },
         {
             label: 'Dashboard',
             href: '/seller',

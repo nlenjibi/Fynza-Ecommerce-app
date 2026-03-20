@@ -60,17 +60,17 @@ export function Header() {
       {/* Main Navigation */}
       <div className="bg-background border-b">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2 lg:gap-4">
             {/* Categories Dropdown */}
             <div className="relative">
               <Button
-                variant="outline"
-                className="flex items-center gap-2 border-2 border-primary text-primary hover:bg-primary hover:text-white font-semibold"
+                variant="ghost"
+                className="flex items-center gap-1 text-gray-700 hover:bg-gray-100"
                 onMouseEnter={() => setMegaMenuOpen(true)}
                 onClick={() => setMegaMenuOpen(!megaMenuOpen)}
               >
                 <Menu className="h-5 w-5" />
-                <span className="hidden md:inline">Categories</span>
+                <span className="hidden lg:inline">Categories</span>
                 <ChevronDown className="h-4 w-4" />
               </Button>
 
@@ -85,15 +85,15 @@ export function Header() {
 
             {/* Logo */}
             <Link href="/" className="flex-shrink-0">
-              <span className="text-xl md:text-2xl font-bold text-orange-500">FYNZA</span>
+              <span className="text-2xl font-bold text-orange-500">FYNZA</span>
             </Link>
 
             {/* Search */}
-            <div className="flex-1 max-w-2xl">
+            <div className="flex-1 w-full">
               <form onSubmit={handleSearch} className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" aria-hidden="true" />
                 <Input
-                  placeholder="Search products, brands and categories"
+                  placeholder="Search products, brands..."
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value)
@@ -113,7 +113,8 @@ export function Header() {
                   className="absolute right-0 top-0 h-12 rounded-l-none bg-primary hover:bg-primary-dark text-white font-semibold"
                   aria-label={`Search for "${searchQuery}"`}
                 >
-                  Search
+                  <Search className="h-5 w-5 sm:hidden" />
+                  <span className="hidden sm:inline">Search</span>
                 </Button>
               </form>
               <SearchSuggestions
@@ -129,7 +130,7 @@ export function Header() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2">
                     <User className="h-5 w-5" />
-                    <span>{user.name}</span>
+                    <span className="hidden md:inline">{user.name}</span>
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -158,6 +159,12 @@ export function Header() {
                       Wishlist
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/notifications">
+                      <Bell className="mr-2 h-4 w-4" />
+                      Notifications
+                    </Link>
+                  </DropdownMenuItem>
                   <div className="p-2">
                     <Button
                       variant="outline"
@@ -174,7 +181,7 @@ export function Header() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2">
                     <User className="h-5 w-5" />
-                    <span>Account</span>
+                    <span className="hidden md:inline">Account</span>
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -212,6 +219,12 @@ export function Header() {
                       Wishlist
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/notifications">
+                      <Bell className="mr-2 h-4 w-4" />
+                      Notifications
+                    </Link>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
@@ -220,7 +233,7 @@ export function Header() {
             <Link href="/stores">
               <Button variant="ghost" className="flex items-center gap-2">
                 <Store className="h-5 w-5" />
-                <span>Stores</span>
+                <span className="hidden lg:inline">Stores</span>
               </Button>
             </Link>
 
@@ -229,7 +242,7 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2">
                   <HelpCircle className="h-5 w-5" />
-                  <span>Support</span>
+                  <span className="hidden lg:inline">Support</span>
                   <ChevronDown className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -249,21 +262,10 @@ export function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Wishlist */}
-            <Link href="/wishlist">
-              <Button variant="ghost" className="flex items-center gap-2 relative">
-                <Heart className="h-5 w-5" />
-                <span className="hidden sm:inline">Wishlist</span>
-                {wishlistCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {wishlistCount}
-                  </span>
-                )}
-              </Button>
-            </Link>
+            {/* Wishlist is in account dropdown */}
 
             {/* Notifications */}
-            <NotificationBell />
+            {/* <NotificationBell /> */}
 
             {/* Theme Toggle */}
 
@@ -271,7 +273,7 @@ export function Header() {
             <Link href="/cart">
               <Button variant="ghost" className="flex items-center gap-2 relative">
                 <ShoppingCart className="h-5 w-5" />
-                <span>Cart</span>
+                <span className="hidden sm:inline">Cart</span>
                 {cartCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                     {cartCount}
