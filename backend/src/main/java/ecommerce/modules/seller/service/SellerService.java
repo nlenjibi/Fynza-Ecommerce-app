@@ -1,6 +1,5 @@
 package ecommerce.modules.seller.service;
 
-import ecommerce.modules.notification.dto.NotificationSettingsResponse;
 import ecommerce.modules.order.dto.OrderResponse;
 import ecommerce.modules.order.dto.OrderStatusUpdateRequest;
 import ecommerce.modules.review.dto.ReviewResponse;

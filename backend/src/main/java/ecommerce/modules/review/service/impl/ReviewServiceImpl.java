@@ -26,6 +26,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +39,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional
+@Transactional(readOnly = true)
 public class ReviewServiceImpl implements ReviewService {
 
     private final ReviewRepository reviewRepository;
@@ -620,14 +621,13 @@ public class ReviewServiceImpl implements ReviewService {
         }
 
         review.setSellerReply(reply);
-        review.setSellerRepliedAt(java.time.LocalDateTime.now());
+        review.setSellerRepliedAt(LocalDateTime.now());
         
         Review saved = reviewRepository.save(review);
-        return reviewMapper.toResponse(saved);
+        return reviewMapper.toDto(saved);
     }
 
 
 }
 
 
-}

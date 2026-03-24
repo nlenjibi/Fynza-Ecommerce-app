@@ -48,7 +48,7 @@ public class ContactMessage extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "category", nullable = false, length = 30)
     @Builder.Default
-    private ContactCategory category = ContactCategory.GENERAL;
+    private ContactCategory category = ContactCategory.GENERAL_INQUIRY;
 
     @Column(name = "admin_response", columnDefinition = "TEXT")
     private String adminResponse;

@@ -29,6 +29,7 @@ import static java.util.concurrent.CompletableFuture.allOf;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class InventoryServiceImpl implements InventoryService {
 
     private final ProductRepository productRepository;

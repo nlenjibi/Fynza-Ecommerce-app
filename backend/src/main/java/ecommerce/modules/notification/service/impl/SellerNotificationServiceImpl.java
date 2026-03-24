@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -25,6 +26,7 @@ import static java.util.concurrent.CompletableFuture.allOf;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class SellerNotificationServiceImpl implements SellerNotificationService {
 
     private final UserRepository userRepository;

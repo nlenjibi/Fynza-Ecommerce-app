@@ -2,7 +2,6 @@ package ecommerce.modules.seller.service.impl;
 
 import ecommerce.exception.BadRequestException;
 import ecommerce.exception.ResourceNotFoundException;
-import ecommerce.modules.notification.dto.NotificationSettingsResponse;
 import ecommerce.modules.notification.entity.SellerNotificationSettings;
 import ecommerce.modules.notification.repository.SellerNotificationSettingsRepository;
 import ecommerce.modules.order.dto.OrderResponse;

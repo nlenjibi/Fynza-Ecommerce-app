@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "messages", indexes = {
     @Index(name = "idx_message_conversation", columnList = "conversation_id"),

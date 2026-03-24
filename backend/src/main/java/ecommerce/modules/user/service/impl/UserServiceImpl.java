@@ -18,7 +18,7 @@ import ecommerce.modules.user.repository.SellerProfileRepository;
 import ecommerce.modules.user.service.UserService;
 import ecommerce.common.enums.VerificationStatus;
 import ecommerce.services.TokenValidationService;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
@@ -39,8 +39,9 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Service
+@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
 
     private final UserMapper userMapper;
