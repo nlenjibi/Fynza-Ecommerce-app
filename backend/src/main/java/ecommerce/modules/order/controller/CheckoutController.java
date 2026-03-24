@@ -10,7 +10,6 @@ import ecommerce.modules.order.service.OrderService;
 import ecommerce.security.UserPrincipal;
 import ecommerce.service.IdempotencyService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -73,8 +72,7 @@ public class CheckoutController {
     @PreAuthorize("hasRole('CUSTOMER')")
     @Operation(
         summary = "Create order from cart", 
-        description = "Create an order from the customer's cart. Use Idempotency-Key header to prevent duplicate orders.",
-        headers = @Header(name = "Idempotency-Key", description = "Optional unique key for idempotency")
+        description = "Create an order from the customer's cart. Use 'Idempotency-Key' header to prevent duplicate orders."
     )
     public ResponseEntity<ApiResponse<OrderResponse>> checkout(
             @RequestParam UUID cartId,
