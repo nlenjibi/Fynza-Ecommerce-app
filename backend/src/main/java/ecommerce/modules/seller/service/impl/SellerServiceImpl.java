@@ -60,17 +60,18 @@ public class SellerServiceImpl implements SellerService {
     public SellerDashboardResponse getDashboard(UUID sellerId) {
         log.info("Getting seller dashboard for: {}", sellerId);
         
-        long totalProducts = productRepository.findBySellerId(sellerId, Pageable.unpaged()).getTotalElements();
-        long activeProducts = productRepository.findBySellerId(sellerId, Pageable.unpaged()).getContent()
-                .stream().filter(p -> p.getIsActive()).count();
+        var products = productRepository.findBySellerId(sellerId, Pageable.unpaged()).getContent();
         
-        Double averageRating = productRepository.findBySellerId(sellerId, Pageable.unpaged()).getContent().stream()
+        long totalProducts = products.size();
+        long activeProducts = products.stream().filter(p -> p.getIsActive()).count();
+        
+        Double averageRating = products.stream()
                 .filter(p -> p.getRating() != null)
                 .mapToDouble(p -> p.getRating().doubleValue())
                 .average()
                 .orElse(0.0);
         
-        long storeVisits = productRepository.findBySellerId(sellerId, Pageable.unpaged()).getContent().stream()
+        long storeVisits = products.stream()
                 .mapToLong(p -> p.getViewCount() != null ? p.getViewCount().longValue() : 0L)
                 .sum();
         

@@ -37,4 +37,6 @@ public class CategoryCreateRequest {
     private String icon;
 
     private String slug;
+
+    private Boolean isActive;
 }

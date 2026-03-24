@@ -51,4 +51,8 @@ public interface ProductService {
     ProductResponse rejectProduct(UUID id, String reason);
 
     ProductResponse updateProductStatus(UUID id, ProductStatus status);
+
+    boolean canUpdate(String productId, String userId);
+
+    boolean canDelete(String productId, String userId);
 }

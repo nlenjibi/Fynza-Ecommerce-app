@@ -21,5 +21,6 @@ public class CategoryResponse {
     private UUID parentCategoryId;
     private String image;
     private String slug;
+    private Boolean isActive;
     private List<CategoryResponse> children;
 }

@@ -38,6 +38,8 @@ public interface ConversationRepository extends BaseRepository<Conversation, UUI
 
     long countByParticipantIdAndUnreadCountGreaterThan(UUID participantId, int unreadCount);
 
+    long countByParticipantIdAndStatus(UUID participantId, MessageStatus status);
+
     long countByStatus(MessageStatus status);
 
     Optional<Conversation> findByIdAndParticipantId(UUID id, UUID participantId);
