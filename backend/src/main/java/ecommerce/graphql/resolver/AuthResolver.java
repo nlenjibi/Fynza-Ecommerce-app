@@ -24,18 +24,6 @@ public class AuthResolver {
         throw new UnsupportedOperationException("Auth service not implemented");
     }
 
-    @QueryMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public String users() {
-        throw new UnsupportedOperationException("Auth service not implemented");
-    }
-
-    @QueryMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public String user() {
-        throw new UnsupportedOperationException("Auth service not implemented");
-    }
-
     @MutationMapping
     public String register(@Argument String input) {
         throw new UnsupportedOperationException("Auth service not implemented");
@@ -85,12 +73,6 @@ public class AuthResolver {
     @MutationMapping
     @PreAuthorize("hasRole('ADMIN')")
     public String updateUserStatus() {
-        throw new UnsupportedOperationException("Auth service not implemented");
-    }
-
-    @MutationMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public String deleteUser() {
         throw new UnsupportedOperationException("Auth service not implemented");
     }
 }

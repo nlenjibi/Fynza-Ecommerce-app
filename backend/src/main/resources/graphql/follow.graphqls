@@ -30,16 +30,11 @@ extend type Query {
     followStats(sellerId: ID!): FollowStats!
     
     # Security: PUBLIC - Get store followers
-    storeFollowers(sellerId: ID!, pagination: PageInput): UserConnection!
+    storeFollowers(sellerId: ID!, pagination: PageInput): UserPage!
 }
 
 type StoreFollowConnection {
     content: [StoreFollow!]!
-    pageInfo: PageInfo!
-}
-
-type UserConnection {
-    content: [User!]!
     pageInfo: PageInfo!
 }
 
