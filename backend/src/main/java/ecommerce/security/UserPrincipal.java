@@ -71,6 +71,8 @@ public class UserPrincipal implements UserDetails {
         return isLocked;
     }
 
+
+
     // ── UserDetails ────────────────────────────────────────────────────────────
 
     @Override

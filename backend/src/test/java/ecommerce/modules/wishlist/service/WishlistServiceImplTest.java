@@ -1,6 +1,7 @@
 package ecommerce.modules.wishlist.service;
 
 import ecommerce.exception.ResourceNotFoundException;
+import ecommerce.modules.cart.dto.AddToCartRequest;
 import ecommerce.modules.cart.service.CartService;
 import ecommerce.modules.product.repository.ProductRepository;
 import ecommerce.modules.user.entity.User;
@@ -30,7 +31,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -88,9 +89,12 @@ class WishlistServiceImplTest {
 
         testWishlistItemDto = WishlistItemDto.builder()
                 .id(wishlistItemId)
-                .productId(productId)
-                .productName("Test Product")
-                .price(BigDecimal.valueOf(99.99))
+                .userId(userId)
+                .product(WishlistItemDto.ProductSummary.builder()
+                        .id(productId)
+                        .name("Test Product")
+                        .price(BigDecimal.valueOf(99.99))
+                        .build())
                 .priority(WishlistPriority.HIGH)
                 .notes("Test note")
                 .desiredQuantity(1)
@@ -201,10 +205,10 @@ class WishlistServiceImplTest {
         @Test
         @DisplayName("Should remove item from wishlist")
         void removeFromWishlist_WhenItemExists_RemovesItem() {
-            when(wishlistItemRepository.findById(wishlistItemId)).thenReturn(Optional.of(testWishlistItem));
+            when(wishlistItemRepository.findByUserIdAndProductId(userId, productId)).thenReturn(Optional.of(testWishlistItem));
             doNothing().when(wishlistItemRepository).delete(testWishlistItem);
 
-            wishlistService.removeFromWishlist(userId, wishlistItemId);
+            wishlistService.removeFromWishlist(userId, productId);
 
             verify(wishlistItemRepository, times(1)).delete(testWishlistItem);
         }
@@ -212,10 +216,10 @@ class WishlistServiceImplTest {
         @Test
         @DisplayName("Should throw exception when item not found")
         void removeFromWishlist_WhenItemNotFound_ThrowsException() {
-            when(wishlistItemRepository.findById(wishlistItemId)).thenReturn(Optional.empty());
+            when(wishlistItemRepository.findByUserIdAndProductId(userId, productId)).thenReturn(Optional.empty());
 
             assertThrows(ResourceNotFoundException.class,
-                    () -> wishlistService.removeFromWishlist(userId, wishlistItemId));
+                    () -> wishlistService.removeFromWishlist(userId, productId));
         }
     }
 
@@ -234,11 +238,11 @@ class WishlistServiceImplTest {
                     .notifyOnStock(true)
                     .build();
 
-            when(wishlistItemRepository.findById(wishlistItemId)).thenReturn(Optional.of(testWishlistItem));
+            when(wishlistItemRepository.findByUserIdAndProductId(userId, productId)).thenReturn(Optional.of(testWishlistItem));
             when(wishlistItemRepository.save(any(WishlistItem.class))).thenReturn(testWishlistItem);
             when(wishlistMapper.toDto(any(WishlistItem.class))).thenReturn(testWishlistItemDto);
 
-            WishlistItemDto result = wishlistService.updateWishlistItem(userId, wishlistItemId, updateRequest);
+            WishlistItemDto result = wishlistService.updateWishlistItem(userId, productId, updateRequest);
 
             assertNotNull(result);
             verify(wishlistItemRepository, times(1)).save(any(WishlistItem.class));
@@ -251,10 +255,10 @@ class WishlistServiceImplTest {
                     .priority(WishlistPriority.LOW)
                     .build();
 
-            when(wishlistItemRepository.findById(wishlistItemId)).thenReturn(Optional.empty());
+            when(wishlistItemRepository.findByUserIdAndProductId(userId, productId)).thenReturn(Optional.empty());
 
             assertThrows(ResourceNotFoundException.class,
-                    () -> wishlistService.updateWishlistItem(userId, wishlistItemId, updateRequest));
+                    () -> wishlistService.updateWishlistItem(userId, productId, updateRequest));
         }
     }
 
@@ -265,16 +269,11 @@ class WishlistServiceImplTest {
         @Test
         @DisplayName("Should move item to cart")
         void moveToCart_WhenItemExists_MovesToCart() {
-            AddToCartRequest cartRequest = AddToCartRequest.builder()
-                    .productId(productId)
-                    .quantity(1)
-                    .build();
-
-            when(wishlistItemRepository.findById(wishlistItemId)).thenReturn(Optional.of(testWishlistItem));
-            when(cartService.addItemByProductId(userId, productId, 1)).thenReturn(null);
+            when(wishlistItemRepository.findByUserIdAndProductId(userId, productId)).thenReturn(Optional.of(testWishlistItem));
+            doNothing().when(cartService).addItem(eq(userId), any(AddToCartRequest.class));
             doNothing().when(wishlistItemRepository).delete(testWishlistItem);
 
-            wishlistService.moveToCart(userId, wishlistItemId, 1);
+            wishlistService.moveToCart(userId, productId);
 
             verify(wishlistItemRepository, times(1)).delete(testWishlistItem);
         }
@@ -292,14 +291,16 @@ class WishlistServiceImplTest {
                     .totalValue(BigDecimal.valueOf(499.95))
                     .build();
 
+            Object[] totals = new Object[]{BigDecimal.valueOf(499.95), BigDecimal.valueOf(20.00)};
             when(wishlistItemRepository.countByUserId(userId)).thenReturn(5L);
-            when(wishlistItemRepository.getTotalValueByUserId(userId)).thenReturn(BigDecimal.valueOf(499.95));
+            when(wishlistItemRepository.findTotalValueAndSavings(userId)).thenReturn(totals);
 
             WishlistSummaryDto result = wishlistService.getWishlistSummary(userId);
 
             assertNotNull(result);
             assertEquals(5, result.getTotalItems());
             assertEquals(BigDecimal.valueOf(499.95), result.getTotalValue());
+            assertEquals(BigDecimal.valueOf(20.00), result.getTotalSavings());
         }
     }
 
@@ -310,12 +311,11 @@ class WishlistServiceImplTest {
         @Test
         @DisplayName("Should clear all wishlist items for user")
         void clearWishlist_ClearsAllItems() {
-            when(wishlistItemRepository.findByUserId(userId)).thenReturn(List.of(testWishlistItem));
-            doNothing().when(wishlistItemRepository).deleteAll(List.of(testWishlistItem));
+            when(wishlistItemRepository.deleteByUserId(userId)).thenReturn(1);
 
             wishlistService.clearWishlist(userId);
 
-            verify(wishlistItemRepository, times(1)).deleteAll(List.of(testWishlistItem));
+            verify(wishlistItemRepository, times(1)).deleteByUserId(userId);
         }
     }
 }

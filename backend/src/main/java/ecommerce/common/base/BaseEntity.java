@@ -54,4 +54,5 @@ public abstract class BaseEntity {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
 }

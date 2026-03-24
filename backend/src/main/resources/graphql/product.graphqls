@@ -117,15 +117,6 @@ type ProductStatisticsResponse {
     totalSales: Long!
 }
 
-type CategoryCount {
-    category: String!
-    count: Long!
-}
-
-type StatusCount {
-    status: String!
-    count: Long!
-}
 
 
 

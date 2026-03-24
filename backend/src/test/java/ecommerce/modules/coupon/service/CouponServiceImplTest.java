@@ -52,7 +52,6 @@ class CouponServiceImplTest {
         testCoupon = Coupon.builder()
                 .id(couponId)
                 .code("SAVE20")
-                .name("Save 20%")
                 .description("Get 20% off your order")
                 .discountType(ecommerce.common.enums.DiscountType.PERCENTAGE)
                 .discountValue(BigDecimal.valueOf(20))
@@ -68,24 +67,21 @@ class CouponServiceImplTest {
         testCouponResponse = CouponResponse.builder()
                 .id(couponId)
                 .code("SAVE20")
-                .name("Save 20%")
                 .description("Get 20% off your order")
-                .discountType(ecommerce.common.enums.DiscountType.PERCENTAGE)
+                .discountType("PERCENTAGE")
                 .discountValue(BigDecimal.valueOf(20))
                 .minOrderAmount(BigDecimal.valueOf(50))
                 .maxUses(100)
                 .usageCount(0)
                 .validFrom(LocalDateTime.now())
                 .validUntil(LocalDateTime.now().plusDays(30))
-                .status(ecommerce.common.enums.CouponStatus.ACTIVE)
-                .isActive(true)
+                .status("ACTIVE")
                 .build();
 
         testCouponRequest = CouponRequest.builder()
                 .code("SAVE20")
-                .name("Save 20%")
                 .description("Get 20% off your order")
-                .discountType(ecommerce.common.enums.DiscountType.PERCENTAGE)
+                .discountType("PERCENTAGE")
                 .discountValue(BigDecimal.valueOf(20))
                 .minOrderAmount(BigDecimal.valueOf(50))
                 .maxUses(100)
@@ -220,7 +216,7 @@ class CouponServiceImplTest {
 
             CouponRequest updateRequest = CouponRequest.builder()
                     .code("NEWCODE")
-                    .name("Updated Coupon")
+                    .description("Updated Coupon")
                     .build();
 
             CouponResponse result = couponService.update(couponId, updateRequest);

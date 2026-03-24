@@ -35,10 +35,6 @@ type ProductSales {
     revenue: BigDecimal!
 }
 
-type StatusCount {
-    status: String!
-    count: Int!
-}
 
 type DailyRevenue {
     date: DateTime!
