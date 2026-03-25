@@ -25,9 +25,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -234,14 +236,14 @@ public class AdminServiceImpl implements AdminService {
                     long productCount = categoryProducts.size();
                     BigDecimal avgPrice = categoryProducts.stream()
                             .map(Product::getPrice)
-                            .filter(java.util.Objects::nonNull)
+                            .filter(Objects::nonNull)
                             .reduce(BigDecimal.ZERO, BigDecimal::add)
-                            .divide(BigDecimal.valueOf(productCount), 2, java.math.RoundingMode.HALF_UP);
+                            .divide(BigDecimal.valueOf(productCount), 2, RoundingMode.HALF_UP);
                     
                     categoryEngagement.add(ContentAnalyticsDto.CategoryEngagement.builder()
                             .categoryName(categoryName)
                             .productCount(productCount)
-                            .avgPrice(avgPrice)
+                            .avgPrice(avgPrice.doubleValue())
                             .orderCount(0L)
                             .build());
                 });

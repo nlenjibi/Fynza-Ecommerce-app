@@ -35,10 +35,6 @@ type ProductSales {
     revenue: BigDecimal!
 }
 
-type StatusCount {
-    status: String!
-    count: Int!
-}
 
 type DailyRevenue {
     date: DateTime!
@@ -61,5 +57,5 @@ extend type Query {
 
 extend type Mutation {
     # Security: SELLER only
-    updateSellerOrderStatus(id: ID!, input: OrderStatusUpdateInput!): OrderResponse!
+    updateSellerOrderStatus(orderId: ID!, request: OrderStatusUpdateInput!): OrderResponse!
 }

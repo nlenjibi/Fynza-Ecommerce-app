@@ -1,0 +1,130 @@
+# Report GraphQL Schema
+# Admin reports and analytics generation
+
+type Report {
+    id: ID!
+    name: String!
+    type: ReportType!
+    format: ReportFormat!
+    parameters: String
+    generatedBy: User!
+    fileUrl: String
+    status: ReportStatus!
+    errorMessage: String
+    startDate: DateTime
+    endDate: DateTime
+    createdAt: DateTime!
+    completedAt: DateTime
+}
+
+type ReportSchedule {
+    id: ID!
+    name: String!
+    type: ReportType!
+    format: ReportFormat!
+    schedule: String!
+    parameters: String
+    lastRunAt: DateTime
+    nextRunAt: DateTime
+    isActive: Boolean!
+    createdBy: User!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}
+
+enum ReportType {
+    SALES
+    INVENTORY
+    REVENUE
+    CUSTOMER
+    ORDER
+    PRODUCT
+    SELLER
+    TAX
+}
+
+enum ReportFormat {
+    PDF
+    EXCEL
+    CSV
+    JSON
+}
+
+enum ReportStatus {
+    PENDING
+    PROCESSING
+    COMPLETED
+    FAILED
+}
+
+input ReportRequestInput {
+    name: String!
+    type: ReportType!
+    format: ReportFormat!
+    startDate: DateTime!
+    endDate: DateTime!
+    parameters: String
+}
+
+input ReportScheduleInput {
+    name: String!
+    type: ReportType!
+    format: ReportFormat!
+    schedule: String!
+    parameters: String
+    isActive: Boolean = true
+}
+
+extend type Query {
+    # Security: ADMIN only
+    reports(pagination: PageInput): ReportConnection!
+    
+    # Security: ADMIN only
+    report(id: ID!): Report
+    
+    # Security: ADMIN only
+    reportSchedules(isActive: Boolean, pagination: PageInput): ReportScheduleConnection!
+    
+    # Security: ADMIN only
+    reportSchedule(id: ID!): ReportSchedule
+    
+    # Security: ADMIN only - Get available report data without generating file
+    generateReportPreview(
+        type: ReportType!
+        startDate: DateTime!
+        endDate: DateTime!
+    ): String!
+}
+
+type ReportConnection {
+    content: [Report!]!
+    pageInfo: PageInfo!
+}
+
+type ReportScheduleConnection {
+    content: [ReportSchedule!]!
+    pageInfo: PageInfo!
+}
+
+extend type Mutation {
+    # Security: ADMIN only
+    generateReport(input: ReportRequestInput!): Report!
+    
+    # Security: ADMIN only
+    regenerateReport(reportId: ID!): Report!
+    
+    # Security: ADMIN only
+    deleteReport(id: ID!): Boolean!
+    
+    # Security: ADMIN only
+    createReportSchedule(input: ReportScheduleInput!): ReportSchedule!
+    
+    # Security: ADMIN only
+    updateReportSchedule(id: ID!, input: ReportScheduleInput!): ReportSchedule!
+    
+    # Security: ADMIN only
+    deleteReportSchedule(id: ID!): Boolean!
+    
+    # Security: ADMIN only
+    toggleReportSchedule(id: ID!): ReportSchedule!
+}

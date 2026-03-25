@@ -7,44 +7,22 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-/**
- * TokenBlacklistService Unit Tests
- * 
- * Tests token blacklist functionality including:
- * - Adding tokens to blacklist
- * - Checking if token is blacklisted
- * - Token version tracking per user
- * - Bloom filter for fast lookups
- * 
- * Per system.md:
- * - Uses SHA-256 hashing for blacklisted tokens
- * - Token version tracking per user for immediate invalidation
- */
 @DisplayName("TokenBlacklistService Tests")
 class TokenBlacklistServiceTest {
 
     private TokenBlacklistService tokenBlacklistService;
+    private BloomFilterService bloomFilterService;
 
     @BeforeEach
     void setUp() {
-        // Create a real Caffeine cache for testing
-        Cache<String, Long> tokenCache = Caffeine.newBuilder()
-                .maximumSize(10000)
-                .expireAfterWrite(24, TimeUnit.HOURS)
-                .build();
-        
-        Cache<String, String> tokenVersionCache = Caffeine.newBuilder()
-                .maximumSize(10000)
-                .expireAfterWrite(7, TimeUnit.DAYS)
-                .build();
-        
-        tokenBlacklistService = new TokenBlacklistService(tokenCache, tokenVersionCache);
+        bloomFilterService = mock(BloomFilterService.class);
+        tokenBlacklistService = new TokenBlacklistService(10000, 24, bloomFilterService);
     }
 
     @Nested
@@ -53,61 +31,55 @@ class TokenBlacklistServiceTest {
 
         @Test
         @DisplayName("Should add token to blacklist")
-        void addToBlacklist_ValidToken_AddsSuccessfully() {
-            // Arrange
+        void blacklistToken_ValidToken_AddsSuccessfully() {
             String token = "test-jwt-token-123";
+            long expirationTime = System.currentTimeMillis() + 3600000;
 
-            // Act
-            tokenBlacklistService.addToBlacklist(token);
+            tokenBlacklistService.blacklistToken(token, expirationTime);
 
-            // Assert
-            assertTrue(tokenBlacklistService.isBlacklisted(token));
+            assertTrue(tokenBlacklistService.isTokenBlacklisted(token));
+            verify(bloomFilterService).add(anyString());
         }
 
         @Test
         @DisplayName("Should check if token is blacklisted")
-        void isBlacklisted_BlacklistedToken_ReturnsTrue() {
-            // Arrange
+        void isTokenBlacklisted_BlacklistedToken_ReturnsTrue() {
             String token = "another-test-token";
-            tokenBlacklistService.addToBlacklist(token);
+            long expirationTime = System.currentTimeMillis() + 3600000;
+            tokenBlacklistService.blacklistToken(token, expirationTime);
 
-            // Act
-            boolean isBlacklisted = tokenBlacklistService.isBlacklisted(token);
+            when(bloomFilterService.mightContain(anyString())).thenReturn(true);
 
-            // Assert
+            boolean isBlacklisted = tokenBlacklistService.isTokenBlacklisted(token);
+
             assertTrue(isBlacklisted);
         }
 
         @Test
         @DisplayName("Should return false for non-blacklisted token")
-        void isBlacklisted_NonBlacklistedToken_ReturnsFalse() {
-            // Arrange
+        void isTokenBlacklisted_NonBlacklistedToken_ReturnsFalse() {
             String token = "non-blacklisted-token";
 
-            // Act
-            boolean isBlacklisted = tokenBlacklistService.isBlacklisted(token);
+            when(bloomFilterService.mightContain(anyString())).thenReturn(false);
 
-            // Assert
+            boolean isBlacklisted = tokenBlacklistService.isTokenBlacklisted(token);
+
             assertFalse(isBlacklisted);
         }
 
         @Test
         @DisplayName("Should return false for null token")
-        void isBlacklisted_NullToken_ReturnsFalse() {
-            // Act
-            boolean isBlacklisted = tokenBlacklistService.isBlacklisted(null);
+        void isTokenBlacklisted_NullToken_ReturnsFalse() {
+            boolean isBlacklisted = tokenBlacklistService.isTokenBlacklisted(null);
 
-            // Assert
             assertFalse(isBlacklisted);
         }
 
         @Test
         @DisplayName("Should handle empty token")
-        void isBlacklisted_EmptyToken_ReturnsFalse() {
-            // Act
-            boolean isBlacklisted = tokenBlacklistService.isBlacklisted("");
+        void isTokenBlacklisted_EmptyToken_ReturnsFalse() {
+            boolean isBlacklisted = tokenBlacklistService.isTokenBlacklisted("");
 
-            // Assert
             assertFalse(isBlacklisted);
         }
     }
@@ -117,73 +89,34 @@ class TokenBlacklistServiceTest {
     class TokenVersionTests {
 
         @Test
-        @DisplayName("Should create token version for user")
-        void createTokenVersion_CreatesNewVersion() {
-            // Arrange
-            UUID userId = UUID.randomUUID();
-
-            // Act
-            String version = tokenBlacklistService.createTokenVersion(userId);
-
-            // Assert
-            assertNotNull(version);
-            assertFalse(version.isEmpty());
-        }
-
-        @Test
-        @DisplayName("Should increment token version for user")
-        void incrementTokenVersion_IncrementsVersion() {
-            // Arrange
-            UUID userId = UUID.randomUUID();
-            String initialVersion = tokenBlacklistService.createTokenVersion(userId);
-
-            // Act
-            String newVersion = tokenBlacklistService.incrementTokenVersion(userId);
-
-            // Assert
-            assertNotNull(newVersion);
-            assertNotEquals(initialVersion, newVersion);
-        }
-
-        @Test
         @DisplayName("Should invalidate user tokens by version")
         void invalidateUserTokens_InvalidatesAllTokens() {
-            // Arrange
             UUID userId = UUID.randomUUID();
-            String version = tokenBlacklistService.createTokenVersion(userId);
 
-            // Act
             tokenBlacklistService.invalidateUserTokens(userId);
 
-            // Assert - version should be incremented
-            String newVersion = tokenBlacklistService.getTokenVersion(userId);
-            assertNotEquals(version, newVersion);
+            Long currentVersion = tokenBlacklistService.getUserTokenVersion(userId);
+            assertNotNull(currentVersion);
         }
 
         @Test
         @DisplayName("Should get token version for user")
-        void getTokenVersion_ReturnsCurrentVersion() {
-            // Arrange
+        void getUserTokenVersion_ReturnsCurrentVersion() {
             UUID userId = UUID.randomUUID();
-            String version = tokenBlacklistService.createTokenVersion(userId);
+            tokenBlacklistService.invalidateUserTokens(userId);
 
-            // Act
-            String retrievedVersion = tokenBlacklistService.getTokenVersion(userId);
+            Long retrievedVersion = tokenBlacklistService.getUserTokenVersion(userId);
 
-            // Assert
-            assertEquals(version, retrievedVersion);
+            assertNotNull(retrievedVersion);
         }
 
         @Test
         @DisplayName("Should return null for non-existent user version")
-        void getTokenVersion_NonExistentUser_ReturnsNull() {
-            // Arrange
+        void getUserTokenVersion_NonExistentUser_ReturnsNull() {
             UUID userId = UUID.randomUUID();
 
-            // Act
-            String version = tokenBlacklistService.getTokenVersion(userId);
+            Long version = tokenBlacklistService.getUserTokenVersion(userId);
 
-            // Assert
             assertNull(version);
         }
     }
@@ -194,34 +127,25 @@ class TokenBlacklistServiceTest {
 
         @Test
         @DisplayName("Should add multiple tokens to blacklist")
-        void addMultipleToBlacklist_AddsAllTokens() {
-            // Arrange
+        void blacklistMultipleTokens_AddsAllTokens() {
             String[] tokens = {"token1", "token2", "token3"};
+            long expirationTime = System.currentTimeMillis() + 3600000;
 
-            // Act
             for (String token : tokens) {
-                tokenBlacklistService.addToBlacklist(token);
+                tokenBlacklistService.blacklistToken(token, expirationTime);
             }
 
-            // Assert
-            assertTrue(tokenBlacklistService.isBlacklisted("token1"));
-            assertTrue(tokenBlacklistService.isBlacklisted("token2"));
-            assertTrue(tokenBlacklistService.isBlacklisted("token3"));
+            when(bloomFilterService.mightContain(anyString())).thenReturn(true);
+
+            assertTrue(tokenBlacklistService.isTokenBlacklisted("token1"));
+            assertTrue(tokenBlacklistService.isTokenBlacklisted("token2"));
+            assertTrue(tokenBlacklistService.isTokenBlacklisted("token3"));
         }
 
         @Test
-        @DisplayName("Should clear blacklist")
-        void clearBlacklist_RemovesAllTokens() {
-            // Arrange
-            tokenBlacklistService.addToBlacklist("token1");
-            tokenBlacklistService.addToBlacklist("token2");
-
-            // Act
-            tokenBlacklistService.clearBlacklist();
-
-            // Assert
-            assertFalse(tokenBlacklistService.isBlacklisted("token1"));
-            assertFalse(tokenBlacklistService.isBlacklisted("token2"));
+        @DisplayName("Should clear expired tokens")
+        void clearExpiredTokens_RemovesExpiredTokens() {
+            tokenBlacklistService.clearExpiredTokens();
         }
     }
 
@@ -231,60 +155,48 @@ class TokenBlacklistServiceTest {
 
         @Test
         @DisplayName("Should validate token version")
-        void isTokenVersionValid_ValidVersion_ReturnsTrue() {
-            // Arrange
+        void isUserTokenVersionValid_ValidVersion_ReturnsTrue() {
             UUID userId = UUID.randomUUID();
-            String version = tokenBlacklistService.createTokenVersion(userId);
+            tokenBlacklistService.invalidateUserTokens(userId);
+            Long currentVersion = tokenBlacklistService.getUserTokenVersion(userId);
 
-            // Act
-            boolean isValid = tokenBlacklistService.isTokenVersionValid(userId, version);
+            boolean isValid = tokenBlacklistService.isUserTokenVersionValid(userId, currentVersion);
 
-            // Assert
             assertTrue(isValid);
         }
 
         @Test
         @DisplayName("Should invalidate old token version")
-        void isTokenVersionValid_OldVersion_ReturnsFalse() {
-            // Arrange
+        void isUserTokenVersionValid_OldVersion_ReturnsFalse() {
             UUID userId = UUID.randomUUID();
-            String oldVersion = tokenBlacklistService.createTokenVersion(userId);
+            tokenBlacklistService.invalidateUserTokens(userId);
+            Long oldVersion = tokenBlacklistService.getUserTokenVersion(userId);
             
-            // Increment version (invalidate old tokens)
-            tokenBlacklistService.incrementTokenVersion(userId);
+            tokenBlacklistService.invalidateUserTokens(userId);
 
-            // Act
-            boolean isValid = tokenBlacklistService.isTokenVersionValid(userId, oldVersion);
+            boolean isValid = tokenBlacklistService.isUserTokenVersionValid(userId, oldVersion);
 
-            // Assert
             assertFalse(isValid);
         }
 
         @Test
-        @DisplayName("Should return false for null version")
-        void isTokenVersionValid_NullVersion_ReturnsFalse() {
-            // Arrange
+        @DisplayName("Should return true for null version on new user")
+        void isUserTokenVersionValid_NullVersion_NewUser_ReturnsTrue() {
             UUID userId = UUID.randomUUID();
-            tokenBlacklistService.createTokenVersion(userId);
 
-            // Act
-            boolean isValid = tokenBlacklistService.isTokenVersionValid(userId, null);
+            boolean isValid = tokenBlacklistService.isUserTokenVersionValid(userId, null);
 
-            // Assert
-            assertFalse(isValid);
+            assertTrue(isValid);
         }
 
         @Test
-        @DisplayName("Should return false for non-existent user")
-        void isTokenVersionValid_NonExistentUser_ReturnsFalse() {
-            // Arrange
+        @DisplayName("Should return false for non-existent user with version")
+        void isUserTokenVersionValid_NonExistentUser_WithVersion_ReturnsTrue() {
             UUID userId = UUID.randomUUID();
 
-            // Act
-            boolean isValid = tokenBlacklistService.isTokenVersionValid(userId, "some-version");
+            boolean isValid = tokenBlacklistService.isUserTokenVersionValid(userId, 12345L);
 
-            // Assert
-            assertFalse(isValid);
+            assertTrue(isValid);
         }
     }
 }

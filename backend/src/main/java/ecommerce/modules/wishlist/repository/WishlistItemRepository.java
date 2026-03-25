@@ -27,10 +27,10 @@ public interface WishlistItemRepository extends BaseRepository<WishlistItem, UUI
     
     Page<WishlistItem> findByUserId(UUID userId, Pageable pageable);
     
-    @Query("SELECT w FROM WishlistItem w WHERE w.user.id = :userId AND w.product.currentPrice < w.targetPrice")
+    @Query("SELECT w FROM WishlistItem w WHERE w.user.id = :userId AND w.product.price < w.targetPrice")
     List<WishlistItem> findItemsWithPriceDrops(@Param("userId") UUID userId);
     
-    @Query("SELECT COALESCE(SUM(w.product.currentPrice * w.desiredQuantity), 0), COALESCE(SUM((w.product.originalPrice - w.product.currentPrice) * w.desiredQuantity), 0) FROM WishlistItem w WHERE w.user.id = :userId")
+    @Query("SELECT COALESCE(SUM(w.product.price * w.desiredQuantity), 0), COALESCE(SUM((w.product.originalPrice - w.product.price) * w.desiredQuantity), 0) FROM WishlistItem w WHERE w.user.id = :userId")
     Object[] findTotalValueAndSavings(@Param("userId") UUID userId);
     
     long countByUserId(UUID userId);

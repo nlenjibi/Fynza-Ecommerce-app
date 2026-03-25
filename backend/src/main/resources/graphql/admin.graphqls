@@ -13,13 +13,6 @@ type AdminDashboard {
     lowStockProducts: Long!
 }
 
-"""
-User management paginated response
-"""
-type UserPage {
-    content: [User!]!
-    pageInfo: PageInfo!
-}
 
 extend type Query {
     # Security: ADMIN only

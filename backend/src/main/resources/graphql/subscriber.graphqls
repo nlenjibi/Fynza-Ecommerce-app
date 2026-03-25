@@ -1,0 +1,70 @@
+# Subscriber GraphQL Schema
+# Newsletter subscription management
+
+type Subscriber {
+    id: ID!
+    email: String!
+    name: String
+    isActive: Boolean!
+    subscribedAt: DateTime!
+    unsubscribedAt: DateTime
+    source: String
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}
+
+input SubscriberInput {
+    email: String!
+    name: String
+    source: String
+}
+
+extend type Query {
+    # Security: ADMIN only
+    subscribers(
+        isActive: Boolean
+        pagination: PageInput
+    ): SubscriberConnection!
+    
+    # Security: ADMIN only
+    subscriber(id: ID!): Subscriber
+    
+    # Security: ADMIN only
+    subscriberByEmail(email: String!): Subscriber
+    
+    # Security: ADMIN only
+    subscriberStats: SubscriberStats!
+}
+
+type SubscriberConnection {
+    content: [Subscriber!]!
+    pageInfo: PageInfo!
+}
+
+type SubscriberStats {
+    total: Int!
+    active: Int!
+    inactive: Int!
+    subscribedToday: Int!
+    unsubscribedToday: Int!
+}
+
+extend type Mutation {
+    # Security: PUBLIC - Allow subscription
+    subscribe(input: SubscriberInput!): Subscriber!
+    
+    # Security: PUBLIC - Allow unsubscription
+    unsubscribe(email: String!): Boolean!
+    
+    # Security: ADMIN only
+    activateSubscriber(id: ID!): Subscriber!
+    
+    # Security: ADMIN only
+    deactivateSubscriber(id: ID!): Subscriber!
+    
+    # Security: ADMIN only
+    deleteSubscriber(id: ID!): Boolean!
+    
+    # Security: ADMIN only
+    importSubscribers(emails: [String!]!): Int!
+}

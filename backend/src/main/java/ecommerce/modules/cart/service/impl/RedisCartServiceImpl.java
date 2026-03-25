@@ -1,9 +1,9 @@
 package ecommerce.modules.cart.service.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ecommerce.exception.InsufficientStockException;
 import ecommerce.exception.ResourceNotFoundException;
+import ecommerce.modules.cart.dto.CartItemData;
 import ecommerce.modules.cart.dto.CartItemResponse;
 import ecommerce.modules.cart.dto.CartResponse;
 import ecommerce.modules.cart.service.RedisCartService;
@@ -13,27 +13,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Redis-based Cart Service Implementation
- * 
- * Per smart caching guidelines:
- * - Cart stored in Redis (NOT database)
- * - TTL: 30 minutes with sliding expiration
- * - O(1) operations for add/update/remove
- * - No Caffeine (user-specific data)
- * 
- * Redis Key: cart:{userId}
- * Data Structure: Hash (productId -> JSON of CartItem)
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class RedisCartServiceImpl implements RedisCartService {
 
     private final RedisTemplate<String, Object> redisTemplate;
@@ -44,6 +34,7 @@ public class RedisCartServiceImpl implements RedisCartService {
     private static final Duration CART_TTL = Duration.ofMinutes(30);
 
     @Override
+    @Transactional
     public CartItemResponse addItem(UUID userId, UUID productId, int quantity) {
         String cartKey = getCartKey(userId);
         
@@ -51,40 +42,36 @@ public class RedisCartServiceImpl implements RedisCartService {
             throw new IllegalArgumentException("Quantity must be positive");
         }
 
-        // Get product details (from cache or DB)
         ProductResponse product = productService.findById(productId);
+        if (product == null) {
+            throw new ResourceNotFoundException("Product not found");
+        }
 
-        // Check stock
-        int availableStock = (product.getStockCount() != null ? product.getStockCount() : 0);
+        int availableStock = product.getStock() != null ? product.getStock() : 0;
         if (availableStock < quantity) {
             throw new InsufficientStockException(product.getName(), availableStock, quantity);
         }
 
-        // Get existing item or create new
         CartItemData item = getCartItem(cartKey, productId);
         
         if (item != null) {
-            // Update quantity
             int newQuantity = item.getQuantity() + quantity;
             if (newQuantity > availableStock) {
                 throw new InsufficientStockException(product.getName(), availableStock, newQuantity);
             }
             item.setQuantity(newQuantity);
         } else {
-            // Create new item
-            item = new CartItemData();
-            item.setProductId(productId);
-            item.setQuantity(quantity);
-            item.setPrice(product.getPrice());
-            item.setProductName(product.getName());
-            item.setProductImage(product.getImages() != null && !product.getImages().isEmpty() 
-                    ? product.getImages().get(0) : null);
+            item = CartItemData.builder()
+                    .productId(productId)
+                    .quantity(quantity)
+                    .price(product.getPrice())
+                    .productName(product.getName())
+                    .productImage(product.getImages() != null && !product.getImages().isEmpty() 
+                            ? product.getImages().get(0) : null)
+                    .build();
         }
 
-        // Save to Redis
         saveCartItem(cartKey, item);
-        
-        // Refresh TTL (sliding expiration)
         refreshTTL(cartKey);
 
         log.info("Added item to cart for user {}: product {}, quantity {}", userId, productId, quantity);
@@ -115,13 +102,12 @@ public class RedisCartServiceImpl implements RedisCartService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
-        // Refresh TTL on read
         refreshTTL(cartKey);
-
         return buildCartResponse(userId, items);
     }
 
     @Override
+    @Transactional
     public CartItemResponse updateItemQuantity(UUID userId, UUID productId, int quantity) {
         String cartKey = getCartKey(userId);
         
@@ -135,16 +121,14 @@ public class RedisCartServiceImpl implements RedisCartService {
         }
 
         if (quantity == 0) {
-            // Remove item
             removeItem(userId, productId);
             return null;
         }
 
-        // Check stock
         ProductResponse product = getProductSafe(productId);
-        if (quantity > (product.getStockCount() != null ? product.getStockCount() : 0)) {
+        if (product != null && quantity > (product.getStock() != null ? product.getStock() : 0)) {
             throw new InsufficientStockException(product.getName(), 
-                    product.getStockCount() != null ? product.getStockCount() : 0, quantity);
+                    product.getStock() != null ? product.getStock() : 0, quantity);
         }
 
         item.setQuantity(quantity);
@@ -156,6 +140,7 @@ public class RedisCartServiceImpl implements RedisCartService {
     }
 
     @Override
+    @Transactional
     public void removeItem(UUID userId, UUID productId) {
         String cartKey = getCartKey(userId);
         redisTemplate.opsForHash().delete(cartKey, productId.toString());
@@ -165,6 +150,7 @@ public class RedisCartServiceImpl implements RedisCartService {
     }
 
     @Override
+    @Transactional
     public void clearCart(UUID userId) {
         String cartKey = getCartKey(userId);
         redisTemplate.delete(cartKey);
@@ -184,8 +170,6 @@ public class RedisCartServiceImpl implements RedisCartService {
         Long size = redisTemplate.opsForHash().size(cartKey);
         return size != null ? size : 0;
     }
-
-    // ==================== Private Helpers ====================
 
     private String getCartKey(UUID userId) {
         return CART_KEY_PREFIX + userId;
@@ -222,23 +206,15 @@ public class RedisCartServiceImpl implements RedisCartService {
     }
 
     private CartItemResponse mapToResponse(CartItemData item, ProductResponse product) {
-        if (product == null) {
-            return CartItemResponse.builder()
-                    .productId(item.getProductId())
-                    .quantity(item.getQuantity())
-                    .price(item.getPrice())
-                    .build();
+        BigDecimal totalPrice = BigDecimal.ZERO;
+        if (item.getPrice() != null && item.getQuantity() != null) {
+            totalPrice = item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
         }
-
-        BigDecimal subtotal = item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
         
         return CartItemResponse.builder()
-                .productId(item.getProductId())
-                .productName(item.getProductName())
-                .image(item.getProductImage())
                 .quantity(item.getQuantity())
-                .price(item.getPrice())
-                .subtotal(subtotal)
+                .product(product)
+                .totalPrice(totalPrice)
                 .build();
     }
 
@@ -247,13 +223,13 @@ public class RedisCartServiceImpl implements RedisCartService {
                 .userId(userId)
                 .items(new ArrayList<>())
                 .itemsCount(0)
-                .total(BigDecimal.ZERO)
+                .totalPrice(BigDecimal.ZERO)
                 .build();
     }
 
     private CartResponse buildCartResponse(UUID userId, List<CartItemResponse> items) {
         BigDecimal totalPrice = items.stream()
-                .map(CartItemResponse::getSubtotal)
+                .map(CartItemResponse::getTotalPrice)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -261,29 +237,7 @@ public class RedisCartServiceImpl implements RedisCartService {
                 .userId(userId)
                 .items(items)
                 .itemsCount(items.size())
-                .total(totalPrice)
+                .totalPrice(totalPrice)
                 .build();
-    }
-
-    /**
-     * Internal cart item data structure
-     */
-    public static class CartItemData {
-        private UUID productId;
-        private String productName;
-        private String productImage;
-        private Integer quantity;
-        private BigDecimal price;
-
-        public UUID getProductId() { return productId; }
-        public void setProductId(UUID productId) { this.productId = productId; }
-        public String getProductName() { return productName; }
-        public void setProductName(String productName) { this.productName = productName; }
-        public String getProductImage() { return productImage; }
-        public void setProductImage(String productImage) { this.productImage = productImage; }
-        public Integer getQuantity() { return quantity; }
-        public void setQuantity(Integer quantity) { this.quantity = quantity; }
-        public BigDecimal getPrice() { return price; }
-        public void setPrice(BigDecimal price) { this.price = price; }
     }
 }

@@ -33,6 +33,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class AuthServiceImpl implements AuthService {
 
     private static final String AUTH_PROVIDER_PASSWORD = "PASSWORD";
@@ -76,7 +77,7 @@ public class AuthServiceImpl implements AuthService {
                 .phone(request.getPhone())
                 .role(role)
                 .status(UserStatus.ACTIVE)
-                .emailVerified(false)
+                .isEmailVerified(false)
                 .lastPasswordChange(LocalDateTime.now())
                 .build();
 

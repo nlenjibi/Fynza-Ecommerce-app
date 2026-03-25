@@ -11,6 +11,7 @@ import ecommerce.modules.product.entity.ProductVariant;
 import ecommerce.modules.product.repository.ProductRepository;
 import ecommerce.modules.product.repository.ProductVariantRepository;
 import ecommerce.modules.product.service.ProductService;
+import ecommerce.modules.user.entity.Role;
 import ecommerce.modules.user.entity.SellerProfile;
 import ecommerce.modules.user.entity.User;
 import ecommerce.modules.user.repository.SellerProfileRepository;
@@ -581,5 +582,31 @@ public class ProductServiceImpl implements ProductService {
         log.info("Updated product {} status to {}", id, status);
         
         return mapToResponse(saved);
+    }
+
+    @Override
+    public boolean canUpdate(String productId, String userId) {
+        UUID productUuid = UUID.fromString(productId);
+        UUID userUuid = UUID.fromString(userId);
+        Product product = productRepository.findById(productUuid).orElse(null);
+        if (product == null) {
+            return false;
+        }
+        boolean isOwner = product.getSeller() != null && product.getSeller().getId().equals(userUuid);
+        boolean isAdmin = product.getSeller() != null && product.getSeller().getRole() == Role.ADMIN;
+        return isOwner || isAdmin;
+    }
+
+    @Override
+    public boolean canDelete(String productId, String userId) {
+        UUID productUuid = UUID.fromString(productId);
+        UUID userUuid = UUID.fromString(userId);
+        Product product = productRepository.findById(productUuid).orElse(null);
+        if (product == null) {
+            return false;
+        }
+        boolean isOwner = product.getSeller() != null && product.getSeller().getId().equals(userUuid);
+        boolean isAdmin = product.getSeller() != null && product.getSeller().getRole() == Role.ADMIN;
+        return isOwner || isAdmin;
     }
 }

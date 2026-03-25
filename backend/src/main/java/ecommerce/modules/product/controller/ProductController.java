@@ -78,13 +78,7 @@ public class ProductController {
             @PathVariable UUID id,
             @Valid @RequestBody UpdateProductRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
-        ProductResponse existingProduct = productService.findById(id);
-        
-        boolean isOwner = existingProduct.getSeller() != null && 
-                existingProduct.getSeller().getId().toString().equals(principal.getId().toString());
-        boolean isAdmin = principal.getRole() == ecommerce.modules.user.entity.Role.ADMIN;
-        
-        if (!isOwner && !isAdmin) {
+        if (!productService.canUpdate(id.toString(), principal.getId().toString())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.error("You are not authorized to update this product"));
         }
@@ -99,13 +93,7 @@ public class ProductController {
     public ResponseEntity<ApiResponse<Void>> deleteProduct(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserPrincipal principal) {
-        ProductResponse existingProduct = productService.findById(id);
-        
-        boolean isOwner = existingProduct.getSeller() != null && 
-                existingProduct.getSeller().getId().toString().equals(principal.getId().toString());
-        boolean isAdmin = principal.getRole() == ecommerce.modules.user.entity.Role.ADMIN;
-        
-        if (!isOwner && !isAdmin) {
+        if (!productService.canDelete(id.toString(), principal.getId().toString())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.error("You are not authorized to delete this product"));
         }

@@ -17,4 +17,5 @@ public class CreateOrderRequest {
     private String paymentMethod;
     private String paymentIntentId;
     private String couponCode;
+    private String idempotencyKey;
 }

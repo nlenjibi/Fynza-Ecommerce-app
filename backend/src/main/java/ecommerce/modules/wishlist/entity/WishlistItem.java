@@ -13,7 +13,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "wishlist_items", indexes = {
         @Index(name = "idx_wishlist_item_user", columnList = "user_id"),
-        @Index(name = "idx_wishlist_item_product", columnList = "product_id")
+        @Index(name = "idx_wishlist_item_product", columnList = "product_id"),
+        @Index(name = "idx_wishlist_item_wishlist", columnList = "wishlist_id")
 })
 @Getter
 @Setter
@@ -22,6 +23,10 @@ import java.time.LocalDateTime;
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 public class WishlistItem extends BaseEntity {
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "wishlist_id", nullable = false)
+    private Wishlist wishlist;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

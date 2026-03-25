@@ -24,13 +24,14 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class MessageServiceImpl implements MessageService {
 
     private final ConversationRepository conversationRepository;
     private final MessageRepository messageRepository;
 
     @Override
+    @Transactional
     public ConversationResponse createConversation(UUID userId, MessageType userType, CreateConversationRequest request) {
         Conversation conversation = Conversation.builder()
                 .participantId(userId)
@@ -94,11 +95,13 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
+    @Transactional
     public ConversationResponse sendMessage(UUID conversationId, UUID senderId, MessageType senderType, String senderName, SendMessageRequest request) {
         return replyToConversation(conversationId, senderId, senderType, senderName, request);
     }
 
     @Override
+    @Transactional
     public ConversationResponse replyToConversation(UUID conversationId, UUID senderId, MessageType senderType, String senderName, SendMessageRequest request) {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Conversation not found"));
@@ -132,6 +135,7 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
+    @Transactional
     public ConversationResponse updateConversationStatus(UUID conversationId, MessageStatus status) {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Conversation not found"));
@@ -144,6 +148,7 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
+    @Transactional
     public ConversationResponse toggleStar(UUID conversationId, UUID userId) {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Conversation not found"));
@@ -159,6 +164,7 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
+    @Transactional
     public ConversationResponse togglePin(UUID conversationId, UUID userId) {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Conversation not found"));
@@ -174,6 +180,7 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
+    @Transactional
     public void markAsRead(UUID conversationId) {
         conversationRepository.findById(conversationId).ifPresent(conversation -> {
             messageRepository.markAllAsRead(conversationId);
@@ -184,6 +191,7 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
+    @Transactional
     public void deleteConversation(UUID conversationId, UUID userId) {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Conversation not found"));
@@ -201,9 +209,9 @@ public class MessageServiceImpl implements MessageService {
     @Transactional(readOnly = true)
     public ConversationStatsResponse getUserStats(UUID userId) {
         long unread = conversationRepository.countByParticipantIdAndUnreadCountGreaterThan(userId, 0);
-        long open = conversationRepository.countByParticipantIdAndStatusOrderByCreatedAtDesc(userId, MessageStatus.OPEN, Pageable.unpaged()).getTotalElements();
-        long pending = conversationRepository.countByParticipantIdAndStatusOrderByCreatedAtDesc(userId, MessageStatus.PENDING, Pageable.unpaged()).getTotalElements();
-        long resolved = conversationRepository.countByParticipantIdAndStatusOrderByCreatedAtDesc(userId, MessageStatus.RESOLVED, Pageable.unpaged()).getTotalElements();
+        long open = conversationRepository.countByParticipantIdAndStatus(userId, MessageStatus.OPEN);
+        long pending = conversationRepository.countByParticipantIdAndStatus(userId, MessageStatus.PENDING);
+        long resolved = conversationRepository.countByParticipantIdAndStatus(userId, MessageStatus.RESOLVED);
 
         return ConversationStatsResponse.builder()
                 .unreadCount(unread)

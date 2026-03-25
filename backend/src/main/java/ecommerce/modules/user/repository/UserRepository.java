@@ -51,7 +51,7 @@ public interface UserRepository extends BaseRepository<User, UUID> {
            "AND (:query IS NULL OR LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%')) " +
            "OR LOWER(u.firstName) LIKE LOWER(CONCAT('%', :query, '%')) " +
            "OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :query, '%')) " +
-           "OR LOWER(u.phoneNumber) LIKE LOWER(CONCAT('%', :query, '%'))) " +
+           "OR LOWER(u.phone) LIKE LOWER(CONCAT('%', :query, '%'))) " +
            "AND (:status IS NULL OR u.status = :status)")
     Page<User> searchCustomers(@Param("query") String query, @Param("status") UserStatus status, Pageable pageable);
 

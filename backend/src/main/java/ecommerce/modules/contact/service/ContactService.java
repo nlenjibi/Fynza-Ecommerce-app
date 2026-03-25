@@ -4,6 +4,7 @@ import ecommerce.exception.ResourceNotFoundException;
 import ecommerce.modules.contact.dto.ContactMessageRequest;
 import ecommerce.modules.contact.dto.ContactMessageResponse;
 import ecommerce.modules.contact.dto.ContactResponseRequest;
+import ecommerce.modules.contact.dto.ContactStats;
 import ecommerce.modules.contact.entity.ContactMessage;
 import ecommerce.modules.contact.entity.ContactMessage.ContactCategory;
 import ecommerce.modules.contact.entity.ContactMessage.ContactPriority;
@@ -36,7 +37,7 @@ public class ContactService {
                 .phone(request.getPhone())
                 .subject(request.getSubject())
                 .message(request.getMessage())
-                .status(ContactStatus.OPEN)
+                .status(ContactStatus.NEW)
                 .priority(ContactPriority.MEDIUM)
                 .category(request.getCategory() != null ? request.getCategory() : ContactCategory.GENERAL_INQUIRY)
                 .build();
@@ -79,7 +80,7 @@ public class ContactService {
         message.setAdminResponse(request.getAdminResponse());
         message.setRespondedAt(LocalDateTime.now());
         message.setRespondedBy(request.getAdminId());
-        message.setStatus(ContactStatus.RESOLVED);
+        message.setStatus(ContactStatus.RESPONDED);
 
         ContactMessage updatedMessage = contactMessageRepository.save(message);
         log.info("Contact message {} responded by admin {}", id, request.getAdminId());
@@ -153,5 +154,18 @@ public class ContactService {
     @Transactional
     public ContactMessageResponse submitMessage(ContactMessageRequest request) {
         return createMessage(request);
+    }
+
+    @Transactional(readOnly = true)
+    public ContactStats getMessageStats() {
+        log.debug("Fetching contact message statistics");
+        
+        return ContactStats.builder()
+                .total(countTotalMessages())
+                .newCount(countMessagesByStatus(ContactStatus.NEW))
+                .inProgress(countMessagesByStatus(ContactStatus.IN_PROGRESS))
+                .responded(countMessagesByStatus(ContactStatus.RESPONDED))
+                .closed(countMessagesByStatus(ContactStatus.CLOSED))
+                .build();
     }
 }

@@ -3,6 +3,8 @@ package ecommerce.graphql.resolver;
 import com.querydsl.core.types.Predicate;
 import ecommerce.common.response.PaginatedResponse;
 import ecommerce.graphql.dto.ReviewResponseDto;
+import ecommerce.graphql.input.PageInput;
+import ecommerce.graphql.input.ReviewFilterInput;
 import ecommerce.modules.review.dto.AdminResponseRequest;
 import ecommerce.modules.review.dto.ReviewCreateRequest;
 import ecommerce.modules.review.dto.ReviewResponse;
@@ -34,10 +36,10 @@ class ReviewResolver {
     @QueryMapping
     public ReviewResponseDto productReviews(
             @Argument UUID productId,
-            @Argument org.springframework.data.domain.Pageable pageable,
-            @Argument ecommerce.graphql.input.ReviewFilterInput filter) {
+            @Argument PageInput pagination,
+            @Argument ReviewFilterInput filter) {
         log.info("GraphQL Query: productReviews productId={}", productId);
-        Pageable page = pageable != null ? pageable : PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Pageable page = createPageable(pagination);
         Page<ReviewResponse> pageResult = filter != null
                 ? reviewService.findReviewsWithPredicate(buildProductPredicate(productId, filter), page)
                 : reviewService.getProductReviews(productId, page);
@@ -55,10 +57,10 @@ class ReviewResolver {
 
     @QueryMapping
     public ReviewResponseDto searchReviews(
-            @Argument ecommerce.graphql.input.ReviewFilterInput filter,
-            @Argument org.springframework.data.domain.Pageable pageable) {
+            @Argument ReviewFilterInput filter,
+            @Argument PageInput pagination) {
         log.info("GraphQL Query: searchReviews");
-        Pageable page = pageable != null ? pageable : PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Pageable page = createPageable(pagination);
         Page<ReviewResponse> pageResult = reviewService.findReviewsWithPredicate(buildGeneralPredicate(filter), page);
         return ReviewResponseDto.builder()
                 .content(pageResult.getContent())
@@ -68,10 +70,10 @@ class ReviewResolver {
 
     @QueryMapping
     public ReviewResponseDto myReviews(
-            @Argument org.springframework.data.domain.Pageable pageable,
+            @Argument PageInput pagination,
             @ContextValue UUID userId) {
         log.info("GraphQL Query: myReviews user={}", userId);
-        Pageable page = pageable != null ? pageable : PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Pageable page = createPageable(pagination);
         Page<ReviewResponse> pageResult = reviewService.getUserReviews(userId, page);
         return ReviewResponseDto.builder()
                 .content(pageResult.getContent())
@@ -199,5 +201,15 @@ class ReviewResolver {
         if (Boolean.TRUE.equals(f.getNegativeOnly())) p.withNegativeRating();
         if (Boolean.TRUE.equals(f.getNeedsAttention())) p.withNeedsAttention();
         return p.buildActiveOnly();
+    }
+
+    private Pageable createPageable(PageInput input) {
+        if (input == null) {
+            return PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
+        }
+        Sort.Direction direction = input.getDirection() == ecommerce.graphql.input.SortDirection.DESC
+                ? Sort.Direction.DESC : Sort.Direction.ASC;
+        String sortBy = input.getSortBy() != null ? input.getSortBy() : "createdAt";
+        return PageRequest.of(input.getPage(), input.getSize(), Sort.by(direction, sortBy));
     }
 }

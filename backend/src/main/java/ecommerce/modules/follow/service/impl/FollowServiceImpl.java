@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class FollowServiceImpl implements FollowService {
 
     private final StoreFollowRepository storeFollowRepository;
@@ -136,7 +137,7 @@ public class FollowServiceImpl implements FollowService {
                 .customerId(customer.getId())
                 .customerName(customer.getFirstName() + " " + customer.getLastName())
                 .customerEmail(customer.getEmail())
-                .customerAvatar(customer.getAvatarUrl())
+                .customerAvatar(customer.getProfileImageUrl())
                 .joinedDate(follow.getFollowedAt())
                 .orderCount(orderCount)
                 .totalSpent(java.math.BigDecimal.valueOf(totalSpent))

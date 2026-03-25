@@ -22,7 +22,7 @@ public class ContactMessageResponse {
     private String phone;
     private String subject;
     private String message;
-    private ContactStatus status;
+    private ContactMessage.ContactStatus status;
     private ContactPriority priority;
     private ContactCategory category;
     private String adminResponse;

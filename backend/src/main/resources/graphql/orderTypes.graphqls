@@ -66,3 +66,11 @@ type Order {
     updatedAt: DateTime!
 }
 
+# Input types for order operations
+input OrderStatusUpdateInput {
+    status: OrderStatus!
+    trackingNumber: String
+    carrier: String
+    notes: String
+}
+

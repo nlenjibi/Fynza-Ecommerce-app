@@ -17,6 +17,7 @@ public interface CategoryMapper {
     @Mapping(target = "featured", expression = "java(request.getFeatured() != null ? request.getFeatured() : false)")
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "image", expression = "java(request.getImage() != null ? request.getImage() : null)")
     @Mapping(target = "parentCategory", expression = "java(mapParentCategory(request.getParentCategoryId()))")
     Category toEntity(CategoryCreateRequest request);
 
@@ -29,6 +30,7 @@ public interface CategoryMapper {
     @Mapping(target = "isActive", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "image", expression = "java(request.getImage() != null ? request.getImage() : null)")
     @Mapping(target = "parentCategory", expression = "java(mapParentCategory(request.getParentCategoryId()))")
     void updateEntityFromRequest(CategoryUpdateRequest request, @MappingTarget Category category);
 
@@ -38,6 +40,7 @@ public interface CategoryMapper {
     @Mapping(target = "isActive", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "image", expression = "java(request.getImage() != null ? request.getImage() : null)")
     @Mapping(target = "parentCategory", expression = "java(mapParentCategory(request.getParentCategoryId()))")
     void updateEntityFromRequest(CategoryCreateRequest request, @MappingTarget Category category);
 

@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -19,7 +20,7 @@ import java.time.LocalDateTime;
 public class PriceDropNotificationDto {
 
     private Long wishlistItemId;
-    private Long productId;
+    private UUID productId;
     private String productName;
     private String productSlug;
     private BigDecimal oldPrice;

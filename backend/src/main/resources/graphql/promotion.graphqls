@@ -1,0 +1,175 @@
+# Promotion GraphQL Schema
+# Flash sales, promotions, and campaigns
+
+type Promotion {
+    id: ID!
+    name: String!
+    description: String
+    type: PromotionType!
+    discountValue: BigDecimal!
+    discountType: DiscountType!
+    minOrderAmount: BigDecimal
+    maxDiscount: BigDecimal
+    startDate: DateTime!
+    endDate: DateTime!
+    isActive: Boolean!
+    usageLimit: Int
+    usageCount: Int
+    applicableProducts: [ProductResponse!]
+    applicableCategories: [CategoryInfo!]
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}
+
+type FlashSale {
+    id: ID!
+    name: String!
+    description: String
+    startDate: DateTime!
+    endDate: DateTime!
+    discountPercentage: BigDecimal!
+    maxParticipants: Int
+    products: [FlashSaleProduct!]!
+    isActive: Boolean!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}
+
+type FlashSaleProduct {
+    id: ID!
+    product: ProductResponse!
+    flashPrice: BigDecimal!
+    originalPrice: BigDecimal!
+    stockAllocated: Int!
+    stockSold: Int!
+    status: FlashSaleStatus!
+}
+
+enum FlashSaleStatus {
+    UPCOMING
+    ACTIVE
+    ENDED
+    SOLD_OUT
+}
+
+type AdminPromotion {
+    id: ID!
+    name: String!
+    description: String
+    type: PromotionType!
+    discountValue: BigDecimal!
+    discountType: DiscountType!
+    minOrderAmount: BigDecimal
+    maxDiscount: BigDecimal
+    startDate: DateTime!
+    endDate: DateTime!
+    isActive: Boolean!
+    usageLimit: Int
+    usageCount: Int
+    sellerIds: [ID!]
+    categoryIds: [ID!]
+    productIds: [ID!]
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}
+
+enum PromotionType {
+    PERCENTAGE
+    FIXED_AMOUNT
+    FREE_SHIPPING
+    BUNDLE
+    BUY_X_GET_Y
+}
+
+enum DiscountType {
+    PERCENTAGE
+    FIXED_AMOUNT
+    FREE_SHIPPING
+}
+
+input PromotionInput {
+    name: String!
+    description: String
+    type: PromotionType!
+    discountValue: BigDecimal!
+    discountType: DiscountType!
+    minOrderAmount: BigDecimal
+    maxDiscount: BigDecimal
+    startDate: DateTime!
+    endDate: DateTime!
+    usageLimit: Int
+    productIds: [ID!]
+    categoryIds: [ID!]
+}
+
+input FlashSaleInput {
+    name: String!
+    description: String
+    startDate: DateTime!
+    endDate: DateTime!
+    discountPercentage: BigDecimal!
+    maxParticipants: Int
+    productIds: [ID!]!
+}
+
+extend type Query {
+    # Security: PUBLIC
+    activePromotions: [Promotion!]!
+    
+    # Security: PUBLIC
+    promotion(id: ID!): Promotion
+    
+    # Security: PUBLIC
+    promotions(pagination: PageInput): PromotionConnection!
+    
+    # Security: PUBLIC
+    activeFlashSales: [FlashSale!]!
+    
+    # Security: PUBLIC
+    flashSale(id: ID!): FlashSale
+    
+    # Security: PUBLIC
+    flashSales(pagination: PageInput): FlashSaleConnection!
+    
+    # Security: ADMIN only
+    adminPromotions(pagination: PageInput): PromotionConnection!
+    
+    # Security: SELLER only
+    sellerPromotions(pagination: PageInput): PromotionConnection!
+}
+
+type PromotionConnection {
+    content: [Promotion!]!
+    pageInfo: PageInfo!
+}
+
+type FlashSaleConnection {
+    content: [FlashSale!]!
+    pageInfo: PageInfo!
+}
+
+extend type Mutation {
+    # Security: ADMIN only
+    createPromotion(input: PromotionInput!): Promotion!
+    
+    # Security: ADMIN only
+    updatePromotion(id: ID!, input: PromotionInput!): Promotion!
+    
+    # Security: ADMIN only
+    deletePromotion(id: ID!): Boolean!
+    
+    # Security: ADMIN only
+    togglePromotionActive(id: ID!): Promotion!
+    
+    # Security: ADMIN only
+    createFlashSale(input: FlashSaleInput!): FlashSale!
+    
+    # Security: ADMIN only
+    updateFlashSale(id: ID!, input: FlashSaleInput!): FlashSale!
+    
+    # Security: ADMIN only
+    deleteFlashSale(id: ID!): Boolean!
+    
+    # Security: SELLER only
+    applyForFlashSale(flashSaleId: ID!, productIds: [ID!]!): Boolean!
+}
