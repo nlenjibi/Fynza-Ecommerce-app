@@ -77,7 +77,7 @@ public class FollowResolver {
     @PreAuthorize("isAuthenticated()")
     public StoreFollow followStore(@Argument FollowInput input) {
         log.info("GraphQL Mutation: followStore(sellerId: {})", input.getSellerId());
-        followStore(null, input.getSellerId());
+        followService.followStore(null, input.getSellerId());
         return StoreFollow.builder().build();
     }
 
