@@ -3,57 +3,29 @@
 extend type Query {
     # Basic Queries
     category(id: ID!): CategoryResponse
-    categoryBySlug(slug: String!): CategoryResponse
-
     # List Queries
     categories(pagination: PageInput): CategoryResponseDto!
-    activeCategories: [CategoryResponse!]!
-    activeCategoriesPaginated(pagination: PageInput): CategoryResponseDto!
-    featuredCategories: [CategoryResponse!]!
-
-    # Search Queries
-    searchCategories(keyword: String!, pagination: PageInput): CategoryResponseDto!
-    searchActiveCategories(keyword: String!, pagination: PageInput): CategoryResponseDto!
 
     # Filter Queries
-    filterCategories(filter: CategoryFilterInput!, pagination: PageInput): CategoryResponseDto!
     advancedFilterCategories(filter: CategoryFilterInput!, pagination: PageInput): CategoryResponseDto!
     filterCategoriesWithPredicate(filter: CategoryFilterInput, pagination: PageInput): CategoryResponseDto!
     searchCategoriesWithPredicate(keyword: String, filter: CategoryFilterInput, pagination: PageInput): CategoryResponseDto!
 
     # Product-Based Queries
-    categoriesWithProducts(pagination: PageInput): CategoryResponseDto!
-    categoriesByProductCount(pagination: PageInput): CategoryResponseDto!
     getCategoriesWithMinProductCount(minProductCount: Int, pagination: PageInput): CategoryResponseDto!
     getCategoriesBySubcategoryPresence(hasSubcategories: Boolean, pagination: PageInput): CategoryResponseDto!
 
     # Date-Based Queries
-    categoriesCreatedBetween(startDate: DateTime!, endDate: DateTime!, pagination: PageInput): CategoryResponseDto!
-    categoriesUpdatedBetween(startDate: DateTime!, endDate: DateTime!, pagination: PageInput): CategoryResponseDto!
     getCategoriesByDateRange(startDate: DateTime, endDate: DateTime, type: String, pagination: PageInput): CategoryResponseDto!
 
     # Root Categories
     getRootCategories(featured: Boolean, pagination: PageInput): CategoryResponseDto!
     getFeaturedRootCategories: [CategoryResponse!]!
-
-    # Bulk Queries
-    categoriesByIds(ids: [ID!]!): [CategoryResponse!]!
-    categoriesBySlugs(slugs: [String!]!): [CategoryResponse!]!
 }
 
 extend type Mutation {
     # Create & Update
     createCategory(input: CategoryCreateRequest!): CategoryResponse!
-    updateCategory(id: ID!, input: CategoryUpdateRequest!): CategoryResponse!
-
-    # Status Toggles
-    activateCategory(id: ID!): CategoryResponse!
-    deactivateCategory(id: ID!): CategoryResponse!
-    featureCategory(id: ID!): CategoryResponse!
-    unfeatureCategory(id: ID!): CategoryResponse!
-
-    # Delete
-    deleteCategory(id: ID!): Boolean!
 }
 
 # Types

@@ -279,8 +279,6 @@ extend type Query {
     # Security: PUBLIC - No authentication required
     # Single Product Queries
     product(id: ID!): ProductResponse
-    productBySlug(slug: String!): ProductResponse
-    productBySku(sku: String!): ProductResponse
 
     # Security: PUBLIC - No authentication required
     # Advanced Filtering Queries
@@ -307,18 +305,6 @@ extend type Query {
         maxPrice: BigDecimal!
         pagination: PageInput
     ): ProductDto
-
-    # Marketing Queries
-    featuredProducts(pagination: PageInput): ProductDto
-    newProducts(pagination: PageInput): ProductDto
-    discountedProducts(pagination: PageInput): ProductDto
-    bestsellerProducts(pagination: PageInput): ProductDto
-    topRatedProducts(pagination: PageInput): ProductDto
-
-    trendingProducts(
-        categoryId: ID
-        limit: Int = 10
-    ): [ProductResponse!]!
 
     # Search Queries
     searchProducts(

@@ -1,10 +1,7 @@
 package ecommerce.graphql.resolver;
 
 import ecommerce.graphql.dto.ContactMessageConnection;
-import ecommerce.graphql.input.ContactFilterInput;
-import ecommerce.graphql.input.ContactMessageInput;
-import ecommerce.graphql.input.ContactResponseInput;
-import ecommerce.graphql.input.PageInput;
+import ecommerce.graphql.input.*;
 import ecommerce.modules.contact.dto.ContactMessageRequest;
 import ecommerce.modules.contact.dto.ContactMessageResponse;
 import ecommerce.modules.contact.dto.ContactResponseRequest;
@@ -130,7 +127,7 @@ public class ContactResolver {
         if (input == null) {
             return PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
         }
-        Sort.Direction direction = "DESC".equalsIgnoreCase(input.getDirection()) 
+        Sort.Direction direction = SortDirection.DESC.equals(input.getDirection())
             ? Sort.Direction.DESC : Sort.Direction.ASC;
         String sortBy = input.getSortBy() != null ? input.getSortBy() : "createdAt";
         return PageRequest.of(input.getPage(), input.getSize(), Sort.by(direction, sortBy));

@@ -132,10 +132,10 @@ springdoc:
     tags-sorter: alpha
     display-request-duration: true
     filter: true
+    try-it-out-enabled: true
+    persist-authorization: true
   paths-to-match:
-    - /api/**
-  packages-to-scan:
-    - ecommerce.controller
+    - /**
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
 

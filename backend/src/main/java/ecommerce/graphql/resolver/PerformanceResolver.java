@@ -1,11 +1,6 @@
 package ecommerce.graphql.resolver;
 
-import ecommerce.graphql.dto.CacheMetrics;
-import ecommerce.graphql.dto.ContentAnalytics;
-import ecommerce.graphql.dto.DatabaseMetrics;
-import ecommerce.graphql.dto.PerformanceDashboard;
-import ecommerce.graphql.dto.SecurityMetrics;
-import ecommerce.graphql.dto.SystemMetrics;
+import ecommerce.graphql.dto.*;
 import ecommerce.graphql.input.ContentAnalyticsInput;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

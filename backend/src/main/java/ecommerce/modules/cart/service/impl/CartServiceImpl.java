@@ -14,7 +14,9 @@ import ecommerce.modules.cart.repository.StockReservationRepository;
 import ecommerce.modules.cart.service.CartService;
 import ecommerce.modules.coupon.entity.Coupon;
 import ecommerce.modules.coupon.repository.CouponRepository;
+import ecommerce.modules.product.dto.ProductResponse;
 import ecommerce.modules.product.entity.Product;
+import ecommerce.modules.product.entity.ProductImage;
 import ecommerce.modules.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -400,7 +402,7 @@ public class CartServiceImpl implements CartService {
                 .tax(tax)
                 .shippingCost(shippingCost)
                 .discount(discount[0])
-                .total(total)
+                .totalPrice(total)
                 .itemsCount(itemResponses.size())
                 .couponCode(cart.getCouponCode())
                 .build();
@@ -426,16 +428,28 @@ public class CartServiceImpl implements CartService {
         return product.getPrice();
     }
 
+    private ProductResponse mapToProductResponse(Product product) {
+        return ProductResponse.builder()
+                .id(product.getId())
+                .name(product.getName())
+                .price(product.getPrice())
+                .originalPrice(product.getOriginalPrice())
+                .discount(product.getDiscount())
+                .stock(product.getStock())
+                .images(product.getImages().stream()
+                        .map(ProductImage::getImageUrl)
+                        .toList())
+                .build();
+    }
+
     private CartItemResponse mapToCartItemResponse(CartItem cartItem) {
         StockReservation reservation = stockReservationRepository.findByCartItemId(cartItem.getId()).orElse(null);
         
         return CartItemResponse.builder()
                 .id(cartItem.getId())
-                .productId(cartItem.getProduct().getId())
-                .productName(cartItem.getProduct().getName())
-                .price(cartItem.getPrice())
+                .product(mapToProductResponse(cartItem.getProduct()))
                 .quantity(cartItem.getQuantity())
-                .subtotal(cartItem.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())))
+                .totalPrice(cartItem.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())))
                 .reserved(reservation != null && !reservation.isExpired())
                 .reservationExpiresAt(reservation != null ? reservation.getExpiresAt() : null)
                 .build();

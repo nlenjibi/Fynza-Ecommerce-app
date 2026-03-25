@@ -60,6 +60,8 @@ public class ContactMessage extends BaseEntity {
     private String respondedBy;
 
     public enum ContactStatus {
+        OPEN,
+
         NEW,
         READ,
         IN_PROGRESS,
