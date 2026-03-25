@@ -38,7 +38,7 @@ public class ContactMessage extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     @Builder.Default
-    private ContactStatus status = ContactStatus.PENDING;
+    private ContactStatus status = ContactStatus.NEW;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "priority", nullable = false, length = 20)
@@ -60,11 +60,12 @@ public class ContactMessage extends BaseEntity {
     private String respondedBy;
 
     public enum ContactStatus {
-        OPEN,
-        PENDING,
+        NEW,
+        READ,
         IN_PROGRESS,
-        RESOLVED,
-        CLOSED
+        RESPONDED,
+        CLOSED,
+        SPAM
     }
 
     public enum ContactPriority {

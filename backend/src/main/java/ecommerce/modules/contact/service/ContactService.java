@@ -36,7 +36,7 @@ public class ContactService {
                 .phone(request.getPhone())
                 .subject(request.getSubject())
                 .message(request.getMessage())
-                .status(ContactStatus.OPEN)
+                .status(ContactStatus.NEW)
                 .priority(ContactPriority.MEDIUM)
                 .category(request.getCategory() != null ? request.getCategory() : ContactCategory.GENERAL_INQUIRY)
                 .build();
@@ -79,7 +79,7 @@ public class ContactService {
         message.setAdminResponse(request.getAdminResponse());
         message.setRespondedAt(LocalDateTime.now());
         message.setRespondedBy(request.getAdminId());
-        message.setStatus(ContactStatus.RESOLVED);
+        message.setStatus(ContactStatus.RESPONDED);
 
         ContactMessage updatedMessage = contactMessageRepository.save(message);
         log.info("Contact message {} responded by admin {}", id, request.getAdminId());
