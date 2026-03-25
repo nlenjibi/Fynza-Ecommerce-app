@@ -1,5 +1,12 @@
 package ecommerce.graphql.resolver;
 
+import ecommerce.graphql.dto.FollowStats;
+import ecommerce.graphql.dto.StoreFollow;
+import ecommerce.graphql.dto.StoreFollowConnection;
+import ecommerce.graphql.dto.UserPage;
+import ecommerce.graphql.input.FollowInput;
+import ecommerce.graphql.input.PageInput;
+import ecommerce.graphql.input.SortDirection;
 import ecommerce.modules.follow.dto.FollowStatsResponse;
 import ecommerce.modules.follow.dto.FollowedStoreResponse;
 import ecommerce.modules.follow.dto.FollowerResponse;
@@ -27,8 +34,7 @@ public class FollowResolver {
 
     @QueryMapping
     @PreAuthorize("isAuthenticated()")
-    public StoreFollowConnection myFollowing(
-            @Argument PageInput pagination) {
+    public StoreFollowConnection myFollowing(@Argument PageInput pagination) {
         log.info("GraphQL Query: myFollowing");
         
         Pageable pageable = createPageable(pagination);
@@ -59,9 +65,7 @@ public class FollowResolver {
     }
 
     @QueryMapping
-    public UserPage storeFollowers(
-            @Argument UUID sellerId,
-            @Argument PageInput pagination) {
+    public UserPage storeFollowers(@Argument UUID sellerId, @Argument PageInput pagination) {
         log.info("GraphQL Query: storeFollowers(sellerId: {})", sellerId);
         
         Pageable pageable = createPageable(pagination);
@@ -93,60 +97,9 @@ public class FollowResolver {
         if (input == null) {
             return PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
         }
-        Sort.Direction direction = "DESC".equalsIgnoreCase(input.getDirection()) 
+        Sort.Direction direction = input.getDirection() == SortDirection.DESC 
             ? Sort.Direction.DESC : Sort.Direction.ASC;
         String sortBy = input.getSortBy() != null ? input.getSortBy() : "createdAt";
         return PageRequest.of(input.getPage(), input.getSize(), Sort.by(direction, sortBy));
-    }
-
-    public static class PageInput {
-        private int page = 0;
-        private int size = 20;
-        private String sortBy;
-        private String direction;
-
-        public int getPage() { return page; }
-        public void setPage(int page) { this.page = page; }
-        public int getSize() { return size; }
-        public void setSize(int size) { this.size = size; }
-        public String getSortBy() { return sortBy; }
-        public void setSortBy(String sortBy) { this.sortBy = sortBy; }
-        public String getDirection() { return direction; }
-        public void setDirection(String direction) { this.direction = direction; }
-    }
-
-    public static class FollowInput {
-        private UUID sellerId;
-
-        public UUID getSellerId() { return sellerId; }
-        public void setSellerId(UUID sellerId) { this.sellerId = sellerId; }
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class StoreFollowConnection {
-        private java.util.List<FollowedStoreResponse> content;
-        private ecommerce.common.response.PaginatedResponse<FollowedStoreResponse> pageInfo;
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class UserPage {
-        private java.util.List<FollowerResponse> content;
-        private ecommerce.common.response.PaginatedResponse<FollowerResponse> pageInfo;
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class FollowStats {
-        private int followerCount;
-        private int followingCount;
-        private boolean isFollowing;
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class StoreFollow {
-        private UUID id;
     }
 }
