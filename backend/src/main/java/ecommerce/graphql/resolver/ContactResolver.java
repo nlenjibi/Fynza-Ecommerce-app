@@ -1,12 +1,15 @@
 package ecommerce.graphql.resolver;
 
 import ecommerce.graphql.dto.ContactMessageConnection;
+import ecommerce.graphql.input.ContactFilterInput;
+import ecommerce.graphql.input.ContactMessageInput;
+import ecommerce.graphql.input.ContactResponseInput;
+import ecommerce.graphql.input.PageInput;
 import ecommerce.modules.contact.dto.ContactMessageRequest;
 import ecommerce.modules.contact.dto.ContactMessageResponse;
 import ecommerce.modules.contact.dto.ContactResponseRequest;
 import ecommerce.modules.contact.dto.ContactStats;
 import ecommerce.modules.contact.entity.ContactMessage.ContactStatus;
-import ecommerce.modules.contact.entity.ContactMessage.ContactPriority;
 import ecommerce.modules.contact.service.ContactService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +39,7 @@ public class ContactResolver {
             @Argument PageInput pagination) {
         log.info("GraphQL Query: contactMessages with filter: {}", filter);
         
-        ContactStatus status = filter != null ? filter.getStatus() : null;
+        ContactStatus status = filter != null ? (ContactStatus) filter.getStatus() : null;
         Pageable pageable = createPageable(pagination);
         
         Page<ContactMessageResponse> messagesPage = contactService.getAllMessages(status, pageable);
@@ -131,72 +134,5 @@ public class ContactResolver {
             ? Sort.Direction.DESC : Sort.Direction.ASC;
         String sortBy = input.getSortBy() != null ? input.getSortBy() : "createdAt";
         return PageRequest.of(input.getPage(), input.getSize(), Sort.by(direction, sortBy));
-    }
-
-    public static class PageInput {
-        private int page = 0;
-        private int size = 20;
-        private String sortBy;
-        private String direction;
-
-        public int getPage() { return page; }
-        public void setPage(int page) { this.page = page; }
-        public int getSize() { return size; }
-        public void setSize(int size) { this.size = size; }
-        public String getSortBy() { return sortBy; }
-        public void setSortBy(String sortBy) { this.sortBy = sortBy; }
-        public String getDirection() { return direction; }
-        public void setDirection(String direction) { this.direction = direction; }
-    }
-
-    public static class ContactFilterInput {
-        private ContactStatus status;
-        private ContactPriority priority;
-        private UUID assignedToId;
-        private String fromDate;
-        private String toDate;
-        private String search;
-
-        public ContactStatus getStatus() { return status; }
-        public void setStatus(ContactStatus status) { this.status = status; }
-        public ContactPriority getPriority() { return priority; }
-        public void setPriority(ContactPriority priority) { this.priority = priority; }
-        public UUID getAssignedToId() { return assignedToId; }
-        public void setAssignedToId(UUID assignedToId) { this.assignedToId = assignedToId; }
-        public String getFromDate() { return fromDate; }
-        public void setFromDate(String fromDate) { this.fromDate = fromDate; }
-        public String getToDate() { return toDate; }
-        public void setToDate(String toDate) { this.toDate = toDate; }
-        public String getSearch() { return search; }
-        public void setSearch(String search) { this.search = search; }
-    }
-
-    public static class ContactMessageInput {
-        private String name;
-        private String email;
-        private String phone;
-        private String subject;
-        private String message;
-
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
-        public String getEmail() { return email; }
-        public void setEmail(String email) { this.email = email; }
-        public String getPhone() { return phone; }
-        public void setPhone(String phone) { this.phone = phone; }
-        public String getSubject() { return subject; }
-        public void setSubject(String subject) { this.subject = subject; }
-        public String getMessage() { return message; }
-        public void setMessage(String message) { this.message = message; }
-    }
-
-    public static class ContactResponseInput {
-        private String response;
-        private ContactStatus status;
-
-        public String getResponse() { return response; }
-        public void setResponse(String response) { this.response = response; }
-        public ContactStatus getStatus() { return status; }
-        public void setStatus(ContactStatus status) { this.status = status; }
     }
 }
