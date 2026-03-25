@@ -46,7 +46,10 @@ public class SellerResolver {
         log.info("GraphQL Query: sellerOrders for seller {}", sellerId);
         Pageable pageable = createPageable(pagination);
         Page<OrderResponse> orders = sellerService.getSellerOrders(sellerId, pageable);
-        return toDto(orders);
+        return OrderResponseDto.builder()
+                .content(orders.getContent())
+                .pageInfo(PaginatedResponse.from(orders))
+                .build();
     }
 
     @QueryMapping
@@ -76,12 +79,5 @@ public class SellerResolver {
                 ? Sort.by(input.getSortBy()).descending()
                 : Sort.by(input.getSortBy()).ascending();
         return PageRequest.of(input.getPage(), input.getSize(), sort);
-    }
-
-    private OrderResponseDto toDto(Page<OrderResponse> page) {
-        return OrderResponseDto.builder()
-                .content(page.getContent())
-                .pageInfo(PaginatedResponse.from(page))
-                .build();
     }
 }
