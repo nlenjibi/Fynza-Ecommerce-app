@@ -1,5 +1,7 @@
 package ecommerce.graphql.resolver;
 
+import ecommerce.graphql.dto.AuthPayload;
+import ecommerce.graphql.dto.RefreshTokenPayload;
 import ecommerce.graphql.input.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -130,19 +132,5 @@ public class AuthResolver {
         return null;
     }
 
-    @lombok.Data
-    @lombok.Builder
-    public static class AuthPayload {
-        private Object user;
-        private String accessToken;
-        private String refreshToken;
-        private int expiresIn;
-    }
 
-    @lombok.Data
-    @lombok.Builder
-    public static class RefreshTokenPayload {
-        private String accessToken;
-        private int expiresIn;
-    }
 }
