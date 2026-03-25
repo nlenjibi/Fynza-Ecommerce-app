@@ -78,13 +78,7 @@ public class ProductController {
             @PathVariable UUID id,
             @Valid @RequestBody UpdateProductRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
-        ProductResponse existingProduct = productService.findById(id);
-        
-        boolean isOwner = existingProduct.getSeller() != null && 
-                existingProduct.getSeller().getId().toString().equals(principal.getId().toString());
-        boolean isAdmin = principal.getRole() == ecommerce.modules.user.entity.Role.ADMIN;
-        
-        if (!isOwner && !isAdmin) {
+        if (!productService.canUpdate(id.toString(), principal.getId().toString())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.error("You are not authorized to update this product"));
         }
@@ -99,18 +93,122 @@ public class ProductController {
     public ResponseEntity<ApiResponse<Void>> deleteProduct(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserPrincipal principal) {
-        ProductResponse existingProduct = productService.findById(id);
-        
-        boolean isOwner = existingProduct.getSeller() != null && 
-                existingProduct.getSeller().getId().toString().equals(principal.getId().toString());
-        boolean isAdmin = principal.getRole() == ecommerce.modules.user.entity.Role.ADMIN;
-        
-        if (!isOwner && !isAdmin) {
+        if (!productService.canDelete(id.toString(), principal.getId().toString())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.error("You are not authorized to delete this product"));
         }
         
         productService.delete(id);
         return ResponseEntity.ok(ApiResponse.success("Product deleted successfully", null));
+    }
+
+    @GetMapping("/seller/products")
+    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    @Operation(summary = "Get seller's products", description = "Returns products for the authenticated seller")
+    public ResponseEntity<ApiResponse<PaginatedResponse<ProductResponse>>> getSellerProducts(
+            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        UUID sellerId = UUID.fromString(principal.getId().toString());
+        Page<ProductResponse> products = productService.findBySellerId(sellerId, pageable);
+        return ResponseEntity.ok(ApiResponse.success(PaginatedResponse.from(products)));
+    }
+
+    @PostMapping("/{id}/stock/add")
+    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    @Operation(summary = "Add stock to product", description = "Add inventory to a product")
+    public ResponseEntity<ApiResponse<ProductResponse>> addStock(
+            @PathVariable UUID id,
+            @RequestParam int quantity,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        ProductResponse existingProduct = productService.findById(id);
+        boolean isOwner = existingProduct.getSeller() != null && 
+                existingProduct.getSeller().getId().toString().equals(principal.getId().toString());
+        boolean isAdmin = principal.getRole() == ecommerce.modules.user.entity.Role.ADMIN;
+        
+        if (!isOwner && !isAdmin) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("You are not authorized to update this product"));
+        }
+        
+        ProductResponse response = productService.addStock(id, quantity);
+        return ResponseEntity.ok(ApiResponse.success("Stock added successfully", response));
+    }
+
+    @PostMapping("/{id}/stock/reduce")
+    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    @Operation(summary = "Reduce stock from product", description = "Reduce inventory from a product")
+    public ResponseEntity<ApiResponse<ProductResponse>> reduceStock(
+            @PathVariable UUID id,
+            @RequestParam int quantity,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        ProductResponse existingProduct = productService.findById(id);
+        boolean isOwner = existingProduct.getSeller() != null && 
+                existingProduct.getSeller().getId().toString().equals(principal.getId().toString());
+        boolean isAdmin = principal.getRole() == ecommerce.modules.user.entity.Role.ADMIN;
+        
+        if (!isOwner && !isAdmin) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("You are not authorized to update this product"));
+        }
+        
+        ProductResponse response = productService.reduceStock(id, quantity);
+        return ResponseEntity.ok(ApiResponse.success("Stock reduced successfully", response));
+    }
+
+    @PostMapping("/{id}/stock/reserve")
+    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    @Operation(summary = "Reserve stock for product", description = "Reserve inventory for a product (for order processing)")
+    public ResponseEntity<ApiResponse<ProductResponse>> reserveStock(
+            @PathVariable UUID id,
+            @RequestParam int quantity) {
+        ProductResponse response = productService.reserveStock(id, quantity);
+        return ResponseEntity.ok(ApiResponse.success("Stock reserved successfully", response));
+    }
+
+    @PostMapping("/{id}/stock/release")
+    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    @Operation(summary = "Release reserved stock", description = "Release previously reserved inventory")
+    public ResponseEntity<ApiResponse<ProductResponse>> releaseReservedStock(
+            @PathVariable UUID id,
+            @RequestParam int quantity) {
+        ProductResponse response = productService.releaseReservedStock(id, quantity);
+        return ResponseEntity.ok(ApiResponse.success("Reserved stock released successfully", response));
+    }
+
+    @PostMapping("/{id}/stock/restore")
+    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    @Operation(summary = "Restore stock", description = "Restore inventory (e.g., after order cancellation)")
+    public ResponseEntity<ApiResponse<ProductResponse>> restoreStock(
+            @PathVariable UUID id,
+            @RequestParam int quantity,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        ProductResponse existingProduct = productService.findById(id);
+        boolean isOwner = existingProduct.getSeller() != null && 
+                existingProduct.getSeller().getId().toString().equals(principal.getId().toString());
+        boolean isAdmin = principal.getRole() == ecommerce.modules.user.entity.Role.ADMIN;
+        
+        if (!isOwner && !isAdmin) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("You are not authorized to update this product"));
+        }
+        
+        ProductResponse response = productService.restoreStock(id, quantity);
+        return ResponseEntity.ok(ApiResponse.success("Stock restored successfully", response));
+    }
+
+    @PostMapping("/{id}/view")
+    @Operation(summary = "Increment product view count", description = "Increment the view count for a product")
+    public ResponseEntity<ApiResponse<Boolean>> incrementViewCount(@PathVariable UUID id) {
+        Boolean result = productService.incrementViewCount(id);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    @PostMapping("/{id}/rating")
+    @Operation(summary = "Update product rating", description = "Update the rating for a product")
+    public ResponseEntity<ApiResponse<ProductResponse>> updateRating(
+            @PathVariable UUID id,
+            @RequestParam Float rating) {
+        ProductResponse response = productService.updateRating(id, rating);
+        return ResponseEntity.ok(ApiResponse.success("Rating updated successfully", response));
     }
 }

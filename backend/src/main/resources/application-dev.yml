@@ -19,7 +19,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update  # Drop and recreate tables on startup
-    show-sql: true
+    show-sql: false
     open-in-view: false
     properties:
       hibernate:
@@ -43,11 +43,11 @@ spring:
 
   # Flyway Configuration
   flyway:
-    enabled: true
+    enabled: true  # Temporarily disabled to let Hibernate create schema first
     locations: classpath:db/migration
     baseline-on-migrate: true
     baseline-version: 0
-    validate-on-migrate: true
+    validate-on-migrate: false
     out-of-order: false
     clean-disabled: true  # Prevent accidental data loss
     placeholder-replacement: true
@@ -84,6 +84,7 @@ spring:
 
 # Custom cache properties for testing
 cache:
+  level: redis
   default-ttl: 1   # minute - very short for testing
   product-ttl: 1   # minute
   category-ttl: 2  # minutes
@@ -131,10 +132,10 @@ springdoc:
     tags-sorter: alpha
     display-request-duration: true
     filter: true
+    try-it-out-enabled: true
+    persist-authorization: true
   paths-to-match:
-    - /api/**
-  packages-to-scan:
-    - ecommerce.controller
+    - /**
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
 
@@ -279,3 +280,25 @@ paypal:
   client-id: ${PAYPAL_CLIENT_ID:your-sandbox-client-id}
   client-secret: ${PAYPAL_CLIENT_SECRET:your-sandbox-client-secret}
   mode: sandbox
+
+# Paystack Configuration
+paystack:
+  secret-key: ${PAYSTACK_SECRET_KEY:your-paystack-secret-key}
+  public-key: ${PAYSTACK_PUBLIC_KEY:your-paystack-public-key}
+  base-url: https://api.paystack.co
+  webhook-secret: ${PAYSTACK_WEBHOOK_SECRET:}
+
+# Redis Configuration
+redis:
+  host: ${REDIS_HOST:localhost}
+  port: ${REDIS_PORT:6379}
+  password: ${REDIS_PASSWORD:}
+  database: 0
+  timeout: 5000ms
+  lettuce:
+    pool:
+      max-active: 8
+      max-idle: 8
+      min-idle: 2
+      max-wait: -1ms
+    shutdown-timeout: 100ms

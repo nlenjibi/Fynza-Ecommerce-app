@@ -1,7 +1,13 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Users, TrendingUp, Shield, Globe, ArrowRight, CheckCircle } from "lucide-react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useAuth } from "@/components/auth-context"
+import { ApplyForm } from "@/components/apply-form"
 
 const benefits = [
   "Earn additional income on your schedule",
@@ -22,6 +28,45 @@ const requirements = [
 ]
 
 export default function BecomeConsultantPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const { user, isLoading } = useAuth()
+  const [showApplyForm, setShowApplyForm] = useState(false)
+
+  useEffect(() => {
+    const apply = searchParams.get("apply")
+    if (apply === "consultant" && user) {
+      setShowApplyForm(true)
+    }
+  }, [searchParams, user])
+
+  const handleApplyNow = () => {
+    if (!user) {
+      router.push("/login?redirect=/become-consultant&apply=consultant")
+      return
+    }
+    setShowApplyForm(true)
+  }
+
+  if (showApplyForm && user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <button 
+            onClick={() => setShowApplyForm(false)}
+            className="flex items-center text-orange-600 hover:text-orange-700 mb-6"
+          >
+            <ArrowRight className="w-4 h-4 mr-2 rotate-180" />
+            Back to Consultant Page
+          </button>
+          <ApplyForm type="consultant" />
+        </div>
+        <Footer />
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -33,7 +78,10 @@ export default function BecomeConsultantPage() {
           <p className="text-xl mb-8 opacity-90">
             Share products you love and earn commission on every sale
           </p>
-          <Button className="bg-white text-orange-600 hover:bg-gray-100 px-8 py-6 text-lg font-semibold">
+          <Button 
+            onClick={handleApplyNow}
+            className="bg-white text-orange-600 hover:bg-gray-100 px-8 py-6 text-lg font-semibold"
+          >
             Apply Now
             <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
@@ -135,7 +183,10 @@ export default function BecomeConsultantPage() {
           <p className="text-xl text-muted-foreground mb-8">
             Join thousands of consultants already earning with Fynza
           </p>
-          <Button className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-6 text-lg">
+          <Button 
+            onClick={handleApplyNow}
+            className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-6 text-lg"
+          >
             Become a Consultant
             <ArrowRight className="w-5 h-5 ml-2" />
           </Button>

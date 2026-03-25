@@ -7,11 +7,12 @@ import { RecentlyViewed } from "@/components/recently-viewed"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Star, Heart, Share2, Truck, RotateCcw, Shield, Check, ChevronRight, MapPin, Store, Package, ArrowRight, ChevronDown, Clock } from "lucide-react"
+import { Star, Heart, Share2, Truck, RotateCcw, Shield, Check, ChevronRight, MapPin, Store, Package, ArrowRight, ChevronDown, Clock, Tag, Percent, Gift, Zap } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { trackingService } from "@/lib/services/tracking"
 
 const locations = [
   "Accra",
@@ -50,6 +51,52 @@ const townsByRegion: Record<string, string[]> = {
   "Upper West": ["Wa", "Lawra", "Nandom", "Jirapa", "Hamile"]
 }
 
+interface SellerCoupon {
+  id: string
+  code: string
+  name: string
+  description: string
+  discountType: 'PERCENTAGE' | 'FIXED_AMOUNT' | 'FREE_SHIPPING'
+  discountValue: number
+  minOrderAmount: number
+  maxDiscountAmount?: number
+  validUntil: string
+}
+
+interface FlashSale {
+  id: string
+  discountPercent: number
+  endTime: string
+  originalPrice: number
+  salePrice: number
+}
+
+interface ProductTag {
+  id: string
+  name: string
+  color: string
+}
+
+interface Promotion {
+  id: string
+  name: string
+  description: string
+  discountValue: number
+  discountType: 'PERCENTAGE' | 'FIXED_AMOUNT'
+  endsAt: string
+}
+
+interface SellerInfo {
+  id: string
+  storeName: string
+  logo?: string
+  verified: boolean
+  rating: number
+  positiveRate: number
+  orderFulfillment: string
+  qualityScore: string
+}
+
 export default function ProductPage() {
   const router = useRouter()
   const [selectedSize, setSelectedSize] = useState("38")
@@ -61,6 +108,139 @@ export default function ProductPage() {
   const [showRegionDropdown, setShowRegionDropdown] = useState(false)
   const [showTownDropdown, setShowTownDropdown] = useState(false)
   const [deliveryOption, setDeliveryOption] = useState<"home" | "pickup">("home")
+  const [coupons, setCoupons] = useState<SellerCoupon[]>([])
+  const [flashSale, setFlashSale] = useState<FlashSale | null>(null)
+  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 })
+  const [tags, setTags] = useState<ProductTag[]>([])
+  const [promotions, setPromotions] = useState<Promotion[]>([])
+  const [sellerInfo, setSellerInfo] = useState<SellerInfo | null>(null)
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchSellerInfo()
+    fetchCoupons()
+    fetchFlashSale()
+    fetchTags()
+    fetchPromotions()
+    
+    trackingService.trackProductView({
+      id: "product-1",
+      name: "Shop Bekia Women's Lace Up Canvas Sports Shoes",
+      category: "Fashion",
+      price: 45.99,
+    })
+  }, [])
+
+  useEffect(() => {
+    if (flashSale?.endTime) {
+      const timer = setInterval(() => {
+        const end = new Date(flashSale.endTime).getTime()
+        const now = new Date().getTime()
+        const diff = end - now
+
+        if (diff <= 0) {
+          setFlashSale(null)
+          clearInterval(timer)
+        } else {
+          setTimeLeft({
+            hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+            minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+            seconds: Math.floor((diff % (1000 * 60)) / 1000)
+          })
+        }
+      }, 1000)
+      return () => clearInterval(timer)
+    }
+  }, [flashSale?.endTime])
+
+  const fetchSellerInfo = async () => {
+    const mockSeller: SellerInfo = {
+      id: "seller-123",
+      storeName: "BEKIA FASHION",
+      verified: true,
+      rating: 4.5,
+      positiveRate: 92,
+      orderFulfillment: "Excellent",
+      qualityScore: "Excellent"
+    }
+    setSellerInfo(mockSeller)
+  }
+
+  const fetchCoupons = async () => {
+    const mockCoupons: SellerCoupon[] = [
+      {
+        id: "1",
+        code: "SAVE10",
+        name: "10% Off",
+        description: "Get 10% off on orders above GHC 50",
+        discountType: "PERCENTAGE",
+        discountValue: 10,
+        minOrderAmount: 50,
+        validUntil: "2026-04-30T23:59:59"
+      },
+      {
+        id: "2",
+        code: "FREESHIP",
+        name: "Free Shipping",
+        description: "Free delivery on orders above GHC 100",
+        discountType: "FREE_SHIPPING",
+        discountValue: 0,
+        minOrderAmount: 100,
+        validUntil: "2026-04-15T23:59:59"
+      }
+    ]
+    setCoupons(mockCoupons)
+  }
+
+  const fetchFlashSale = async () => {
+    const endTime = new Date()
+    endTime.setHours(endTime.getHours() + 5)
+    const mockFlashSale: FlashSale = {
+      id: "flash-1",
+      discountPercent: 18,
+      endTime: endTime.toISOString(),
+      originalPrice: 72,
+      salePrice: 59
+    }
+    setFlashSale(mockFlashSale)
+  }
+
+  const fetchTags = async () => {
+    const mockTags: ProductTag[] = [
+      { id: "1", name: "Lace-Up", color: "#FF6900" },
+      { id: "2", name: "Canvas", color: "#3B82F6" },
+      { id: "3", name: "Casual", color: "#10B981" }
+    ]
+    setTags(mockTags)
+  }
+
+  const fetchPromotions = async () => {
+    const mockPromotions: Promotion[] = [
+      {
+        id: "1",
+        name: "New Year Sale",
+        description: "Extra 5% off",
+        discountValue: 5,
+        discountType: "PERCENTAGE",
+        endsAt: "2026-03-31T23:59:59"
+      }
+    ]
+    setPromotions(mockPromotions)
+  }
+
+  const handleApplyCoupon = (code: string) => {
+    setAppliedCoupon(code)
+    router.push("/cart?coupon=" + code)
+  }
+
+  const formatDiscount = (coupon: SellerCoupon) => {
+    if (coupon.discountType === "PERCENTAGE") {
+      return `${coupon.discountValue}% OFF`
+    } else if (coupon.discountType === "FREE_SHIPPING") {
+      return "FREE SHIPPING"
+    }
+    return `GHC ${coupon.discountValue} OFF`
+  }
 
   const productImages = [
     "/colorful-bekia-sneakers.jpg",
@@ -72,6 +252,15 @@ export default function ProductPage() {
 
   const handleAddToCart = () => {
     console.log("[v0] Product added to cart:", { selectedSize, quantity })
+    
+    trackingService.trackAddToCart({
+      id: "product-1",
+      name: "Shop Bekia Women's Lace Up Canvas Sports Shoes",
+      category: "Fashion",
+      price: 45.99,
+      quantity: quantity,
+    })
+    
     setIsAdded(true)
     setTimeout(() => {
       setIsAdded(false)
@@ -127,7 +316,7 @@ export default function ProductPage() {
           <Card className="bg-white overflow-hidden">
             <CardContent className="p-0">
               <div className="grid md:grid-cols-[1fr_1fr] h-full">
-                {/* Large Image */}
+                  {/* Large Image */}
                 <div className="relative aspect-square md:aspect-auto md:min-h-[400px] bg-white p-4 flex items-center justify-center">
                   <Image
                     src={productImages[selectedImage]}
@@ -135,10 +324,25 @@ export default function ProductPage() {
                     fill
                     className="object-contain"
                   />
-                  {/* Sale Badge */}
-                  <Badge className="absolute top-4 left-4 bg-[#FF6900] text-white hover:bg-[#FF6900]">
-                    -18%
-                  </Badge>
+                  {/* Sale Badges */}
+                  <div className="absolute top-4 left-4 flex flex-col gap-2">
+                    {flashSale ? (
+                      <Badge className="bg-red-600 text-white hover:bg-red-700">
+                        <Zap className="h-3 w-3 mr-1" />
+                        FLASH SALE
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-[#FF6900] text-white hover:bg-[#FF6900]">
+                        -18%
+                      </Badge>
+                    )}
+                    {promotions.map((promo) => (
+                      <Badge key={promo.id} className="bg-green-600 text-white hover:bg-green-700">
+                        <Gift className="h-3 w-3 mr-1" />
+                        {promo.name}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Product Info */}
@@ -174,12 +378,39 @@ export default function ProductPage() {
 
                   {/* Price */}
                   <div className="border-t border-b py-4 mb-4">
-                    <div className="flex items-baseline gap-3 mb-1">
-                      <span className="text-2xl md:text-3xl font-bold text-[#FF6900]">GHC 59.00</span>
-                      <span className="text-sm text-gray-400 line-through">GHC 72.00</span>
-                    </div>
+                    {flashSale ? (
+                      <div className="flex items-baseline gap-3 mb-1">
+                        <span className="text-2xl md:text-3xl font-bold text-red-600">GHC {flashSale.salePrice.toFixed(2)}</span>
+                        <span className="text-sm text-gray-400 line-through">GHC {flashSale.originalPrice.toFixed(2)}</span>
+                        <Badge className="bg-red-600 text-white text-xs">-{flashSale.discountPercent}%</Badge>
+                      </div>
+                    ) : (
+                      <div className="flex items-baseline gap-3 mb-1">
+                        <span className="text-2xl md:text-3xl font-bold text-[#FF6900]">GHC 59.00</span>
+                        <span className="text-sm text-gray-400 line-through">GHC 72.00</span>
+                      </div>
+                    )}
                     <p className="text-xs text-gray-500">+ shipping from GHC 8.70 to {selectedTown}</p>
                   </div>
+
+                  {/* Product Tags */}
+                  {tags.length > 0 && (
+                    <div className="mb-4">
+                      <div className="flex flex-wrap gap-2">
+                        {tags.map((tag) => (
+                          <Badge
+                            key={tag.id}
+                            variant="outline"
+                            className="border-2 font-normal text-xs"
+                            style={{ borderColor: tag.color, color: tag.color }}
+                          >
+                            <Tag className="h-3 w-3 mr-1" />
+                            {tag.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Color/Size Selection */}
                   <div className="mb-4">
@@ -219,6 +450,37 @@ export default function ProductPage() {
                       </button>
                     </div>
                   </div>
+
+                  {/* Available Coupons */}
+                  {coupons.length > 0 && (
+                    <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                      <h3 className="font-semibold mb-2 text-sm flex items-center gap-2">
+                        <Percent className="h-4 w-4 text-[#FF6900]" />
+                        Available Coupons
+                      </h3>
+                      <div className="space-y-2">
+                        {coupons.map((coupon) => (
+                          <div
+                            key={coupon.id}
+                            className="flex items-center justify-between bg-white p-2 rounded border border-orange-200"
+                          >
+                            <div>
+                              <span className="font-bold text-[#FF6900] text-sm">{coupon.code}</span>
+                              <p className="text-xs text-gray-500">{coupon.name} - Min GHC {coupon.minOrderAmount}</p>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant={appliedCoupon === coupon.code ? "secondary" : "outline"}
+                              onClick={() => handleApplyCoupon(coupon.code)}
+                              className="text-xs h-7 border-[#FF6900] text-[#FF6900] hover:bg-[#FF6900] hover:text-white"
+                            >
+                              {appliedCoupon === coupon.code ? "Applied" : "Apply"}
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Action Buttons */}
                   <div className="flex gap-3 mb-4">
@@ -402,19 +664,29 @@ export default function ProductPage() {
                 <h3 className="font-bold text-sm mb-3">SOLD BY</h3>
                 <div className="space-y-3">
                   <div>
-                    <p className="font-semibold">BEKIA FASHION</p>
+                    <p className="font-semibold flex items-center gap-2">
+                      {sellerInfo?.storeName || "BEKIA FASHION"}
+                      {sellerInfo?.verified && (
+                        <Shield className="h-4 w-4 text-green-600" />
+                      )}
+                    </p>
                     <div className="flex items-center gap-2 mt-1">
                       <div className="flex">
                         {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="h-3 w-3 fill-[#FF6900] text-[#FF6900]" />
+                          <Star
+                            key={i}
+                            className={`h-3 w-3 ${i < Math.floor(sellerInfo?.rating || 4) ? "fill-[#FF6900] text-[#FF6900]" : "fill-gray-200 text-gray-200"}`}
+                          />
                         ))}
                       </div>
-                      <span className="text-xs text-gray-500">(92% positive)</span>
+                      <span className="text-xs text-gray-500">({sellerInfo?.positiveRate || 92}% positive)</span>
                     </div>
                   </div>
-                  <Button variant="outline" className="w-full h-8 text-xs border-gray-200 hover:border-[#FF6900] hover:text-[#FF6900] bg-transparent">
-                    View Profile
-                  </Button>
+                  <Link href={`/store/${sellerInfo?.id || 'seller-123'}`}>
+                    <Button variant="outline" className="w-full h-8 text-xs border-gray-200 hover:border-[#FF6900] hover:text-[#FF6900] bg-transparent">
+                      Visit Store
+                    </Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>
@@ -426,26 +698,86 @@ export default function ProductPage() {
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between">
                     <span className="text-gray-500">Order Fulfillment</span>
-                    <span className="font-semibold text-green-600">★ Excellent</span>
+                    <span className="font-semibold text-green-600">★ {sellerInfo?.orderFulfillment || "Excellent"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Quality Score</span>
-                    <span className="font-semibold text-green-600">★ Excellent</span>
+                    <span className="font-semibold text-green-600">★ {sellerInfo?.qualityScore || "Excellent"}</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Promotion Card */}
-            <Card className="bg-gradient-to-r from-[#FF6900] to-[#FF8C33] text-white">
-              <CardContent className="p-4">
-                <h3 className="font-bold text-sm mb-2">🔥 FLASH SALE</h3>
-                <p className="text-xs mb-2">Get 15% off on orders above GHC 100!</p>
-                <Button variant="secondary" size="sm" className="w-full bg-white text-[#FF6900] hover:bg-gray-100 text-xs">
-                  Shop Now <ArrowRight className="ml-1 h-3 w-3" />
-                </Button>
-              </CardContent>
-            </Card>
+            {/* Flash Sale Card with Timer */}
+            {flashSale ? (
+              <Card className="bg-gradient-to-r from-red-600 to-red-700 text-white">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-bold text-sm flex items-center gap-2">
+                      <Zap className="h-4 w-4" />
+                      FLASH SALE
+                    </h3>
+                    <Badge className="bg-white text-red-600 text-xs">
+                      -{flashSale.discountPercent}% OFF
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2 mb-3 text-xs">
+                    <Clock className="h-4 w-4" />
+                    <span>Ends in:</span>
+                    <div className="flex gap-1">
+                      <span className="bg-red-800 px-2 py-1 rounded font-mono">
+                        {String(timeLeft.hours).padStart(2, '0')}
+                      </span>
+                      <span>:</span>
+                      <span className="bg-red-800 px-2 py-1 rounded font-mono">
+                        {String(timeLeft.minutes).padStart(2, '0')}
+                      </span>
+                      <span>:</span>
+                      <span className="bg-red-800 px-2 py-1 rounded font-mono">
+                        {String(timeLeft.seconds).padStart(2, '0')}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-xs mb-2 opacity-90">Limited time offer!</p>
+                  <Button variant="secondary" size="sm" className="w-full bg-white text-red-600 hover:bg-gray-100 text-xs">
+                    Shop Now <ArrowRight className="ml-1 h-3 w-3" />
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="bg-gradient-to-r from-[#FF6900] to-[#FF8C33] text-white">
+                <CardContent className="p-4">
+                  <h3 className="font-bold text-sm mb-2 flex items-center gap-2">
+                    <Zap className="h-4 w-4" />
+                    FLASH SALE
+                  </h3>
+                  <p className="text-xs mb-2">Get 15% off on orders above GHC 100!</p>
+                  <Button variant="secondary" size="sm" className="w-full bg-white text-[#FF6900] hover:bg-gray-100 text-xs">
+                    Shop Now <ArrowRight className="ml-1 h-3 w-3" />
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Active Promotions */}
+            {promotions.length > 0 && (
+              <Card className="bg-green-50 border border-green-200">
+                <CardContent className="p-4">
+                  <h3 className="font-bold text-sm mb-3 flex items-center gap-2 text-green-700">
+                    <Gift className="h-4 w-4" />
+                    Active Promotions
+                  </h3>
+                  <div className="space-y-2">
+                    {promotions.map((promo) => (
+                      <div key={promo.id} className="bg-white p-2 rounded border border-green-200">
+                        <p className="font-semibold text-sm text-green-700">{promo.name}</p>
+                        <p className="text-xs text-gray-500">{promo.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
 

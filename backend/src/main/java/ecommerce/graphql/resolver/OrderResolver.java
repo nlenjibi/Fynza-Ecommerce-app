@@ -1,11 +1,11 @@
 package ecommerce.graphql.resolver;
 
 import ecommerce.common.enums.OrderStatus;
-import ecommerce.common.enums.PaymentStatus;
 import ecommerce.common.response.PaginatedResponse;
 import ecommerce.graphql.dto.OrderResponseDto;
 import ecommerce.graphql.input.PageInput;
 import ecommerce.graphql.input.SortDirection;
+import ecommerce.modules.order.dto.CreateOrderRequest;
 import ecommerce.modules.order.dto.OrderResponse;
 import ecommerce.modules.order.dto.OrderStatsResponse;
 import ecommerce.modules.order.dto.OrderStatusUpdateRequest;
@@ -50,7 +50,10 @@ public class OrderResolver {
                                      @ContextValue UUID userId) {
         log.debug("GQL myOrders(user={})", userId);
         Page<OrderResponse> page = orderService.getUserOrders(userId, toPageable(pagination));
-        return toDto(page);
+        return OrderResponseDto.builder()
+                .content(page.getContent())
+                .pageInfo(PaginatedResponse.from(page))
+                .build();
     }
 
     @QueryMapping
@@ -58,7 +61,10 @@ public class OrderResolver {
     public OrderResponseDto allOrders(@Argument PageInput pagination) {
         log.debug("GQL allOrders");
         Page<OrderResponse> page = orderService.getAllOrders(toPageable(pagination));
-        return toDto(page);
+        return OrderResponseDto.builder()
+                .content(page.getContent())
+                .pageInfo(PaginatedResponse.from(page))
+                .build();
     }
 
     @QueryMapping
@@ -67,7 +73,10 @@ public class OrderResolver {
                                            @Argument PageInput pagination) {
         log.debug("GQL ordersByStatus(status={})", status);
         Page<OrderResponse> page = orderService.getOrdersByStatus(status, toPageable(pagination));
-        return toDto(page);
+        return OrderResponseDto.builder()
+                .content(page.getContent())
+                .pageInfo(PaginatedResponse.from(page))
+                .build();
     }
 
     @QueryMapping
@@ -77,11 +86,29 @@ public class OrderResolver {
         return orderService.getOrderStatistics();
     }
 
+    // ==================== Mutations ====================
+
+    @MutationMapping
+    public OrderResponse createOrder(@Argument CreateOrderRequest input,
+                                     @ContextValue UUID userId) {
+        log.info("GQL createOrder(user={})", userId);
+        return orderService.createOrder(input, userId);
+    }
+
     @MutationMapping
     public OrderResponse cancelOrder(@Argument UUID id,
-                                     @ContextValue UUID userId) {
+                                      @Argument String reason,
+                                      @ContextValue UUID userId) {
         log.info("GQL cancelOrder(id={}, user={})", id, userId);
-        return orderService.cancelOrder(id, userId);
+        return orderService.cancelOrder(id, userId, reason);
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public OrderResponse cancelOrderAdmin(@Argument UUID id,
+                                          @Argument String reason) {
+        log.info("GQL cancelOrderAdmin(id={})", id);
+        return orderService.cancelOrder(id, reason);
     }
 
     @MutationMapping
@@ -100,12 +127,5 @@ public class OrderResolver {
                 ? Sort.by(input.getSortBy()).descending()
                 : Sort.by(input.getSortBy()).ascending();
         return PageRequest.of(input.getPage(), input.getSize(), sort);
-    }
-
-    private OrderResponseDto toDto(Page<OrderResponse> page) {
-        return OrderResponseDto.builder()
-                .content(page.getContent())
-                .pageInfo(PaginatedResponse.from(page))
-                .build();
     }
 }

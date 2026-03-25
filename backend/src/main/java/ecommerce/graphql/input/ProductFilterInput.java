@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * GraphQL Product Filter Input
@@ -23,8 +24,8 @@ public class ProductFilterInput {
 
     // ==================== Category Filters ====================
 
-    private Long categoryId;
-    private List<Long> categoryIds;
+    private UUID categoryId;
+    private List<UUID> categoryIds;
     private String categoryName;
     private String categorySlug;
 
@@ -82,8 +83,8 @@ public class ProductFilterInput {
 
     // ==================== View/Sales Filters ====================
 
-    private Long minViews;
-    private Long maxViews;
+    private Integer minViews;
+    private Integer maxViews;
     private Long minSales;
     private Boolean popular;
     private Boolean trending;
@@ -142,8 +143,9 @@ public class ProductFilterInput {
                 .featured(featured)
                 .isNew(isNew)
                 .isBestseller(isBestseller)
-                .inventoryStatus(inventoryStatus)
-                .inventoryStatuses(inventoryStatuses)
+                .inventoryStatus(inventoryStatus != null ? inventoryStatus.name() : null)
+                .inventoryStatuses(inventoryStatuses != null ? inventoryStatuses.stream()
+                        .map(ecommerce.common.enums.InventoryStatus::name).collect(java.util.stream.Collectors.toList()) : null)
                 .inStockOnly(inStockOnly)
                 .lowStockOnly(lowStockOnly)
                 .outOfStockOnly(outOfStockOnly)

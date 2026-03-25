@@ -33,7 +33,7 @@ interface Promotion {
 }
 
 export default function SellerPromotions() {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [showAddModal, setShowAddModal] = useState(false);
 
@@ -103,9 +103,38 @@ export default function SellerPromotions() {
 
     return (
         <div className="flex h-screen bg-gray-50">
-            <SellerSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+            <SellerSidebar isOpen={sidebarOpen} onToggle={(open) => setSidebarOpen(open)} />
 
-            <main className="flex-1 overflow-auto lg:ml-0">
+            <main className={`flex-1 overflow-auto ${sidebarOpen ? 'lg:ml-0' : 'lg:ml-20'}`}>
+                {/* Sidebar Toggle Header - Shows when sidebar is collapsed */}
+                {!sidebarOpen && (
+                    <div className="hidden lg:flex bg-white border-b border-gray-200 px-4 py-3 items-center gap-3">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSidebarOpen(true)}
+                            className="p-2"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <line x1="3" y1="12" x2="21" y2="12" />
+                                <line x1="3" y1="6" x2="21" y2="6" />
+                                <line x1="3" y1="18" x2="21" y2="18" />
+                            </svg>
+                        </Button>
+                        <span className="font-semibold text-gray-900">Promotions</span>
+                    </div>
+                )}
+
                 {/* Mobile Header */}
                 <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
                     <Button

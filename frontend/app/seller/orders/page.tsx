@@ -48,13 +48,12 @@ interface Order {
 }
 
 export default function SellerOrders() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [filter, setFilter] = useState<OrderStatus>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [dateRange, setDateRange] = useState("all");
-
-  const orders: Order[] = [
+  const [orders, setOrders] = useState<Order[]>([
     {
       id: "ORD-7821",
       customer: {
@@ -178,7 +177,11 @@ export default function SellerOrders() {
         region: "Greater Accra",
       },
     },
-  ];
+  ]);
+  const [showTrackingModal, setShowTrackingModal] = useState(false);
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [contactMethod, setContactMethod] = useState<"email" | "phone" | "message" | null>(null);
 
   const getStatusColor = (status: OrderStatus) => {
     switch (status) {
@@ -224,14 +227,101 @@ export default function SellerOrders() {
   });
 
   const handleUpdateStatus = (orderId: string, newStatus: OrderStatus) => {
-    console.log(`Updating order ${orderId} to ${newStatus}`);
+    setOrders(orders.map(order => 
+      order.id === orderId ? { ...order, status: newStatus } : order
+    ));
+    if (selectedOrder && selectedOrder.id === orderId) {
+      setSelectedOrder({ ...selectedOrder, status: newStatus });
+    }
+    alert(`Order ${orderId} status updated to ${newStatus}`);
+  };
+
+  const handleAddTrackingNumber = () => {
+    if (selectedOrder && trackingNumber.trim()) {
+      setOrders(orders.map(order => 
+        order.id === selectedOrder.id ? { ...order, trackingNumber: trackingNumber, status: "shipped" as OrderStatus } : order
+      ));
+      setSelectedOrder({ ...selectedOrder, trackingNumber: trackingNumber, status: "shipped" });
+      setShowTrackingModal(false);
+      setTrackingNumber("");
+      alert(`Tracking number added to order ${selectedOrder.id}`);
+    }
+  };
+
+  const handleContactCustomer = (method: "email" | "phone" | "message") => {
+    if (!selectedOrder) return;
+    
+    switch (method) {
+      case "email":
+        window.location.href = `mailto:${selectedOrder.customer.email}?subject=Order ${selectedOrder.id}`;
+        break;
+      case "phone":
+        window.location.href = `tel:${selectedOrder.customer.phone}`;
+        break;
+      case "message":
+        alert(`Message composer would open for ${selectedOrder.customer.name}`);
+        break;
+    }
+    setShowContactModal(false);
+  };
+
+  const handleExportReport = () => {
+    const csvContent = [
+      ['Order ID', 'Customer', 'Date', 'Products', 'Total', 'Status', 'Payment'].join(','),
+      ...filteredOrders.map(order => [
+        order.id,
+        order.customer.name,
+        order.date,
+        order.products.map(p => p.name).join('; '),
+        order.total.toFixed(2),
+        order.status,
+        order.paymentStatus
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'orders-report.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
   };
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <SellerSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <SellerSidebar isOpen={sidebarOpen} onToggle={(open) => setSidebarOpen(open)} />
 
-      <main className="flex-1 overflow-auto lg:ml-0">
+      <main className={`flex-1 overflow-auto ${sidebarOpen ? 'lg:ml-0' : 'lg:ml-20'}`}>
+        {/* Sidebar Toggle Header - Shows when sidebar is collapsed */}
+        {!sidebarOpen && (
+          <div className="hidden lg:flex bg-white border-b border-gray-200 px-4 py-3 items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSidebarOpen(true)}
+              className="p-2"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            </Button>
+            <span className="font-semibold text-gray-900">Orders</span>
+          </div>
+        )}
+
         {/* Mobile Header */}
         <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
           <Button
@@ -267,7 +357,7 @@ export default function SellerOrders() {
               <h1 className="text-3xl font-bold text-gray-900">Orders</h1>
               <p className="text-gray-600 mt-1">Manage and track your customer orders</p>
             </div>
-            <Button className="bg-orange-500 hover:bg-orange-600 flex items-center gap-2">
+            <Button className="bg-orange-500 hover:bg-orange-600 flex items-center gap-2" onClick={handleExportReport}>
               <Download size={18} />
               Export Report
             </Button>
@@ -427,27 +517,31 @@ export default function SellerOrders() {
                             variant="outline"
                             size="sm"
                             onClick={() => setSelectedOrder(order)}
+                            className="gap-1"
                           >
                             <Eye size={16} />
+                            <span className="hidden sm:inline">View</span>
                           </Button>
                           {order.status === "processing" && (
                             <Button
                               variant="outline"
                               size="sm"
-                              className="text-purple-600 border-purple-600 hover:bg-purple-50"
+                              className="text-purple-600 border-purple-600 hover:bg-purple-50 gap-1"
                               onClick={() => handleUpdateStatus(order.id, "shipped")}
                             >
                               <Truck size={16} />
+                              <span className="hidden sm:inline">Ship</span>
                             </Button>
                           )}
                           {order.status === "shipped" && (
                             <Button
                               variant="outline"
                               size="sm"
-                              className="text-green-600 border-green-600 hover:bg-green-50"
+                              className="text-green-600 border-green-600 hover:bg-green-50 gap-1"
                               onClick={() => handleUpdateStatus(order.id, "delivered")}
                             >
                               <CheckCircle size={16} />
+                              <span className="hidden sm:inline">Deliver</span>
                             </Button>
                           )}
                         </div>
@@ -637,7 +731,7 @@ export default function SellerOrders() {
                       <Truck size={16} className="mr-2" />
                       Mark as Shipped
                     </Button>
-                    <Button variant="outline">
+                    <Button variant="outline" onClick={() => setShowTrackingModal(true)}>
                       Add Tracking Number
                     </Button>
                   </>
@@ -651,11 +745,90 @@ export default function SellerOrders() {
                     Mark as Delivered
                   </Button>
                 )}
-                <Button variant="outline">
+                <Button variant="outline" onClick={() => setShowContactModal(true)}>
                   <MessageSquare size={16} className="mr-2" />
                   Contact Customer
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Tracking Number Modal */}
+      {showTrackingModal && selectedOrder && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Add Tracking Number</h3>
+              <Button variant="ghost" size="sm" onClick={() => setShowTrackingModal(false)}>
+                <XCircle size={20} />
+              </Button>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Enter the tracking number for order {selectedOrder.id}
+            </p>
+            <input
+              type="text"
+              placeholder="e.g., FYN-TRK-12345"
+              value={trackingNumber}
+              onChange={(e) => setTrackingNumber(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500 mb-4"
+            />
+            <div className="flex gap-3">
+              <Button 
+                className="flex-1 bg-orange-500 hover:bg-orange-600"
+                onClick={handleAddTrackingNumber}
+                disabled={!trackingNumber.trim()}
+              >
+                Add Tracking Number
+              </Button>
+              <Button variant="outline" onClick={() => setShowTrackingModal(false)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Contact Customer Modal */}
+      {showContactModal && selectedOrder && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Contact Customer</h3>
+              <Button variant="ghost" size="sm" onClick={() => setShowContactModal(false)}>
+                <XCircle size={20} />
+              </Button>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Contact {selectedOrder.customer.name} regarding order {selectedOrder.id}
+            </p>
+            <div className="space-y-3">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => handleContactCustomer("email")}
+              >
+                <Mail size={18} className="mr-3" />
+                Send Email
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => handleContactCustomer("phone")}
+              >
+                <Phone size={18} className="mr-3" />
+                Call {selectedOrder.customer.phone}
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => handleContactCustomer("message")}
+              >
+                <MessageSquare size={18} className="mr-3" />
+                Send Message
+              </Button>
             </div>
           </div>
         </div>

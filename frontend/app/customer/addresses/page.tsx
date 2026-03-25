@@ -1,88 +1,336 @@
 'use client';
 
+import { Header } from '@/components/header';
+import { Footer } from '@/components/footer';
 import { CustomerSidebar } from '@/components/customer/customer-sidebar';
 import { Button } from '@/components/ui/button';
-import { Trash2, Edit2, Plus } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { MapPin, Edit2, Trash2, Plus, Check } from 'lucide-react';
+import { useState } from 'react';
 
-export default function CustomerAddresses() {
-  const addresses = [
+interface Address {
+  id: number;
+  type: string;
+  name: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  isDefault: boolean;
+}
+
+export default function AddressesPage() {
+  const [addresses, setAddresses] = useState<Address[]>([
     {
       id: 1,
-      name: 'Home',
-      street: '123 Main Street',
-      city: 'Accra',
-      region: 'Accra',
-      zip: '00100',
+      type: 'Home',
+      name: 'John Doe',
       phone: '+233 24 XXX XXXX',
+      address: '123 Main Street',
+      city: 'Accra',
+      state: 'Greater Accra',
+      zipCode: '00233',
+      country: 'Ghana',
       isDefault: true,
     },
     {
       id: 2,
-      name: 'Office',
-      street: '456 Business Ave',
+      type: 'Office',
+      name: 'John Doe',
+      phone: '+233 24 XXX XXXX',
+      address: '456 Business Avenue',
       city: 'Accra',
-      region: 'Accra',
-      zip: '00200',
-      phone: '+233 30 XXX XXXX',
+      state: 'Greater Accra',
+      zipCode: '00233',
+      country: 'Ghana',
       isDefault: false,
     },
-    {
-      id: 3,
-      name: 'Parents House',
-      street: '789 Oak Road',
-      city: 'Kumasi',
-      region: 'Ashanti',
-      zip: '00300',
-      phone: '+233 24 YYY YYYY',
+  ]);
+
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [formData, setFormData] = useState<Partial<Address>>({
+    type: 'Home',
+    name: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: 'Ghana',
+    isDefault: false,
+  });
+
+  const removeAddress = (id: number) => {
+    setAddresses(addresses.filter(addr => addr.id !== id));
+  };
+
+  const setDefaultAddress = (id: number) => {
+    setAddresses(addresses.map(addr => ({
+      ...addr,
+      isDefault: addr.id === id,
+    })));
+  };
+
+  const handleEdit = (address: Address) => {
+    setFormData(address);
+    setEditingId(address.id);
+    setShowForm(true);
+  };
+
+  const handleSave = () => {
+    if (!formData.name || !formData.address || !formData.city) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    if (editingId) {
+      setAddresses(addresses.map(addr => 
+        addr.id === editingId ? { ...addr, ...formData } as Address : addr
+      ));
+    } else {
+      const newId = Math.max(...addresses.map(a => a.id), 0) + 1;
+      setAddresses([...addresses, { ...formData, id: newId } as Address]);
+    }
+    
+    setShowForm(false);
+    setEditingId(null);
+    setFormData({
+      type: 'Home',
+      name: '',
+      phone: '',
+      address: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      country: 'Ghana',
       isDefault: false,
-    },
-  ];
+    });
+  };
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <CustomerSidebar />
-      
-      <main className="flex-1 overflow-auto">
-        <div className="max-w-5xl mx-auto px-6 py-8">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Saved Addresses</h1>
-            <Button className="bg-orange-500 hover:bg-orange-600 flex items-center gap-2">
-              <Plus size={18} />
-              Add New Address
-            </Button>
-          </div>
+    <div className="min-h-screen bg-gray-50">
+      <Header />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {addresses.map((address) => (
-              <div key={address.id} className="bg-white rounded-lg shadow p-6 border-l-4 border-orange-500">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="font-semibold text-gray-900 text-lg">{address.name}</h3>
-                    {address.isDefault && (
-                      <span className="text-xs font-medium text-orange-600 bg-orange-50 px-2 py-1 rounded inline-block mt-1">
-                        Default Address
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <button className="p-2 text-blue-600 hover:bg-blue-50 rounded">
-                      <Edit2 size={18} />
-                    </button>
-                    <button className="p-2 text-red-600 hover:bg-red-50 rounded">
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </div>
-                <div className="text-gray-700 space-y-1 text-sm">
-                  <p>{address.street}</p>
-                  <p>{address.city}, {address.region} {address.zip}</p>
-                  <p className="text-gray-600">{address.phone}</p>
-                </div>
+      <div className="flex">
+        <CustomerSidebar />
+
+        <main className="flex-1">
+          <div className="max-w-4xl mx-auto px-6 py-8">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">My Addresses</h1>
+                <p className="text-gray-600">Manage your delivery addresses</p>
               </div>
-            ))}
+              <Button
+                className="bg-orange-500 hover:bg-orange-600 gap-2"
+                onClick={() => {
+                  setShowForm(!showForm);
+                  setEditingId(null);
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                Add New Address
+              </Button>
+            </div>
+
+            {/* Add/Edit Form */}
+            {showForm && (
+              <div className="bg-white rounded-lg shadow p-6 mb-8">
+                <h2 className="text-xl font-bold text-gray-900 mb-6">
+                  {editingId ? 'Edit Address' : 'Add New Address'}
+                </h2>
+
+                <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                      <Input 
+                        placeholder="John Doe" 
+                        value={formData.name || ''}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                      <Input 
+                        placeholder="+233 24 XXX XXXX"
+                        value={formData.phone || ''}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Address Type</label>
+                    <select 
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      value={formData.type || 'Home'}
+                      onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                    >
+                      <option>Home</option>
+                      <option>Office</option>
+                      <option>Other</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Street Address</label>
+                    <Input 
+                      placeholder="123 Main Street"
+                      value={formData.address || ''}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+                      <Input 
+                        placeholder="Accra"
+                        value={formData.city || ''}
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">State/Region</label>
+                      <Input 
+                        placeholder="Greater Accra"
+                        value={formData.state || ''}
+                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">ZIP Code</label>
+                      <Input 
+                        placeholder="00233"
+                        value={formData.zipCode || ''}
+                        onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
+                    <Input 
+                      placeholder="Ghana"
+                      value={formData.country || ''}
+                      onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="checkbox" 
+                      id="default" 
+                      className="rounded"
+                      checked={formData.isDefault || false}
+                      onChange={(e) => setFormData({ ...formData, isDefault: e.target.checked })}
+                    />
+                    <label htmlFor="default" className="text-sm text-gray-700">Set as default address</label>
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <Button className="bg-orange-500 hover:bg-orange-600" type="submit">
+                      {editingId ? 'Update Address' : 'Save Address'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowForm(false);
+                        setEditingId(null);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Addresses List */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {addresses.map((address) => (
+                <div key={address.id} className="bg-white rounded-lg shadow p-6 relative">
+                  {/* Default Badge */}
+                  {address.isDefault && (
+                    <div className="absolute top-4 right-4 bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                      <Check className="h-3 w-3" />
+                      Default
+                    </div>
+                  )}
+
+                  {/* Address Type */}
+                  <div className="flex items-center gap-2 mb-4">
+                    <MapPin className="h-5 w-5 text-orange-500" />
+                    <span className="font-semibold text-gray-900">{address.type}</span>
+                  </div>
+
+                  {/* Address Details */}
+                  <div className="space-y-2 mb-6">
+                    <p className="font-medium text-gray-900">{address.name}</p>
+                    <p className="text-gray-600 text-sm">{address.address}</p>
+                    <p className="text-gray-600 text-sm">
+                      {address.city}, {address.state} {address.zipCode}
+                    </p>
+                    <p className="text-gray-600 text-sm">{address.country}</p>
+                    <p className="text-gray-600 text-sm">{address.phone}</p>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2 pt-4 border-t border-gray-200">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 gap-2"
+                      onClick={() => handleEdit(address)}
+                    >
+                      <Edit2 className="h-4 w-4" />
+                      Edit
+                    </Button>
+                    {!address.isDefault && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => setDefaultAddress(address.id)}
+                      >
+                        Set Default
+                      </Button>
+                    )}
+                    <button
+                      onClick={() => removeAddress(address.id)}
+                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {addresses.length === 0 && !showForm && (
+              <div className="bg-white rounded-lg shadow p-12 text-center">
+                <MapPin className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">No addresses yet</h2>
+                <p className="text-gray-600 mb-6">Add your first address to get started</p>
+                <Button
+                  className="bg-orange-500 hover:bg-orange-600 gap-2"
+                  onClick={() => setShowForm(true)}
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Address
+                </Button>
+              </div>
+            )}
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
+
+      <Footer />
     </div>
   );
 }

@@ -1,0 +1,35 @@
+# Admin GraphQL Schema
+
+"""
+Admin Dashboard - Returns key metrics for admin overview
+"""
+type AdminDashboard {
+    totalUsers: Long!
+    totalProducts: Long!
+    totalOrders: Long!
+    totalRevenue: BigDecimal!
+    pendingOrders: Long!
+    activeUsers: Long!
+    lowStockProducts: Long!
+}
+
+
+extend type Query {
+    # Security: ADMIN only
+    adminDashboard: AdminDashboard!
+    
+    # Security: ADMIN or STAFF
+    staffDashboard: AdminDashboard!
+    
+    # Security: ADMIN or MANAGER
+    allUsers(pagination: PageInput, filter: UserFilterInput): UserPage!
+}
+
+extend type Mutation {
+    # Security: ADMIN only
+    createUser(input: UserCreateInput!): User!
+    updateUser(id: ID!, input: UserUpdateInput!): User!
+    deleteUser(id: ID!): Boolean!
+    lockAccount(userId: ID!): Boolean!
+    unlockAccount(userId: ID!): Boolean!
+}

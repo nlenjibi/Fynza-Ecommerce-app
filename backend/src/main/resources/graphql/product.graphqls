@@ -5,41 +5,46 @@
 type ProductResponse {
     id: ID!
     name: String!
-    description: String
     slug: String!
+    description: String
+    brand: String
     sku: String
+    category: CategoryInfo
     price: BigDecimal!
+    originalPrice: BigDecimal
+    discount: BigDecimal
     discountPrice: BigDecimal
     costPrice: BigDecimal
     effectivePrice: BigDecimal!
-    discountPercentage: BigDecimal!
-    stockQuantity: Int!
+    discountPercentage: BigDecimal
+    stock: Int
+    stockQuantity: Int
     reservedQuantity: Int!
     availableQuantity: Int!
     lowStockThreshold: Int!
     reorderPoint: Int!
     reorderQuantity: Int
     maxStockQuantity: Int
-    inventoryStatus: InventoryStatus!
+    rating: BigDecimal
+    ratingAverage: BigDecimal
+    reviewCount: Int
+    ratingCount: Int
+    viewCount: Int!
+    soldQuantity: Int!
+    salesCount: Long!
+    images: [String!]
+    variants: [ProductVariantResponse!]
+    inStock: Boolean!
+    stockCount: Int
     trackInventory: Boolean!
     allowBackorder: Boolean!
-    expectedRestockDate: DateTime
-    lastRestockedAt: DateTime
     featured: Boolean!
     isNew: Boolean!
     isBestseller: Boolean!
-    viewCount: Long!
-    salesCount: Long!
-    ratingAverage: BigDecimal
-    ratingCount: Int!
-    imageUrl: String
-    thumbnailUrl: String
-    additionalImages: [String!]
-    metaTitle: String
-    metaDescription: String
-    tags: [String!]
-    category: CategoryInfo!
-    images: [ProductImage!]!
+    seller: SellerInfo
+    status: String
+    isApproved: Boolean!
+    inventoryStatus: String
     createdAt: DateTime!
     updatedAt: DateTime!
     version: Long
@@ -53,16 +58,62 @@ type CategoryInfo {
     imageUrl: String
 }
 
-type ProductImage {
+type ProductVariantResponse {
     id: ID!
-    imageUrl: String!
-    altText: String
-    isPrimary: Boolean!
+    sku: String!
+    size: String
+    color: String
+    price: BigDecimal!
+    stock: Int!
+}
+
+type SellerInfo {
+    id: ID!
+    storeName: String!
+    rating: BigDecimal
 }
 
 type ProductDto {
     content: [ProductResponse!]!
     pageInfo: PageInfo!
+}
+
+type SearchResponse {
+    results: [ProductResponse!]!
+    pagination: PaginationInfo!
+    filters: SearchFilters
+}
+
+type SearchFilters {
+    categories: [FilterOption!]!
+    brands: [FilterOption!]!
+    priceRange: PriceRange
+    ratingRange: RatingRange
+    availableFilters: [String!]!
+}
+
+type FilterOption {
+    id: ID!
+    name: String!
+    count: Long
+}
+
+type PriceRange {
+    min: BigDecimal!
+    max: BigDecimal!
+}
+
+type RatingRange {
+    min: Float!
+    max: Float!
+}
+
+type PaginationInfo {
+    total: Long!
+    page: Int!
+    limit: Int!
+    totalPages: Int!
+    hasMore: Boolean!
 }
 
 type ProductStatisticsResponse {
@@ -79,15 +130,6 @@ type ProductStatisticsResponse {
     totalSales: Long!
 }
 
-type CategoryCount {
-    category: String!
-    count: Long!
-}
-
-type StatusCount {
-    status: String!
-    count: Long!
-}
 
 
 
@@ -109,6 +151,12 @@ input ProductFilterInput {
     categorySlug: String
 
     # Price Filters
+    minPrice: BigDecimal
+    maxPrice: BigDecimal
+
+    # Rating Filters
+    minRating: Float
+
     # Inventory Filters
     inventoryStatus: InventoryStatus
     inventoryStatuses: [InventoryStatus!]
@@ -125,6 +173,13 @@ input ProductFilterInput {
     # Discount Filters
     hasDiscount: Boolean
     minDiscountPercent: Int
+
+    # Search & Sort
+    keyword: String
+    sortBy: String
+    sortDirection: SortDirection
+
+    # Analytics Filters
     minSales: Long
     popular: Boolean
     trending: Boolean
@@ -138,12 +193,13 @@ input ProductCreateRequest {
     name: String!
     description: String
     slug: String!
+    brand: String
     sku: String
     price: BigDecimal!
-    discountPrice: BigDecimal
-    costPrice: BigDecimal
-    categoryId: ID!
-    stockQuantity: Int = 0
+    originalPrice: BigDecimal
+    discount: BigDecimal
+    categoryId: ID
+    stock: Int = 0
     lowStockThreshold: Int = 10
     reorderPoint: Int = 5
     reorderQuantity: Int
@@ -153,24 +209,21 @@ input ProductCreateRequest {
     featured: Boolean = false
     isNew: Boolean = false
     isBestseller: Boolean = false
-    imageUrl: String
-    thumbnailUrl: String
-    additionalImages: [String!]
-    metaTitle: String
-    metaDescription: String
-    tags: [String!]
+    images: [String!]
+    status: String = "PENDING"
 }
 
 input ProductUpdateRequest {
     name: String
     description: String
     slug: String
+    brand: String
     sku: String
     price: BigDecimal
-    discountPrice: BigDecimal
-    costPrice: BigDecimal
+    originalPrice: BigDecimal
+    discount: BigDecimal
     categoryId: ID
-    stockQuantity: Int
+    stock: Int
     lowStockThreshold: Int
     reorderPoint: Int
     reorderQuantity: Int
@@ -180,20 +233,52 @@ input ProductUpdateRequest {
     featured: Boolean
     isNew: Boolean
     isBestseller: Boolean
-    imageUrl: String
-    thumbnailUrl: String
-    additionalImages: [String!]
-    metaTitle: String
-    metaDescription: String
-    tags: [String!]
+    images: [String!]
+    status: String
+}
+
+# Advanced Search Input - matches REST API SearchRequest
+input SearchInput {
+    # Search query
+    q: String
+    
+    # Category filters
+    categoryId: ID
+    categoryIds: [ID!]
+    categoryName: String
+    categorySlug: String
+    
+    # Brand/Seller filter
+    brandId: ID
+    
+    # Price filters
+    minPrice: BigDecimal
+    maxPrice: BigDecimal
+    
+    # Rating filters
+    minRating: Float
+    maxRating: Float
+    
+    # Stock filters
+    inStock: Boolean
+    expressDelivery: Boolean
+    
+    # Discount filters
+    discountMin: Float
+    discountMax: Float
+    
+    # Sorting
+    sortBy: String  # popularity, price-low, price-high, rating, newest
+    
+    # Pagination
+    page: Int = 0
+    limit: Int = 20
 }
 
 extend type Query {
     # Security: PUBLIC - No authentication required
     # Single Product Queries
     product(id: ID!): ProductResponse
-    productBySlug(slug: String!): ProductResponse
-    productBySku(sku: String!): ProductResponse
 
     # Security: PUBLIC - No authentication required
     # Advanced Filtering Queries
@@ -221,23 +306,27 @@ extend type Query {
         pagination: PageInput
     ): ProductDto
 
-    # Marketing Queries
-    featuredProducts(pagination: PageInput): ProductDto
-    newProducts(pagination: PageInput): ProductDto
-    discountedProducts(pagination: PageInput): ProductDto
-    bestsellerProducts(pagination: PageInput): ProductDto
-    topRatedProducts(pagination: PageInput): ProductDto
-
-    trendingProducts(
-        categoryId: ID
-        limit: Int = 10
-    ): [ProductResponse!]!
-
     # Search Queries
     searchProducts(
         keyword: String!
         pagination: PageInput
     ): ProductDto
+
+    # Advanced Search - Full-featured search with all filters (matches REST API)
+    search(
+        input: SearchInput
+    ): SearchResponse
+    
+    # Search suggestions for autocomplete
+    searchSuggestions(
+        query: String!
+        limit: Int = 10
+    ): [String!]!
+    
+    # Trending search terms
+    trendingSearches(
+        limit: Int = 10
+    ): [String!]!
 
     # Inventory Management Queries
     productsByInventoryStatus(
@@ -251,6 +340,9 @@ extend type Query {
 
     # Statistics Queries
     productStatistics: ProductStatisticsResponse
+
+    # Seller Queries
+    productsBySeller(sellerId: ID!, pagination: PageInput): ProductDto
 }
 
 extend type Mutation {

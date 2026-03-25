@@ -112,6 +112,7 @@ extend type Query {
     myWishlist:                    [WishlistItem!]!
     myWishlistPaginated(pagination: PageInput): WishlistItemPage!
     wishlistSummary:               WishlistSummary!
+    wishlistCount:                Int!
     isInWishlist(productId: ID!):  Boolean!
     wishlistItemsWithPriceDrops:   [WishlistItem!]!
 }
@@ -135,4 +136,7 @@ extend type Mutation {
     
     # Security: AUTHENTICATED - Mark item as purchased
     markWishlistItemPurchased(productId: ID!):                          WishlistItem!
+    
+    # Security: AUTHENTICATED - Move wishlist item to cart
+    moveWishlistItemToCart(productId: ID!):                             Boolean!
 }

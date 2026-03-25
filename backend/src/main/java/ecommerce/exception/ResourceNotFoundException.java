@@ -1,5 +1,7 @@
 package ecommerce.exception;
 
+import java.util.UUID;
+
 public class ResourceNotFoundException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
@@ -12,6 +14,10 @@ public class ResourceNotFoundException extends RuntimeException {
     }
 
     public static ResourceNotFoundException forResource(String resourceName, Long id) {
+        return new ResourceNotFoundException(resourceName + " not found with id: " + id);
+    }
+
+    public static ResourceNotFoundException forResource(String resourceName, UUID id) {
         return new ResourceNotFoundException(resourceName + " not found with id: " + id);
     }
 

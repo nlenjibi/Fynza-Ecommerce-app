@@ -1,0 +1,47 @@
+# Follow GraphQL Schema
+# Store following functionality
+
+type StoreFollow {
+    id: ID!
+    user: User!
+    seller: User!
+    isActive: Boolean!
+    createdAt: DateTime!
+}
+
+type FollowStats {
+    followerCount: Int!
+    followingCount: Int!
+    isFollowing: Boolean!
+}
+
+input FollowInput {
+    sellerId: ID!
+}
+
+extend type Query {
+    # Security: AUTHENTICATED
+    myFollowing(pagination: PageInput): StoreFollowConnection!
+    
+    # Security: PUBLIC - Check if following a store
+    isFollowing(sellerId: ID!): Boolean!
+    
+    # Security: AUTHENTICATED
+    followStats(sellerId: ID!): FollowStats!
+    
+    # Security: PUBLIC - Get store followers
+    storeFollowers(sellerId: ID!, pagination: PageInput): UserPage!
+}
+
+type StoreFollowConnection {
+    content: [StoreFollow!]!
+    pageInfo: PageInfo!
+}
+
+extend type Mutation {
+    # Security: AUTHENTICATED
+    followStore(input: FollowInput!): StoreFollow!
+    
+    # Security: AUTHENTICATED
+    unfollowStore(sellerId: ID!): Boolean!
+}

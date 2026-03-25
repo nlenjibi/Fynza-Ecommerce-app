@@ -2,15 +2,15 @@ package ecommerce.modules.user.service.impl;
 
 import ecommerce.exception.BadRequestException;
 import ecommerce.exception.ResourceNotFoundException;
-import ecommerce.modules.user.dto.AddressCreateRequest;
 import ecommerce.modules.user.dto.AddressDto;
+import ecommerce.modules.user.dto.AddressRequest;
 import ecommerce.modules.user.entity.Address;
 import ecommerce.modules.user.entity.User;
 import ecommerce.modules.user.mapper.AddressMapper;
 import ecommerce.modules.user.repository.AddressRepository;
 import ecommerce.modules.user.repository.UserRepository;
 import ecommerce.modules.user.service.AddressService;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,8 +20,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Service
+@Transactional(readOnly = true)
 public class AddressServiceImpl implements AddressService {
 
     private final AddressRepository addressRepository;
@@ -58,7 +59,7 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     @Transactional
-    public AddressDto createAddress(UUID userId, AddressCreateRequest request) {
+    public AddressDto createAddress(UUID userId, AddressRequest request) {
         log.debug("Creating new address for user: {}", userId);
 
         // Check address limit
@@ -89,7 +90,7 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     @Transactional
-    public AddressDto updateAddress(UUID userId, UUID addressId, AddressCreateRequest request) {
+    public AddressDto updateAddress(UUID userId, UUID addressId, AddressRequest request) {
         log.debug("Updating address {} for user {}", addressId, userId);
 
         Address address = addressRepository.findById(addressId)

@@ -1,5 +1,6 @@
 package ecommerce.modules.cart.dto;
 
+import ecommerce.modules.product.dto.ProductResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,15 +16,9 @@ import java.util.UUID;
 @Builder
 public class CartItemResponse {
     private UUID id;
-    private UUID productId;
-    private String productName;
-    private UUID variantId;
-    private String size;
-    private String color;
-    private BigDecimal price;
+    private ProductResponse product;
     private Integer quantity;
-    private String image;
-    private BigDecimal subtotal;
+    private BigDecimal totalPrice;
     private Boolean reserved;
     private LocalDateTime reservationExpiresAt;
 }

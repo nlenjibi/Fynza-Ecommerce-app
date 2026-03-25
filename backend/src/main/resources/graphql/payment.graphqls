@@ -1,0 +1,142 @@
+# Payment GraphQL Schema
+# Payment transactions and saved payment methods
+
+type PaymentTransaction {
+    id: ID!
+    order: OrderResponse
+    user: User!
+    amount: BigDecimal!
+    currency: String!
+    paymentMethod: PaymentMethod!
+    paymentGateway: String
+    transactionId: String
+    gatewayTransactionId: String
+    status: PaymentTransactionStatus!
+    gatewayResponse: String
+    failureReason: String
+    receiptUrl: String
+    createdAt: DateTime!
+    completedAt: DateTime!
+}
+
+enum PaymentTransactionStatus {
+    PENDING
+    PROCESSING
+    COMPLETED
+    FAILED
+    REFUNDED
+    PARTIALLY_REFUNDED
+    CANCELLED
+}
+
+type SavedPaymentMethod {
+    id: ID!
+    user: User!
+    type: PaymentMethod!
+    last4: String
+    expiryMonth: Int
+    expiryYear: Int
+    cardBrand: String
+    bankName: String
+    isDefault: Boolean!
+    isActive: Boolean!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}
+
+enum PaymentMethod {
+    CREDIT_CARD
+    DEBIT_CARD
+    UPI
+    NET_BANKING
+    WALLET
+    PAYPAL
+    COD
+}
+
+input PaymentMethodInput {
+    type: PaymentMethod!
+    last4: String
+    expiryMonth: Int
+    expiryYear: Int
+    cardBrand: String
+    bankName: String
+    isDefault: Boolean
+}
+
+input InitiatePaymentInput {
+    orderId: ID!
+    paymentMethodId: ID
+    paymentMethod: PaymentMethod
+    savePaymentMethod: Boolean = false
+}
+
+input PaymentWebhookInput {
+    transactionId: ID!
+    gatewayTransactionId: String!
+    status: PaymentTransactionStatus!
+    gatewayResponse: String
+    failureReason: String
+}
+
+extend type Query {
+    # Security: AUTHENTICATED - Own transactions only
+    paymentTransactions(
+        status: PaymentTransactionStatus
+        pagination: PageInput
+    ): PaymentTransactionConnection!
+    
+    # Security: AUTHENTICATED or ADMIN
+    paymentTransaction(id: ID!): PaymentTransaction
+    
+    # Security: AUTHENTICATED - Own methods only
+    savedPaymentMethods: [SavedPaymentMethod!]!
+    
+    # Security: AUTHENTICATED
+    defaultPaymentMethod: SavedPaymentMethod
+    
+    # Security: ADMIN only
+    allPaymentTransactions(
+        status: PaymentTransactionStatus
+        fromDate: DateTime
+        toDate: DateTime
+        pagination: PageInput
+    ): PaymentTransactionConnection!
+    
+    # Security: ADMIN only
+    paymentStats(fromDate: DateTime, toDate: DateTime): PaymentStats!
+}
+
+type PaymentTransactionConnection {
+    content: [PaymentTransaction!]!
+    pageInfo: PageInfo!
+}
+
+type PaymentStats {
+    totalAmount: BigDecimal!
+    successfulAmount: BigDecimal!
+    failedAmount: BigDecimal!
+    refundedAmount: BigDecimal!
+    transactionCount: Int!
+    successRate: Float!
+}
+
+extend type Mutation {
+    # Security: AUTHENTICATED
+    initiatePayment(input: InitiatePaymentInput!): PaymentTransaction!
+    
+    # Security: PUBLIC - Webhook endpoint
+    processPaymentWebhook(input: PaymentWebhookInput!): PaymentTransaction!
+    
+    # Security: AUTHENTICATED - Cancel pending payment
+    cancelPayment(transactionId: ID!): PaymentTransaction!
+    
+    # Security: AUTHENTICATED - Save payment method
+    savePaymentMethod(input: PaymentMethodInput!): SavedPaymentMethod!
+    
+    # Security: AUTHENTICATED - Remove saved payment method
+    deletePaymentMethod(id: ID!): Boolean!
+    
+    # Security: AUTHENTICATED - Set default payment method
+    setDefaultPaymentMethod(id: ID!): SavedPaymentMethod!
+}

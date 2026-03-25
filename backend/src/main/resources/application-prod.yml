@@ -92,12 +92,7 @@ management:
       prometheus:
         enabled: true
 
-flyway:
-  enabled: true
-  baseline-on-migrate: true
-  schemas: public
-
-# Production settings (sensible defaults)
+# Production settings
 # - Datasource tuned for moderate load
 # - Management endpoints on separate port for observability
 # - Graceful shutdown enabled
@@ -128,3 +123,18 @@ paypal:
   client-id: ${PAYPAL_CLIENT_ID}
   client-secret: ${PAYPAL_CLIENT_SECRET}
   mode: live
+
+# Redis Configuration
+redis:
+  host: ${REDIS_HOST:localhost}
+  port: ${REDIS_PORT:6379}
+  password: ${REDIS_PASSWORD:}
+  database: 0
+  timeout: 5000ms
+  lettuce:
+    pool:
+      max-active: 20
+      max-idle: 10
+      min-idle: 5
+      max-wait: -1ms
+    shutdown-timeout: 100ms

@@ -1,4 +1,6 @@
-import type { Metadata } from "next"
+"use client"
+
+import { useState, useEffect } from "react"
 import { AdminSidebar } from "@/components/admin/admin-sidebar"
 import { AdminHeader } from "@/components/admin/admin-header"
 import { DashboardMetrics } from "@/components/admin/dashboard-metrics"
@@ -8,6 +10,7 @@ import { TopProducts } from "@/components/admin/top-products"
 import { CustomersStats } from "@/components/admin/customers-stats"
 import { ProductsStats } from "@/components/admin/products-stats"
 import { SystemHistory } from "@/components/admin/system-history"
+import { DashboardSkeleton } from "@/components/skeletons"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { 
@@ -26,10 +29,11 @@ import {
   AlertTriangle
 } from "lucide-react"
 
-export const metadata: Metadata = {
-  title: "Admin Dashboard - Fynza",
-  description: "Comprehensive marketplace admin dashboard",
-}
+// Server-side metadata export
+// export const metadata: Metadata = {
+//   title: "Admin Dashboard - Fynza",
+//   description: "Comprehensive marketplace admin dashboard",
+// }
 
 // Mock data for dashboard
 const statsCards = [
@@ -123,6 +127,27 @@ const statusColors: Record<string, string> = {
 }
 
 export default function AdminDashboard() {
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1500)
+    return () => clearTimeout(timer)
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen bg-gray-50">
+        <AdminSidebar />
+        <div className="flex-1 ml-64">
+          <AdminHeader title="Dashboard" subtitle="Overview" />
+          <main className="p-6">
+            <DashboardSkeleton />
+          </main>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <AdminSidebar />

@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+import { ProductGridSkeleton } from '@/components/skeletons';
+import { trackingService } from '@/lib/services/tracking';
 
 interface SearchProduct {
     id: string;
@@ -42,6 +44,8 @@ export default function SearchPage() {
 
         setLoading(true);
         setError(null);
+
+        trackingService.trackSearch(query, 0)
 
         // Simulate API call
         const timer = setTimeout(() => {
@@ -145,12 +149,7 @@ export default function SearchPage() {
                         </Link>
                     </div>
                 ) : loading ? (
-                    <div className="bg-white rounded-lg border border-border p-12 text-center">
-                        <div className="inline-block">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                        </div>
-                        <p className="text-muted-foreground mt-4">Searching for "{query}"...</p>
-                    </div>
+                    <ProductGridSkeleton count={8} />
                 ) : error ? (
                     <div className="bg-red-50 border border-red-200 rounded-lg p-6 flex items-start gap-4">
                         <AlertCircle className="h-6 w-6 text-red-600 flex-shrink-0 mt-0.5" aria-hidden="true" />

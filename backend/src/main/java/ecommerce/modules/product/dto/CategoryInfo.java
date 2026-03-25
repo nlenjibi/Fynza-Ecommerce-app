@@ -12,4 +12,6 @@ public class CategoryInfo {
     private UUID id;
     private String name;
     private String slug;
+    private String description;
+    private String imageUrl;
 }

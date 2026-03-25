@@ -18,7 +18,6 @@ import {
   Bell,
   Settings,
   LogOut,
-  Shield,
   Building2,
   AlertTriangle,
   ChevronDown,
@@ -26,6 +25,13 @@ import {
   Zap,
   DollarSign,
   TrendingUp,
+  Mail,
+  Activity,
+  Star,
+  Truck,
+  FileQuestion,
+  Home,
+  Briefcase,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -33,11 +39,13 @@ const navigation = [
   {
     title: "MAIN",
     items: [
+      { name: "Home", href: "/", icon: Home },
       { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
       { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
+      { name: "Performance", href: "/admin/performance", icon: TrendingUp },
     ],
   },
-  {
+{
     title: "COMMERCE",
     items: [
       { name: "Orders", href: "/admin/orders", icon: ShoppingCart, badge: "24", badgeColor: "orange" },
@@ -45,13 +53,18 @@ const navigation = [
       { name: "Products", href: "/admin/products", icon: Package, badge: "8", badgeColor: "red" },
       { name: "Customers", href: "/admin/customers", icon: Users },
       { name: "Sellers", href: "/admin/sellers", icon: Building2, badge: "5", badgeColor: "green" },
+      { name: "Consultants", href: "/admin/consultants", icon: Users, badge: "3", badgeColor: "purple" },
+      { name: "Delivery", href: "/admin/delivery", icon: Truck },
     ],
   },
   {
     title: "MARKETING",
     items: [
       { name: "Promotions", href: "/admin/promotions", icon: Percent },
+      { name: "Coupons", href: "/admin/coupons", icon: Tag, badge: "12", badgeColor: "orange" },
       { name: "Flash Sales", href: "/admin/flash-sales", icon: Zap, badge: "2", badgeColor: "purple" },
+      { name: "Tags", href: "/admin/tags", icon: Tag },
+      { name: "Reviews", href: "/admin/reviews", icon: Star, badge: "3", badgeColor: "yellow" },
     ],
   },
   {
@@ -62,19 +75,23 @@ const navigation = [
       { name: "Reports", href: "/admin/reports", icon: FileText },
     ],
   },
-  {
+{
     title: "SUPPORT",
     items: [
       { name: "Contacts", href: "/admin/contacts", icon: MessageSquare, badge: "12", badgeColor: "blue" },
+      { name: "Messages", href: "/admin/messages", icon: Mail, badge: "8", badgeColor: "orange" },
+      { name: "FAQs", href: "/admin/faqs", icon: FileQuestion },
+      { name: "Subscribers", href: "/admin/subscribers", icon: Mail, badge: "5", badgeColor: "green" },
       { name: "Notifications", href: "/admin/notifications", icon: Bell },
+      { name: "Careers", href: "/admin/careers", icon: Briefcase, badge: "4", badgeColor: "purple" },
     ],
   },
   {
     title: "SYSTEM",
     items: [
       { name: "Settings", href: "/admin/settings", icon: Settings },
-      { name: "Security", href: "/admin/security", icon: Shield },
       { name: "Activity Logs", href: "/admin/activity-logs", icon: TrendingUp },
+      { name: "Tracking", href: "/admin/tracking", icon: Activity },
     ],
   },
 ]
@@ -83,9 +100,20 @@ const bottomNav = [
   { name: "Logout", href: "/", icon: LogOut },
 ]
 
-export function AdminSidebar() {
+interface AdminSidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminSidebarProps) {
   const pathname = usePathname()
   const [expandedItems, setExpandedItems] = useState<string[]>([])
+  const [internalIsOpen, setInternalIsOpen] = useState(true)
+  
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen
+  const setIsOpen = onClose ? (value: boolean) => {
+      if (!value) onClose();
+  } : setInternalIsOpen
 
   const toggleExpand = (name: string) => {
     setExpandedItems((prev) =>

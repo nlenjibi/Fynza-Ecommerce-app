@@ -6,6 +6,9 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -36,7 +39,26 @@ public class Cart extends BaseEntity {
     @Builder.Default
     private List<CartItem> items = new ArrayList<>();
 
+    @Column(name = "is_checked_out")
+    @Builder.Default
+    private Boolean isCheckedOut = false;
+
+    @Column(name = "checked_out_at")
+    private LocalDateTime checkedOutAt;
+
+    @Column(name = "is_abandoned")
+    @Builder.Default
+    private Boolean isAbandoned = false;
+
+    @Column(name = "abandoned_at")
+    private LocalDateTime abandonedAt;
+
+    @Column(name = "last_activity_at")
+    private LocalDateTime lastActivityAt;
+
     public List<CartItem> getItems() {
         return items;
     }
+
+
 }

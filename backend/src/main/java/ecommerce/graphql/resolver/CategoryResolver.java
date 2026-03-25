@@ -26,6 +26,7 @@ import org.springframework.stereotype.Controller;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Controller
 @RequiredArgsConstructor
@@ -247,7 +248,7 @@ public class CategoryResolver {
 
     @QueryMapping
     
-    public CategoryResponse category(@Argument Long id) {
+    public CategoryResponse category(@Argument UUID id) {
         log.info("GraphQL Query: category(id: {})", id);
         return categoryService.getCategoryById(id);
     }
@@ -256,7 +257,7 @@ public class CategoryResolver {
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public CategoryResponse createCategory(@Argument CategoryCreateRequest input) {
         log.info("GraphQL Mutation: createCategory(name: {})", input.getName());
-        return categoryService.createCategory(input);
+        return categoryService.create(input);
     }
 
     // ==================== Helper Methods ====================

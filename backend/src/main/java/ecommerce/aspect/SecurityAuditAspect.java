@@ -1,9 +1,9 @@
 package ecommerce.aspect;
 
+import ecommerce.modules.activity.entity.ActivityLog;
+import ecommerce.modules.activity.service.ActivityLogService;
 import ecommerce.modules.auth.service.SecurityService;
-import ecommerce.modules.user.entity.AuditLog;
 import ecommerce.modules.user.entity.User;
-import ecommerce.modules.user.service.AuditService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class SecurityAuditAspect {
 
-    private final AuditService auditService;
+    private final ActivityLogService activityLogService;
     private final SecurityService securityService;
 
     private static final DateTimeFormatter TIMESTAMP_FORMATTER =
@@ -112,7 +112,7 @@ public class SecurityAuditAspect {
 
         // Persist audit log to database
         persistAuditLog(null, operationType, className, methodName, 
-                AuditLog.AuditStatus.ATTEMPTED.name(), "Operation initiated");
+                ActivityLog.AuditStatus.ATTEMPTED.name(), "Operation initiated");
     }
 
     /**
@@ -250,11 +250,11 @@ public class SecurityAuditAspect {
             if (securityService.isAuthenticated()) {
                 User currentUser = securityService.getCurrentUser();
                 if (currentUser != null) {
-                    username = currentUser.getUsername();
+                    username = currentUser.getEmail();
                 }
             }
 
-            auditService.logAction(userId, username, action, null, null, methodName, className, status, details);
+            activityLogService.logAuditAction(userId, username, action, null, null, status, details, null);
         } catch (Exception e) {
             log.error("Failed to persist audit log: {}", e.getMessage());
         }

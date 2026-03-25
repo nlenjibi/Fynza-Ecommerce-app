@@ -1,5 +1,7 @@
 package ecommerce.modules.product.service.impl;
 
+import ecommerce.common.enums.InventoryStatus;
+import ecommerce.common.enums.ProductStatus;
 import ecommerce.exception.ResourceNotFoundException;
 import ecommerce.modules.category.entity.Category;
 import ecommerce.modules.category.repository.CategoryRepository;
@@ -9,6 +11,7 @@ import ecommerce.modules.product.entity.ProductVariant;
 import ecommerce.modules.product.repository.ProductRepository;
 import ecommerce.modules.product.repository.ProductVariantRepository;
 import ecommerce.modules.product.service.ProductService;
+import ecommerce.modules.user.entity.Role;
 import ecommerce.modules.user.entity.SellerProfile;
 import ecommerce.modules.user.entity.User;
 import ecommerce.modules.user.repository.SellerProfileRepository;
@@ -247,7 +250,7 @@ public class ProductServiceImpl implements ProductService {
         // Batch fetch seller profiles for all sellers (single query)
         Map<UUID, SellerProfile> sellerProfileMap = sellerProfileRepository.findByUserIdIn(sellerIds)
                 .stream()
-                .collect(Collectors.toMap(SellerProfile::getUserId, Function.identity()));
+                .collect(Collectors.toMap(sp -> sp.getUser().getId(), sp -> sp));
 
         // Map with pre-fetched data
         return products.map(product -> mapToResponseWithCache(product, variantsMap, sellerProfileMap));
@@ -307,6 +310,7 @@ public class ProductServiceImpl implements ProductService {
         return ProductResponse.builder()
                 .id(product.getId())
                 .name(product.getName())
+                .slug(product.getSlug())
                 .description(product.getDescription())
                 .brand(product.getBrand())
                 .sku(product.getSku())
@@ -316,12 +320,19 @@ public class ProductServiceImpl implements ProductService {
                 .discount(product.getDiscount())
                 .rating(product.getRating())
                 .reviewCount(product.getReviewCount())
+                .viewCount(product.getViewCount())
                 .images(new ArrayList<>())
                 .variants(variantResponses)
-                .inStock(product.getStock() > 0)
+                .inStock(product.isInStock())
                 .stockCount(product.getStock())
+                .availableQuantity(product.getAvailableQuantity())
+                .soldQuantity(product.getSoldQuantity())
                 .seller(sellerInfo)
+                .status(product.getStatus() != null ? product.getStatus().name() : null)
+                .isApproved(product.getIsApproved())
+                .inventoryStatus(product.getInventoryStatus() != null ? product.getInventoryStatus().name() : null)
                 .createdAt(product.getCreatedAt())
+                .updatedAt(product.getUpdatedAt())
                 .build();
     }
 
@@ -376,6 +387,7 @@ public class ProductServiceImpl implements ProductService {
         return ProductResponse.builder()
                 .id(product.getId())
                 .name(product.getName())
+                .slug(product.getSlug())
                 .description(product.getDescription())
                 .brand(product.getBrand())
                 .sku(product.getSku())
@@ -385,12 +397,19 @@ public class ProductServiceImpl implements ProductService {
                 .discount(product.getDiscount())
                 .rating(product.getRating())
                 .reviewCount(product.getReviewCount())
+                .viewCount(product.getViewCount())
                 .images(new ArrayList<>())
                 .variants(variantResponses)
-                .inStock(product.getStock() > 0)
+                .inStock(product.isInStock())
                 .stockCount(product.getStock())
+                .availableQuantity(product.getAvailableQuantity())
+                .soldQuantity(product.getSoldQuantity())
                 .seller(sellerInfo)
+                .status(product.getStatus() != null ? product.getStatus().name() : null)
+                .isApproved(product.getIsApproved())
+                .inventoryStatus(product.getInventoryStatus() != null ? product.getInventoryStatus().name() : null)
                 .createdAt(product.getCreatedAt())
+                .updatedAt(product.getUpdatedAt())
                 .build();
     }
 
@@ -418,6 +437,17 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
+    public ProductResponse releaseReservedStock(UUID id, int quantity) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + id));
+        product.releaseReservedStock(quantity);
+        productRepository.save(product);
+        log.info("Released {} reserved stock for product {}", quantity, id);
+        return mapToResponse(product);
+    }
+
+    @Override
+    @Transactional
     public ProductResponse reserveStock(UUID id, int quantity) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + id));
@@ -425,6 +455,28 @@ public class ProductServiceImpl implements ProductService {
         productRepository.save(product);
         log.info("Reserved {} stock for product {}", quantity, id);
         return mapToResponse(product);
+    }
+
+    @Override
+    @Transactional
+    public ProductResponse reduceStock(UUID id, int quantity) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + id));
+        product.reduceStock(quantity);
+        productRepository.save(product);
+        log.info("Reduced {} stock from product {}", quantity, id);
+        return mapToResponse(product);
+    }
+
+    @Override
+    @Transactional
+    public Boolean incrementViewCount(UUID id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + id));
+        product.setViewCount((product.getViewCount() != null ? product.getViewCount() : 0) + 1);
+        productRepository.save(product);
+        log.debug("Incremented view count for product {}", id);
+        return true;
     }
 
     @Override
@@ -439,5 +491,122 @@ public class ProductServiceImpl implements ProductService {
         productRepository.save(product);
         log.info("Updated rating to {} for product {}", rating, id);
         return mapToResponse(product);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductResponse> findBySellerId(UUID sellerId, ProductStatus status, UUID categoryId, String search, Pageable pageable) {
+        ProductFilterRequest filter = ProductFilterRequest.builder()
+                .sellerId(sellerId)
+                .status(status != null ? status.name() : null)
+                .categoryId(categoryId)
+                .search(search)
+                .keyword(search)
+                .build();
+        return findAll(filter, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SellerProductStatsResponse getSellerProductStats(UUID sellerId) {
+        long total = productRepository.countBySellerId(sellerId);
+        long active = productRepository.countBySellerIdAndStatus(sellerId, ProductStatus.ACTIVE);
+        long draft = productRepository.countBySellerIdAndStatus(sellerId, ProductStatus.DRAFT);
+        long outOfStock = productRepository.countBySellerIdAndInventoryStatus(sellerId, InventoryStatus.OUT_OF_STOCK);
+        long lowStock = productRepository.countBySellerIdAndLowStock(sellerId);
+
+        return SellerProductStatsResponse.builder()
+                .totalProducts(total)
+                .activeProducts(active)
+                .draftProducts(draft)
+                .outOfStockProducts(outOfStock)
+                .lowStockProducts(lowStock)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AdminProductStatsResponse getAdminProductStats() {
+        long total = productRepository.count();
+        long active = productRepository.countByStatus(ProductStatus.ACTIVE);
+        long pending = productRepository.countPendingApproval();
+        long outOfStock = productRepository.countByInventoryStatusAndIsActiveTrue(InventoryStatus.OUT_OF_STOCK);
+        long lowStock = productRepository.countByInventoryStatusAndIsActiveTrue(InventoryStatus.LOW_STOCK);
+
+        return AdminProductStatsResponse.builder()
+                .totalProducts(total)
+                .activeProducts(active)
+                .pendingProducts(pending)
+                .outOfStockProducts(outOfStock)
+                .lowStockProducts(lowStock)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public ProductResponse approveProduct(UUID id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + id));
+        
+        product.setIsApproved(true);
+        product.setStatus(ProductStatus.ACTIVE);
+        Product saved = productRepository.save(product);
+        log.info("Approved product: {}", id);
+        
+        return mapToResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public ProductResponse rejectProduct(UUID id, String reason) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + id));
+        
+        product.setIsApproved(false);
+        product.setStatus(ProductStatus.DRAFT);
+        product.setDescription(product.getDescription() + "\n\n rejection reason: " + reason);
+        Product saved = productRepository.save(product);
+        log.info("Rejected product: {} with reason: {}", id, reason);
+        
+        return mapToResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public ProductResponse updateProductStatus(UUID id, ProductStatus status) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + id));
+        
+        product.setStatus(status);
+        Product saved = productRepository.save(product);
+        log.info("Updated product {} status to {}", id, status);
+        
+        return mapToResponse(saved);
+    }
+
+    @Override
+    public boolean canUpdate(String productId, String userId) {
+        UUID productUuid = UUID.fromString(productId);
+        UUID userUuid = UUID.fromString(userId);
+        Product product = productRepository.findById(productUuid).orElse(null);
+        if (product == null) {
+            return false;
+        }
+        boolean isOwner = product.getSeller() != null && product.getSeller().getId().equals(userUuid);
+        boolean isAdmin = product.getSeller() != null && product.getSeller().getRole() == Role.ADMIN;
+        return isOwner || isAdmin;
+    }
+
+    @Override
+    public boolean canDelete(String productId, String userId) {
+        UUID productUuid = UUID.fromString(productId);
+        UUID userUuid = UUID.fromString(userId);
+        Product product = productRepository.findById(productUuid).orElse(null);
+        if (product == null) {
+            return false;
+        }
+        boolean isOwner = product.getSeller() != null && product.getSeller().getId().equals(userUuid);
+        boolean isAdmin = product.getSeller() != null && product.getSeller().getRole() == Role.ADMIN;
+        return isOwner || isAdmin;
     }
 }

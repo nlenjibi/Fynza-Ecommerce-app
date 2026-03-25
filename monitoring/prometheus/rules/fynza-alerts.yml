@@ -1,0 +1,273 @@
+groups:
+  - name: fynza_errors
+    interval: 30s
+    rules:
+      # HTTP 5xx Errors - Critical
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) 
+          / 
+          sum(rate(http_server_requests_seconds_count[5m])) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High HTTP 5xx error rate"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+
+      - alert: ManyServerErrors
+        expr: sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) * 60 > 10
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Many server errors occurring"
+          description: "{{ $value | humanize }} errors per minute"
+
+      # HTTP 4xx Errors - Warning
+      - alert: HighClientErrorRate
+        expr: |
+          sum(rate(http_server_requests_seconds_count{status=~"4.."}[5m])) 
+          / 
+          sum(rate(http_server_requests_seconds_count[5m])) > 0.20
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High HTTP 4xx error rate"
+          description: "Client error rate is {{ $value | humanizePercentage }} (threshold: 20%)"
+
+  - name: fynza_rate_limiting
+    interval: 30s
+    rules:
+      # Rate Limit Errors
+      - alert: RateLimitErrors
+        expr: sum(rate(api_rate_limit_exceeded_total[5m])) * 60 > 50
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Rate limit errors detected"
+          description: "{{ $value | humanize }} rate limit violations per minute"
+
+      - alert: HighRateLimitErrors
+        expr: sum(rate(api_rate_limit_exceeded_total[5m])) * 60 > 100
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High rate limit errors - possible attack"
+          description: "{{ $value | humanize }} rate limit violations per minute"
+
+      # Too Many Requests
+      - alert: TooManyRequests
+        expr: sum(rate(http_server_requests_seconds_count{status="429"}[5m])) * 60 > 20
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Too many 429 requests"
+          description: "{{ $value | humanize }} 429 responses per minute"
+
+  - name: fynza_authentication
+    interval: 30s
+    rules:
+      # Authentication Failures
+      - alert: HighAuthFailureRate
+        expr: sum(rate(authentication_failures_total[5m])) * 60 > 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High authentication failure rate"
+          description: "{{ $value | humanize }} auth failures per minute"
+
+      - alert: BruteForceAttack
+        expr: sum(rate(authentication_failures_total[5m])) * 60 > 50
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Possible brute force attack detected"
+          description: "{{ $value | humanize }} auth failures per minute - possible attack"
+
+      # JWT Errors
+      - alert: JwtValidationErrors
+        expr: sum(rate(jwt_validation_errors_total[5m])) * 60 > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "JWT validation errors"
+          description: "{{ $value | humanize }} JWT errors per minute"
+
+  - name: fynza_database
+    interval: 30s
+    rules:
+      # Database Connection Errors
+      - alert: DatabaseConnectionErrors
+        expr: sum(rate(database_connection_errors_total[5m])) * 60 > 5
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database connection errors"
+          description: "{{ $value | humanize }} DB connection errors per minute"
+
+      # Slow Queries
+      - alert: SlowDatabaseQueries
+        expr: histogram_quantile(0.95, sum(rate(hikaricp_connections_usage_seconds_bucket{pool="HikariPool-1"}[5m])) by (le)) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow database queries detected"
+          description: "95th percentile query time is {{ $value | humanizeDuration }}"
+
+      # Connection Pool Exhausted
+      - alert: DatabasePoolExhausted
+        expr: hikaricp_connections_active{pool="HikariPool-1"} / hikaricp_connections_max{pool="HikariPool-1"} > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database connection pool near capacity"
+          description: "Connection pool usage is {{ $value | humanizePercentage }}"
+
+  - name: fynza_performance
+    interval: 30s
+    rules:
+      # High Response Time
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le, uri)) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API response time"
+          description: "95th percentile response time is {{ $value | humanizeDuration }}"
+
+      # Very High Response Time
+      - alert: VeryHighResponseTime
+        expr: histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket[5m])) by (le, uri)) > 5
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Very high API response time"
+          description: "99th percentile response time is {{ $value | humanizeDuration }}"
+
+      # Low Throughput
+      - alert: LowThroughput
+        expr: sum(rate(http_server_requests_seconds_count[5m])) < 10
+        for: 10m
+        labels:
+          severity: info
+        annotations:
+          summary: "Low API throughput"
+          description: "Throughput is {{ $value | humanize }} requests/second"
+
+  - name: fynza_jvm
+    interval: 30s
+    rules:
+      # High Memory Usage
+      - alert: HighJVMHeapUsage
+        expr: jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} > 0.90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High JVM heap usage"
+          description: "JVM heap usage is {{ $value | humanizePercentage }}"
+
+      # Very High Memory Usage
+      - alert: VeryHighJVMHeapUsage
+        expr: jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} > 0.95
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "JVM heap usage critical"
+          description: "JVM heap usage is {{ $value | humanizePercentage }} - risk of OOM"
+
+      # High GC Activity
+      - alert: HighGCActivity
+        expr: rate(jvm_gc_pause_seconds_count[5m]) * 60 > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High garbage collection activity"
+          description: "{{ $value | humanize }} GCs per minute"
+
+  - name: fynza_cache
+    interval: 30s
+    rules:
+      # Low Cache Hit Rate
+      - alert: LowCacheHitRate
+        expr: |
+          sum(rate(cache_hits_total[5m])) 
+          / 
+          (sum(rate(cache_hits_total[5m])) + sum(rate(cache_misses_total[5m]))) < 0.70
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low cache hit rate"
+          description: "Cache hit rate is {{ $value | humanizePercentage }} (threshold: 70%)"
+
+      # Redis Connection Errors
+      - alert: RedisConnectionErrors
+        expr: sum(rate(redis_connection_errors_total[5m])) * 60 > 5
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis connection errors"
+          description: "{{ $value | humanize }} Redis errors per minute"
+
+  - name: fynza_payment
+    interval: 30s
+    rules:
+      # Payment Failures
+      - alert: HighPaymentFailureRate
+        expr: sum(rate(payment_failures_total[5m])) / sum(rate(payment_requests_total[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High payment failure rate"
+          description: "{{ $value | humanizePercentage }} of payments are failing"
+
+      # PayPal Errors
+      - alert: PayPalAPIErrors
+        expr: sum(rate(paypal_api_errors_total[5m])) * 60 > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PayPal API errors"
+          description: "{{ $value | humanize }} PayPal errors per minute"
+
+  - name: fynza_service_health
+    interval: 15s
+    rules:
+      # Service Down
+      - alert: ServiceDown
+        expr: up{job="backend"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend service is down"
+          description: "Backend service has been down for more than 30 seconds"
+
+      # Service Unhealthy
+      - alert: ServiceUnhealthy
+        expr: spring_boot_health_up != 1
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service health check failing"
+          description: "Service health endpoint returning unhealthy status"

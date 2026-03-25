@@ -1,6 +1,7 @@
 package ecommerce.modules.user.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import ecommerce.common.enums.UserStatus;
 import ecommerce.modules.user.entity.Role;
 import lombok.*;
 
@@ -24,6 +25,11 @@ public class UserDto {
     private Role role;
     private Boolean isActive;
     private String profileImageUrl;
+    private UserStatus status;
+    private Boolean emailVerified;
+
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime lastLoginAt;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;

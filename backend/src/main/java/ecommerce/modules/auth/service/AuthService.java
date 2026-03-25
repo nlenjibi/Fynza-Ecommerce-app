@@ -15,6 +15,8 @@ public interface AuthService {
 
     void logout(UUID userId, String token);
 
+    void cleanupExpiredSessions();
+
     /**
      * Handle OAuth2 login - generate tokens for OAuth2 authenticated users
      * @param user The authenticated user

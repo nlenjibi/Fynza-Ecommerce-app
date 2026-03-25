@@ -29,6 +29,7 @@ import static java.util.concurrent.CompletableFuture.allOf;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class InventoryServiceImpl implements InventoryService {
 
     private final ProductRepository productRepository;
@@ -162,7 +163,7 @@ public class InventoryServiceImpl implements InventoryService {
                 Product product = productRepository.findById(productId)
                         .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + productId));
                 
-                product.deductStock(quantity);
+                product.reduceStock(quantity);
                 productRepository.save(product);
                 
                 log.info("Stock reduced for product {}: quantity={}, remaining stock={}",
