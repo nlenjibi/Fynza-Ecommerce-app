@@ -1,5 +1,8 @@
 package ecommerce.graphql.resolver;
 
+import ecommerce.graphql.input.AddItemToCartInput;
+import ecommerce.graphql.input.ApplyCouponInput;
+import ecommerce.graphql.input.UpdateCartItemInput;
 import ecommerce.modules.cart.dto.AddToCartRequest;
 import ecommerce.modules.cart.dto.CartItemResponse;
 import ecommerce.modules.cart.dto.CartResponse;
@@ -42,6 +45,7 @@ public class CartResolver {
                 cartId, input.getProductId(), input.getQuantity());
         AddToCartRequest request = AddToCartRequest.builder()
                 .productId(input.getProductId())
+                .variantId(input.getVariantId())
                 .quantity(input.getQuantity())
                 .build();
         return cartService.addItem(userId, request);
@@ -78,10 +82,10 @@ public class CartResolver {
     @MutationMapping
     public CartResponse applyCouponToCart(
             @Argument UUID cartId,
-            @Argument String couponCode,
+            @Argument ApplyCouponInput input,
             @ContextValue UUID userId) {
-        log.info("GraphQL Mutation: applyCouponToCart(cartId: {}, coupon: {})", cartId, couponCode);
-        return cartService.applyCoupon(userId, couponCode);
+        log.info("GraphQL Mutation: applyCouponToCart(cartId: {}, coupon: {})", cartId, input.getCouponCode());
+        return cartService.applyCoupon(userId, input.getCouponCode());
     }
 
     @MutationMapping
@@ -90,38 +94,5 @@ public class CartResolver {
             @ContextValue UUID userId) {
         log.info("GraphQL Mutation: mergeCart(guestCartId: {})", guestCartId);
         return cartService.mergeCart(userId, guestCartId);
-    }
-
-    public static class AddItemToCartInput {
-        private UUID productId;
-        private Integer quantity;
-
-        public UUID getProductId() {
-            return productId;
-        }
-
-        public void setProductId(UUID productId) {
-            this.productId = productId;
-        }
-
-        public Integer getQuantity() {
-            return quantity;
-        }
-
-        public void setQuantity(Integer quantity) {
-            this.quantity = quantity;
-        }
-    }
-
-    public static class UpdateCartItemInput {
-        private Integer quantity;
-
-        public Integer getQuantity() {
-            return quantity;
-        }
-
-        public void setQuantity(Integer quantity) {
-            this.quantity = quantity;
-        }
     }
 }
