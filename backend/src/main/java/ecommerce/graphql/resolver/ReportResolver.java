@@ -1,7 +1,9 @@
 package ecommerce.graphql.resolver;
 
 import ecommerce.common.response.PaginatedResponse;
+import ecommerce.graphql.dto.Report;
 import ecommerce.graphql.dto.ReportConnection;
+import ecommerce.graphql.dto.ReportSchedule;
 import ecommerce.graphql.dto.ReportScheduleConnection;
 import ecommerce.graphql.input.PageInput;
 import ecommerce.graphql.input.ReportRequestInput;
@@ -171,40 +173,5 @@ public class ReportResolver {
                 ? Sort.Direction.DESC : Sort.Direction.ASC;
         String sortBy = input.getSortBy() != null ? input.getSortBy() : "createdAt";
         return PageRequest.of(input.getPage(), input.getSize(), Sort.by(direction, sortBy));
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class Report {
-        private String id;
-        private String name;
-        private String type;
-        private String format;
-        private String parameters;
-        private Object generatedBy;
-        private String fileUrl;
-        private String status;
-        private String errorMessage;
-        private LocalDateTime startDate;
-        private LocalDateTime endDate;
-        private LocalDateTime createdAt;
-        private LocalDateTime completedAt;
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class ReportSchedule {
-        private String id;
-        private String name;
-        private String type;
-        private String format;
-        private String schedule;
-        private String parameters;
-        private LocalDateTime lastRunAt;
-        private LocalDateTime nextRunAt;
-        private Boolean isActive;
-        private Object createdBy;
-        private LocalDateTime createdAt;
-        private LocalDateTime updatedAt;
     }
 }
