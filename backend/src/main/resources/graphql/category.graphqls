@@ -18,14 +18,23 @@ extend type Query {
     # Filter Queries
     filterCategories(filter: CategoryFilterInput!, pagination: PageInput): CategoryResponseDto!
     advancedFilterCategories(filter: CategoryFilterInput!, pagination: PageInput): CategoryResponseDto!
+    filterCategoriesWithPredicate(filter: CategoryFilterInput, pagination: PageInput): CategoryResponseDto!
+    searchCategoriesWithPredicate(keyword: String, filter: CategoryFilterInput, pagination: PageInput): CategoryResponseDto!
 
     # Product-Based Queries
     categoriesWithProducts(pagination: PageInput): CategoryResponseDto!
     categoriesByProductCount(pagination: PageInput): CategoryResponseDto!
+    getCategoriesWithMinProductCount(minProductCount: Int, pagination: PageInput): CategoryResponseDto!
+    getCategoriesBySubcategoryPresence(hasSubcategories: Boolean, pagination: PageInput): CategoryResponseDto!
 
     # Date-Based Queries
     categoriesCreatedBetween(startDate: DateTime!, endDate: DateTime!, pagination: PageInput): CategoryResponseDto!
     categoriesUpdatedBetween(startDate: DateTime!, endDate: DateTime!, pagination: PageInput): CategoryResponseDto!
+    getCategoriesByDateRange(startDate: DateTime, endDate: DateTime, type: String, pagination: PageInput): CategoryResponseDto!
+
+    # Root Categories
+    getRootCategories(featured: Boolean, pagination: PageInput): CategoryResponseDto!
+    getFeaturedRootCategories: [CategoryResponse!]!
 
     # Bulk Queries
     categoriesByIds(ids: [ID!]!): [CategoryResponse!]!
@@ -54,16 +63,15 @@ type CategoryResponse {
     slug: String!
     name: String!
     description: String
-    imageUrl: String
-    displayOrder: Int!
+    parentCategoryId: ID
+    children: [CategoryResponse!]!
+    image: String
     isActive: Boolean!
     featured: Boolean!
-    icon: String
-    color: String
-    productCount: Int
     createdAt: DateTime!
     updatedAt: DateTime!
-}
+
+  }
 
 type CategoryResponseDto {
     content: [CategoryResponse!]!
@@ -76,10 +84,9 @@ input CategoryCreateRequest {
     name: String!
     description: String
     imageUrl: String
-    displayOrder: Int
     featured: Boolean
-    icon: String
-    color: String
+    isActive: Boolean
+    parentCategoryId: ID
 }
 
 input CategoryUpdateRequest {

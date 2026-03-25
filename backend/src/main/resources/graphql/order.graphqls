@@ -86,6 +86,7 @@ extend type Query {
     # Security: ADMIN or STAFF only
     # Admin
     allOrders(pagination: PageInput): OrderResponseDto!
+    ordersByStatus(status: OrderStatus!, pagination: PageInput): OrderResponseDto!
     orderStatistics: OrderStatsResponse!
     staffOrderManagement(pagination: PageInput): OrderResponseDto!
 }
@@ -106,4 +107,6 @@ extend type Mutation {
     shipOrder(id: ID!, trackingNumber: String!, carrier: String): OrderResponse!
     deliverOrder(id: ID!): OrderResponse!
     refundOrder(id: ID!, amount: BigDecimal!, reason: String!): OrderResponse!
+    cancelOrderAdmin(id: ID!, reason: String!): OrderResponse!
+    updateOrderStatus(id: ID!, status: OrderStatus!): OrderResponse!
 }
