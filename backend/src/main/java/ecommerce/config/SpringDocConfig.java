@@ -29,7 +29,8 @@ public class SpringDocConfig {
                 .type(SecurityScheme.Type.HTTP)
                 .scheme("bearer")
                 .bearerFormat("JWT")
-                .description("Enter your JWT token. Obtain it from /auth/login or use OAuth2.");
+                .name("Authorization")
+                .description("Enter your JWT token. Click 'Authorize' button to login.");
 
         Scopes oauth2Scopes = new Scopes();
         oauth2Scopes.put("email", "Access to email");
@@ -42,8 +43,7 @@ public class SpringDocConfig {
                                 .tokenUrl("https://oauth2.googleapis.com/token")
                                 .scopes(oauth2Scopes)));
 
-        SecurityRequirement jwtRequirement = new SecurityRequirement().addList("JWT-Auth");
-        SecurityRequirement oauth2Requirement = new SecurityRequirement().addList("Google-OAuth2");
+        SecurityRequirement jwtRequirement = new SecurityRequirement().addList("bearerAuth");
 
         return new OpenAPI()
                 .info(new Info()
@@ -52,37 +52,11 @@ public class SpringDocConfig {
                         .description("""
                                 ## Smart E-Commerce API - Security Documentation
                                 
-                                ### Authentication Methods
-                                
-                                1. **JWT Authentication** (Recommended for API clients)
-                                   - Login: POST `/api/v1/auth/login`
-                                   - Use: Include header `Authorization: Bearer {JWT_TOKEN}`
-                                   
-                                2. **OAuth2 Google Login** (For frontend applications)
-                                   - Use: `/oauth2/authorization/google` endpoint
-                                   - Redirect URI: `/api/v1/auth/oauth2/success`
-                                   
-                                ### Role-Based Access Control (RBAC)
-                                
-                                | Role | Description |
-                                |------|-------------|
-                                | CUSTOMER | Regular user with customer access |
-                                | STAFF | Staff member with limited admin access |
-                                | ADMIN | Full administrative access |
-                                
-                                ### Security Features
-                                
-                                - **Password**: BCrypt hashed
-                                - **Token**: JWT with HS512 signature
-                                - **Token Blacklisting**: Implemented for logout/revocation
-                                - **CORS**: Configured for frontend origins
-                                
-                                ### Public Endpoints
-                                - `/api/v1/auth/login` - User authentication
-                                - `/api/v1/auth/register` - User registration
-                                - `/api/v1/auth/oauth2/**` - OAuth2 endpoints
-                                - `/api/v1/products` - Public product listings
-                                - `/api/v1/categories` - Public category listings
+                                ### How to Use
+                                1. Click **Authorize** button below
+                                2. Enter your JWT token (format: `Bearer {token}`)
+                                3. Click **Authorize** to apply to all requests
+                                4. Test protected endpoints - they will return 401 if not authenticated
                                 """)
                         .contact(new Contact()
                                 .name("Development Team")
@@ -99,10 +73,9 @@ public class SpringDocConfig {
                                 .description("Production Server")
                 ))
                 .components(new Components()
-                        .addSecuritySchemes("JWT-Auth", jwtSecurityScheme)
+                        .addSecuritySchemes("bearerAuth", jwtSecurityScheme)
                         .addSecuritySchemes("Google-OAuth2", oauth2SecurityScheme))
-                .addSecurityItem(jwtRequirement)
-                .addSecurityItem(oauth2Requirement);
+                .addSecurityItem(jwtRequirement);
     }
 
     @Bean
@@ -121,7 +94,11 @@ public class SpringDocConfig {
                         "/info",
                         "/help-support/**",
                         "/social-links",
-                        "/app-download-links"
+                        "/app-download-links",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/v3/api-docs/**",
+                        "/graphiql/**"
                 )
                 .build();
     }

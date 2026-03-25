@@ -643,7 +643,7 @@ public class OrderServiceImpl implements OrderService {
                 customerName = order.getCustomer().getFirstName() + " " + order.getCustomer().getLastName();
             }
             String email = order.getCustomer() != null ? order.getCustomer().getEmail() : "";
-            String phone = order.getCustomer() != null ? order.getCustomer().getPhoneNumber() : "";
+            String phone = order.getCustomer() != null ? order.getCustomer().getPhone() : "";
             String shippingAddress = "";
             if (order.getShippingAddress() != null) {
                 shippingAddress = order.getShippingAddress().getStreetAddress() + ", " + 
@@ -1965,9 +1965,9 @@ public class OrderServiceImpl implements OrderService {
                 .collect(Collectors.toList());
 
         // Add rank
-        rank = 1;
+        int productRank = 1;
         for (var product : topProducts) {
-            product.setRank(rank++);
+            product.setRank(productRank++);
         }
 
         // Monthly sales trend
@@ -2010,13 +2010,16 @@ public class OrderServiceImpl implements OrderService {
             totalPaymentAmount = totalPaymentAmount.add((BigDecimal) row[2]);
         }
 
+        // Create effectively final copy for lambda expression
+        final BigDecimal finalTotalPaymentAmount = totalPaymentAmount;
+
         List<ecommerce.modules.admin.dto.AdminAnalyticsDto.PaymentMethodBreakdown> paymentMethodBreakdown = paymentBreakdownData.stream()
                 .map(row -> {
                     PaymentMethod method = (PaymentMethod) row[0];
                     Long count = (Long) row[1];
                     BigDecimal amount = (BigDecimal) row[2];
-                    Double share = totalPaymentAmount.compareTo(BigDecimal.ZERO) > 0
-                            ? amount.multiply(BigDecimal.valueOf(100)).divide(totalPaymentAmount, 2, java.math.RoundingMode.HALF_UP).doubleValue()
+                    Double share = finalTotalPaymentAmount.compareTo(BigDecimal.ZERO) > 0
+                            ? amount.multiply(BigDecimal.valueOf(100)).divide(finalTotalPaymentAmount, 2, java.math.RoundingMode.HALF_UP).doubleValue()
                             : 0.0;
                     return ecommerce.modules.admin.dto.AdminAnalyticsDto.PaymentMethodBreakdown.builder()
                             .method(method != null ? method.name() : "UNKNOWN")

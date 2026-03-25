@@ -1,5 +1,6 @@
 package ecommerce.modules.order.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import ecommerce.common.response.ApiResponse;
 import ecommerce.modules.order.dto.CartOrderRequest;
 import ecommerce.modules.order.dto.CreateOrderRequest;
@@ -7,6 +8,7 @@ import ecommerce.modules.order.dto.OrderResponse;
 import ecommerce.modules.order.dto.PaymentProcessRequest;
 import ecommerce.modules.order.service.OrderService;
 import ecommerce.security.UserPrincipal;
+import ecommerce.service.IdempotencyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -44,6 +47,8 @@ import java.util.UUID;
 public class CheckoutController {
 
     private final OrderService orderService;
+    private final IdempotencyService idempotencyService;
+    private final ObjectMapper objectMapper;
 
     /**
      * Creates an order from the customer's cart.
@@ -53,6 +58,11 @@ public class CheckoutController {
      * 2. User selects shipping address and payment method
      * 3. Order is created and cart is cleared
      * 
+     * IDEMPOTENCY:
+     * - Accepts "Idempotency-Key" header with unique key
+     * - Validates payload consistency (same key + different payload = error)
+     * - Returns cached response for duplicate requests
+     * 
      * @param cartId    The cart UUID to checkout
      * @param request   Optional checkout metadata (shipping address, payment method, etc.)
      * @param principal The authenticated user principal
@@ -60,23 +70,50 @@ public class CheckoutController {
      */
     @PostMapping("/checkout")
     @PreAuthorize("hasRole('CUSTOMER')")
-    @Operation(summary = "Create order from cart", description = "Create an order from the customer's cart")
+    @Operation(
+        summary = "Create order from cart", 
+        description = "Create an order from the customer's cart. Use 'Idempotency-Key' header to prevent duplicate orders."
+    )
     public ResponseEntity<ApiResponse<OrderResponse>> checkout(
             @RequestParam UUID cartId,
             @RequestBody(required = false) CartOrderRequest request,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
             @AuthenticationPrincipal UserPrincipal principal) {
         
-        log.info("POST /api/v1/checkout - cartId={}, user={}", cartId, principal.getId());
+        log.info("POST /api/v1/checkout - cartId={}, user={}, idempotencyKey={}", cartId, principal.getId(), idempotencyKey);
         
-        // Build the create order request from cart and optional metadata
+        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
+            if (!idempotencyService.validatePayload(idempotencyKey, request)) {
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.<OrderResponse>builder()
+                                .message("Idempotency key already used with different payload")
+                                .build());
+            }
+            
+            Optional<String> cached = idempotencyService.check(idempotencyKey, request);
+            if (cached.isPresent()) {
+                try {
+                    OrderResponse cachedOrder = objectMapper.readValue(cached.get(), OrderResponse.class);
+                    return ResponseEntity.ok(ApiResponse.success("Order retrieved from cache (duplicate request)", cachedOrder));
+                } catch (Exception e) {
+                    log.error("Failed to deserialize cached order", e);
+                }
+            }
+        }
+        
         CreateOrderRequest createRequest = CreateOrderRequest.builder()
                 .shippingAddressId(request != null && request.getShippingAddress() != null 
                         ? extractAddressId(request.getShippingAddress()) : null)
                 .paymentMethod(request != null && request.getPaymentMethod() != null 
                         ? request.getPaymentMethod().name() : null)
+                .idempotencyKey(idempotencyKey)
                 .build();
         
         OrderResponse order = orderService.createOrder(createRequest, principal.getId());
+        
+        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
+            idempotencyService.save(idempotencyKey, request, order);
+        }
         
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Order created successfully", order));

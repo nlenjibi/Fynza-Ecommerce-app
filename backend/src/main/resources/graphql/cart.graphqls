@@ -4,14 +4,32 @@ enum CartStatus {
     CONVERTED
 }
 
+enum ReservationStatus {
+    PENDING
+    CONFIRMED
+    FAILED
+}
+
+type ReservationResponse {
+    reservationId: ID!
+    status: ReservationStatus!
+    estimatedConfirmationMs: Long
+    message: String!
+    retryCount: Int!
+}
+
 type Cart {
     id: ID!
-    status: CartStatus!
+    userId: ID!
     items: [CartItem!]!
+    subtotal: BigDecimal!
+    tax: BigDecimal!
+    shippingCost: BigDecimal!
+    discount: BigDecimal!
     totalPrice: BigDecimal!
-    discountAmount: BigDecimal!
+    itemsCount: Int!
     couponCode: String
-    itemCount: Int!
+    status: CartStatus!
     createdAt: DateTime!
     updatedAt: DateTime!
 }
@@ -20,17 +38,23 @@ type CartItem {
     id: ID!
     product: ProductResponse!
     quantity: Int!
-    unitPrice: BigDecimal!
     totalPrice: BigDecimal!
+    reserved: Boolean!
+    reservationExpiresAt: DateTime!
 }
 
 input AddItemToCartInput {
     productId: ID!
+    variantId: ID
     quantity: Int!
 }
 
 input UpdateCartItemInput {
     quantity: Int!
+}
+
+input ApplyCouponInput {
+    couponCode: String!
 }
 
 extend type Query {
@@ -53,6 +77,9 @@ extend type Mutation {
     
     # Security: AUTHENTICATED - Clear own cart
     clearCart(cartId: ID!): Boolean!
+    
+    # Security: AUTHENTICATED - Apply coupon to cart
+    applyCouponToCart(cartId: ID!, input: ApplyCouponInput!): Cart!
     
     # Security: AUTHENTICATED - Merge guest cart with user cart
     mergeCart(guestCartId: ID!): Cart!

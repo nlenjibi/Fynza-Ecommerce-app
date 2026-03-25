@@ -1,9 +1,15 @@
 enum Role {
-    USER
-    ADMIN
-    SELLER
     CUSTOMER
-    STAFF
+    SELLER
+    ADMIN
+    MODERATOR
+}
+
+enum UserStatus {
+    ACTIVE
+    INACTIVE
+    BANNED
+    SUSPENDED
 }
 
 """
@@ -16,13 +22,15 @@ type User {
     firstName: String!
     lastName: String!
     fullName: String!
-    phoneNumber: String
+    phone: String
     profileImageUrl: String
     role: Role!
-    isActive: Boolean!
+    status: UserStatus!
     emailVerified: Boolean!
+    isActive: Boolean!
     createdAt: DateTime!
     updatedAt: DateTime!
+    lastLoginAt: DateTime
 }
 
 """
@@ -33,18 +41,6 @@ type UserPage {
     pageInfo: PageInfo!
 }
 
-"""
-Security: Requires ADMIN role
-"""
-type AdminDashboard {
-    totalUsers: Long!
-    totalProducts: Long!
-    totalOrders: Long!
-    totalRevenue: BigDecimal!
-    pendingOrders: Long!
-    activeUsers: Long!
-    lowStockProducts: Long!
-}
 
 input UserCreateInput {
     email: String!
@@ -112,26 +108,16 @@ input AddressInput {
 # - user(id): Public
 # - users: ADMIN only
 # - currentUser: AUTHENTICATED only
-# - adminDashboard: ADMIN only
-# - staffDashboard: ADMIN or STAFF
 extend type Query {
     user(id: ID!): User
     users(pagination: PageInput, filter: UserFilterInput): UserPage!
     currentUser: User
-    adminDashboard: AdminDashboard!
-    staffDashboard: AdminDashboard!
     
     # Address queries
     myAddresses: [Address!]!
 }
 
 extend type Mutation {
-    createUser(input: UserCreateInput!): User!
-    updateUser(id: ID!, input: UserUpdateInput!): User!
-    deleteUser(id: ID!): Boolean!
-    lockAccount(userId: ID!): Boolean!
-    unlockAccount(userId: ID!): Boolean!
-    
     # Address mutations
     addAddress(input: AddressInput!): Address!
     updateAddress(id: ID!, input: AddressInput!): Address!

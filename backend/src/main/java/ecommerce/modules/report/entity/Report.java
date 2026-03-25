@@ -4,10 +4,7 @@ import ecommerce.common.base.BaseEntity;
 import ecommerce.common.enums.ReportFormat;
 import ecommerce.common.enums.ReportType;
 import jakarta.persistence.*;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;

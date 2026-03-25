@@ -22,15 +22,9 @@ public class CategoryUpdateRequest {
     private String description;
 
     @Size(max = 500, message = "Image URL must not exceed 500 characters")
-    private String imageUrl;
-
-    @Min(value = 0, message = "Display order must be non-negative")
-    private Integer displayOrder;
+    private String image;
 
     private Boolean featured;
-
-    @Size(max = 100, message = "Icon must not exceed 100 characters")
-    private String icon;
 
     private UUID parentCategoryId;
 

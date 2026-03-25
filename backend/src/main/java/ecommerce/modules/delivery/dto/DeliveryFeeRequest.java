@@ -32,6 +32,9 @@ public class DeliveryFeeRequest {
     @Positive(message = "Per KM fee must be positive")
     private BigDecimal perKmFee;
 
+    private BigDecimal weightBasedFee;
+    private BigDecimal freeShippingThreshold;
+
     @NotNull(message = "Estimated days is required")
     @Positive(message = "Estimated days must be positive")
     private Integer estimatedDays;

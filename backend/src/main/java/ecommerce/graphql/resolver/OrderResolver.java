@@ -50,7 +50,10 @@ public class OrderResolver {
                                      @ContextValue UUID userId) {
         log.debug("GQL myOrders(user={})", userId);
         Page<OrderResponse> page = orderService.getUserOrders(userId, toPageable(pagination));
-        return toDto(page);
+        return OrderResponseDto.builder()
+                .content(page.getContent())
+                .pageInfo(PaginatedResponse.from(page))
+                .build();
     }
 
     @QueryMapping
@@ -58,7 +61,10 @@ public class OrderResolver {
     public OrderResponseDto allOrders(@Argument PageInput pagination) {
         log.debug("GQL allOrders");
         Page<OrderResponse> page = orderService.getAllOrders(toPageable(pagination));
-        return toDto(page);
+        return OrderResponseDto.builder()
+                .content(page.getContent())
+                .pageInfo(PaginatedResponse.from(page))
+                .build();
     }
 
     @QueryMapping
@@ -67,7 +73,10 @@ public class OrderResolver {
                                            @Argument PageInput pagination) {
         log.debug("GQL ordersByStatus(status={})", status);
         Page<OrderResponse> page = orderService.getOrdersByStatus(status, toPageable(pagination));
-        return toDto(page);
+        return OrderResponseDto.builder()
+                .content(page.getContent())
+                .pageInfo(PaginatedResponse.from(page))
+                .build();
     }
 
     @QueryMapping
@@ -118,12 +127,5 @@ public class OrderResolver {
                 ? Sort.by(input.getSortBy()).descending()
                 : Sort.by(input.getSortBy()).ascending();
         return PageRequest.of(input.getPage(), input.getSize(), sort);
-    }
-
-    private OrderResponseDto toDto(Page<OrderResponse> page) {
-        return OrderResponseDto.builder()
-                .content(page.getContent())
-                .pageInfo(PaginatedResponse.from(page))
-                .build();
     }
 }

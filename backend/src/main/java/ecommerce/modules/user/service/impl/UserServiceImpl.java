@@ -1,5 +1,7 @@
 package ecommerce.modules.user.service.impl;
 
+import ecommerce.common.enums.SellerStatus;
+import ecommerce.common.enums.UserStatus;
 import ecommerce.exception.DuplicateResourceException;
 import ecommerce.exception.ResourceNotFoundException;
 import ecommerce.modules.auth.service.SecurityService;
@@ -18,7 +20,7 @@ import ecommerce.modules.user.repository.SellerProfileRepository;
 import ecommerce.modules.user.service.UserService;
 import ecommerce.common.enums.VerificationStatus;
 import ecommerce.services.TokenValidationService;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
@@ -39,8 +41,9 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Service
+@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
 
     private final UserMapper userMapper;
@@ -564,7 +567,7 @@ public class UserServiceImpl implements UserService {
             csv.append(String.format("%s,%s,%s,%s,%s,%s\n",
                     escapeCsv(user.getFullName()),
                     escapeCsv(user.getEmail()),
-                    escapeCsv(user.getPhoneNumber() != null ? user.getPhoneNumber() : ""),
+                    escapeCsv(user.getPhone() != null ? user.getPhone() : ""),
                     user.getStatus(),
                     user.getCreatedAt(),
                     user.getLastLoginAt() != null ? user.getLastLoginAt() : ""));
@@ -601,9 +604,9 @@ public class UserServiceImpl implements UserService {
         log.debug("Fetching seller statistics");
 
         long total = sellerProfileRepository.countAllSellers();
-        long active = sellerProfileRepository.countBySellerStatus(UserStatus.ACTIVE);
-        long pending = sellerProfileRepository.countBySellerStatus(UserStatus.PENDING);
-        long suspended = sellerProfileRepository.countBySellerStatus(UserStatus.SUSPENDED);
+        long active = sellerProfileRepository.countBySellerStatus(SellerStatus.ACTIVE);
+        long pending = sellerProfileRepository.countBySellerStatus(SellerStatus.PENDING);
+        long suspended = sellerProfileRepository.countBySellerStatus(SellerStatus.SUSPENDED);
 
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalSellers", total);
@@ -622,7 +625,7 @@ public class UserServiceImpl implements UserService {
         SellerProfile profile = sellerProfileRepository.findById(sellerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Seller profile not found"));
 
-        profile.setSellerStatus(UserStatus.ACTIVE);
+        profile.setSellerStatus(SellerStatus.ACTIVE);
         profile.setVerificationStatus(VerificationStatus.VERIFIED);
         sellerProfileRepository.save(profile);
 
@@ -638,7 +641,7 @@ public class UserServiceImpl implements UserService {
         SellerProfile profile = sellerProfileRepository.findById(sellerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Seller profile not found"));
 
-        profile.setSellerStatus(UserStatus.SUSPENDED);
+        profile.setSellerStatus(SellerStatus.SUSPENDED);
         sellerProfileRepository.save(profile);
 
         log.info("Seller {} suspended successfully", sellerId);
@@ -653,7 +656,7 @@ public class UserServiceImpl implements UserService {
         SellerProfile profile = sellerProfileRepository.findById(sellerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Seller profile not found"));
 
-        profile.setSellerStatus(UserStatus.ACTIVE);
+        profile.setSellerStatus(SellerStatus.ACTIVE);
         sellerProfileRepository.save(profile);
 
         log.info("Seller {} reactivated successfully", sellerId);

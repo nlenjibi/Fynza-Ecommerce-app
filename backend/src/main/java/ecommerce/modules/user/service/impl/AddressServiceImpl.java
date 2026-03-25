@@ -10,7 +10,7 @@ import ecommerce.modules.user.mapper.AddressMapper;
 import ecommerce.modules.user.repository.AddressRepository;
 import ecommerce.modules.user.repository.UserRepository;
 import ecommerce.modules.user.service.AddressService;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,8 +20,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Service
+@Transactional(readOnly = true)
 public class AddressServiceImpl implements AddressService {
 
     private final AddressRepository addressRepository;

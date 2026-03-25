@@ -24,7 +24,11 @@ public class AsyncConfig {
     private static final Logger log = LoggerFactory.getLogger(AsyncConfig.class);
 
     private final AsyncProperties asyncProperties;
-    private final MdcTaskDecorator mdcTaskDecorator;
+
+    @Bean
+    public MdcTaskDecorator mdcTaskDecorator() {
+        return new MdcTaskDecorator();
+    }
 
     @Bean("taskExecutor")
     public Executor taskExecutor() {
@@ -33,7 +37,7 @@ public class AsyncConfig {
         executor.setMaxPoolSize(25);
         executor.setQueueCapacity(100);
         executor.setThreadNamePrefix("async-");
-        executor.setTaskDecorator(mdcTaskDecorator);
+        executor.setTaskDecorator(mdcTaskDecorator());
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(60);
@@ -53,7 +57,7 @@ public class AsyncConfig {
         executor.setMaxPoolSize(getInventoryMaxPoolSize());
         executor.setQueueCapacity(getInventoryQueueCapacity());
         executor.setThreadNamePrefix("inventory-");
-        executor.setTaskDecorator(mdcTaskDecorator);
+        executor.setTaskDecorator(mdcTaskDecorator());
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(60);
@@ -72,7 +76,7 @@ public class AsyncConfig {
         executor.setMaxPoolSize(asyncProperties.getOrder().getMaxPoolSize());
         executor.setQueueCapacity(asyncProperties.getOrder().getQueueCapacity());
         executor.setThreadNamePrefix("order-");
-        executor.setTaskDecorator(mdcTaskDecorator);
+        executor.setTaskDecorator(mdcTaskDecorator());
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(60);
@@ -91,7 +95,7 @@ public class AsyncConfig {
         executor.setMaxPoolSize(asyncProperties.getPayment().getMaxPoolSize());
         executor.setQueueCapacity(asyncProperties.getPayment().getQueueCapacity());
         executor.setThreadNamePrefix("payment-");
-        executor.setTaskDecorator(mdcTaskDecorator);
+        executor.setTaskDecorator(mdcTaskDecorator());
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(60);
@@ -110,7 +114,7 @@ public class AsyncConfig {
         executor.setMaxPoolSize(asyncProperties.getNotification().getMaxPoolSize());
         executor.setQueueCapacity(asyncProperties.getNotification().getQueueCapacity());
         executor.setThreadNamePrefix("notification-");
-        executor.setTaskDecorator(mdcTaskDecorator);
+        executor.setTaskDecorator(mdcTaskDecorator());
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(60);
@@ -129,7 +133,7 @@ public class AsyncConfig {
         executor.setMaxPoolSize(asyncProperties.getReport().getMaxPoolSize());
         executor.setQueueCapacity(asyncProperties.getReport().getQueueCapacity());
         executor.setThreadNamePrefix("report-");
-        executor.setTaskDecorator(mdcTaskDecorator);
+        executor.setTaskDecorator(mdcTaskDecorator());
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(60);
@@ -148,7 +152,7 @@ public class AsyncConfig {
         executor.setMaxPoolSize(asyncProperties.getImage().getMaxPoolSize());
         executor.setQueueCapacity(asyncProperties.getImage().getQueueCapacity());
         executor.setThreadNamePrefix("image-");
-        executor.setTaskDecorator(mdcTaskDecorator);
+        executor.setTaskDecorator(mdcTaskDecorator());
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(60);
@@ -167,7 +171,7 @@ public class AsyncConfig {
         executor.setMaxPoolSize(asyncProperties.getSearch().getMaxPoolSize());
         executor.setQueueCapacity(asyncProperties.getSearch().getQueueCapacity());
         executor.setThreadNamePrefix("search-");
-        executor.setTaskDecorator(mdcTaskDecorator);
+        executor.setTaskDecorator(mdcTaskDecorator());
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(60);
@@ -190,7 +194,7 @@ public class AsyncConfig {
         executor.setMaxPoolSize(5);
         executor.setQueueCapacity(200);  // Larger queue to handle bursts
         executor.setThreadNamePrefix("security-");
-        executor.setTaskDecorator(mdcTaskDecorator);
+        executor.setTaskDecorator(mdcTaskDecorator());
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(30);

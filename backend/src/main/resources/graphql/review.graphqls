@@ -90,6 +90,23 @@ input AdminResponseInput {
     response: String!
 }
 
+input ReviewFilterInput {
+    productId: ID
+    customerId: ID
+    rating: Int
+    ratingMin: Int
+    ratingMax: Int
+    verifiedPurchase: Boolean
+    approved: Boolean
+    hasImages: Boolean
+    hasPros: Boolean
+    hasCons: Boolean
+    hasAdminResponse: Boolean
+    dateFrom: DateTime
+    dateTo: DateTime
+    search: String
+}
+
 # ──────────────────────────────────────────────────────────────
 #  Queries
 # ──────────────────────────────────────────────────────────────

@@ -38,7 +38,7 @@ public class ContactMessage extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     @Builder.Default
-    private ContactStatus status = ContactStatus.PENDING;
+    private ContactStatus status = ContactStatus.NEW;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "priority", nullable = false, length = 20)
@@ -48,7 +48,7 @@ public class ContactMessage extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "category", nullable = false, length = 30)
     @Builder.Default
-    private ContactCategory category = ContactCategory.GENERAL;
+    private ContactCategory category = ContactCategory.GENERAL_INQUIRY;
 
     @Column(name = "admin_response", columnDefinition = "TEXT")
     private String adminResponse;
@@ -61,10 +61,13 @@ public class ContactMessage extends BaseEntity {
 
     public enum ContactStatus {
         OPEN,
-        PENDING,
+
+        NEW,
+        READ,
         IN_PROGRESS,
-        RESOLVED,
-        CLOSED
+        RESPONDED,
+        CLOSED,
+        SPAM
     }
 
     public enum ContactPriority {

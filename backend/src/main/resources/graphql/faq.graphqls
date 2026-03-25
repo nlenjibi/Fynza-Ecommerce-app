@@ -1,0 +1,89 @@
+# FAQ GraphQL Schema
+# Frequently Asked Questions management
+
+type FAQ {
+    id: ID!
+    question: String!
+    answer: String!
+    category: FAQCategory!
+    order: Int
+    isActive: Boolean!
+    isPublic: Boolean!
+    viewCount: Int!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}
+
+enum FAQCategory {
+    GENERAL
+    ACCOUNT
+    ORDER
+    PAYMENT
+    SHIPPING
+    RETURN
+    PRODUCT
+    SELLER
+    SUPPORT
+}
+
+input FAQInput {
+    question: String!
+    answer: String!
+    category: FAQCategory!
+    order: Int
+    isPublic: Boolean = true
+}
+
+input FAQFilterInput {
+    category: FAQCategory
+    isActive: Boolean
+    isPublic: Boolean
+    search: String
+}
+
+extend type Query {
+    # Security: PUBLIC
+    faqs(
+        filter: FAQFilterInput
+        pagination: PageInput
+    ): FAQConnection!
+    
+    # Security: PUBLIC
+    faq(id: ID!): FAQ
+    
+    # Security: PUBLIC - Get FAQ categories with counts
+    faqCategories: [FAQCategoryCount!]!
+    
+    # Security: ADMIN only
+    adminFaqs(
+        filter: FAQFilterInput
+        pagination: PageInput
+    ): FAQConnection!
+}
+
+type FAQConnection {
+    content: [FAQ!]!
+    pageInfo: PageInfo!
+}
+
+type FAQCategoryCount {
+    category: FAQCategory!
+    count: Int!
+}
+
+extend type Mutation {
+    # Security: ADMIN only
+    createFAQ(input: FAQInput!): FAQ!
+    
+    # Security: ADMIN only
+    updateFAQ(id: ID!, input: FAQInput!): FAQ!
+    
+    # Security: ADMIN only
+    deleteFAQ(id: ID!): Boolean!
+    
+    # Security: ADMIN only
+    reorderFAQs(faqIds: [ID!]!): Boolean!
+    
+    # Security: ADMIN only
+    toggleFAQActive(id: ID!): FAQ!
+}

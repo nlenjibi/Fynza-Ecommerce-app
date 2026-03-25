@@ -5,6 +5,7 @@ import ecommerce.common.response.PaginatedResponse;
 import ecommerce.modules.contact.dto.ContactMessageRequest;
 import ecommerce.modules.contact.dto.ContactMessageResponse;
 import ecommerce.modules.contact.dto.ContactResponseRequest;
+import ecommerce.modules.contact.dto.ContactStats;
 import ecommerce.modules.contact.entity.ContactMessage.ContactCategory;
 import ecommerce.modules.contact.entity.ContactMessage.ContactPriority;
 import ecommerce.modules.contact.entity.ContactMessage.ContactStatus;
@@ -21,8 +22,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -123,15 +122,8 @@ public class ContactController {
     @GetMapping("/stats")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get message statistics", description = "Get count of messages by status - ADMIN only")
-    public ResponseEntity<ApiResponse<Map<String, Long>>> getMessageStats() {
-        Map<String, Long> stats = new HashMap<>();
-        stats.put("total", contactService.countTotalMessages());
-        stats.put("open", contactService.countMessagesByStatus(ContactStatus.OPEN));
-        stats.put("pending", contactService.countMessagesByStatus(ContactStatus.PENDING));
-        stats.put("inProgress", contactService.countMessagesByStatus(ContactStatus.IN_PROGRESS));
-        stats.put("resolved", contactService.countMessagesByStatus(ContactStatus.RESOLVED));
-        stats.put("closed", contactService.countMessagesByStatus(ContactStatus.CLOSED));
-
+    public ResponseEntity<ApiResponse<ContactStats>> getMessageStats() {
+        ContactStats stats = contactService.getMessageStats();
         return ResponseEntity.ok(ApiResponse.success("Statistics retrieved successfully", stats));
     }
 }

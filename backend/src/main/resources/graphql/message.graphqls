@@ -1,0 +1,137 @@
+# Message GraphQL Schema
+# User-to-seller messaging and conversations
+
+type Conversation {
+    id: ID!
+    participants: [User!]!
+    category: ConversationCategory!
+    subject: String
+    lastMessage: Message
+    unreadCount: Int!
+    isArchived: Boolean!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}
+
+type Message {
+    id: ID!
+    conversation: Conversation!
+    sender: User!
+    content: String!
+    messageType: MessageType!
+    attachments: [MessageAttachment!]
+    isRead: Boolean!
+    readAt: DateTime
+    priority: MessagePriority
+    createdAt: DateTime!
+}
+
+type MessageAttachment {
+    id: ID!
+    fileName: String!
+    fileUrl: String!
+    fileType: String
+    fileSize: Long
+}
+
+enum ConversationCategory {
+    GENERAL
+    ORDER_INQUIRY
+    PRODUCT_QUESTION
+    REFUND_REQUEST
+    COMPLAINT
+    PARTNERSHIP
+}
+
+enum MessageType {
+    TEXT
+    IMAGE
+    FILE
+    SYSTEM
+}
+
+enum MessagePriority {
+    LOW
+    NORMAL
+    HIGH
+}
+
+input MessageInput {
+    conversationId: ID
+    recipientId: ID
+    subject: String
+    category: ConversationCategory
+    content: String!
+    messageType: MessageType = TEXT
+    attachments: [AttachmentInput]
+    priority: MessagePriority = NORMAL
+}
+
+input AttachmentInput {
+    fileName: String!
+    fileUrl: String!
+    fileType: String
+    fileSize: Long
+}
+
+input ConversationFilterInput {
+    category: ConversationCategory
+    isArchived: Boolean
+    hasUnread: Boolean
+}
+
+extend type Query {
+    # Security: AUTHENTICATED
+    conversations(
+        filter: ConversationFilterInput
+        pagination: PageInput
+    ): ConversationConnection!
+    
+    # Security: AUTHENTICATED
+    conversation(id: ID!): Conversation
+    
+    # Security: AUTHENTICATED
+    messages(
+        conversationId: ID!
+        pagination: PageInput
+    ): MessageConnection!
+    
+    # Security: AUTHENTICATED
+    unreadMessageCount: Int!
+    
+    # Security: ADMIN only
+    allConversations(
+        filter: ConversationFilterInput
+        pagination: PageInput
+    ): ConversationConnection!
+}
+
+type ConversationConnection {
+    content: [Conversation!]!
+    pageInfo: PageInfo!
+}
+
+type MessageConnection {
+    content: [Message!]!
+    pageInfo: PageInfo!
+}
+
+extend type Mutation {
+    # Security: AUTHENTICATED
+    createConversation(input: MessageInput!): Conversation!
+    
+    # Security: AUTHENTICATED
+    sendMessage(input: MessageInput!): Message!
+    
+    # Security: AUTHENTICATED
+    markMessageAsRead(messageId: ID!): Message!
+    
+    # Security: AUTHENTICATED
+    markConversationAsRead(conversationId: ID!): Conversation!
+    
+    # Security: AUTHENTICATED
+    archiveConversation(conversationId: ID!): Boolean!
+    
+    # Security: AUTHENTICATED
+    deleteConversation(conversationId: ID!): Boolean!
+}
