@@ -8,24 +8,27 @@
 - ✅ Query.getFeaturedRootCategories - ADDED to category.graphqls
 - ✅ Query.getCategoriesByDateRange - ADDED to category.graphqls
 - ✅ Query.getRootCategories - ADDED to category.graphqls
-- ✅ Query.coupon - Needs coupon.graphqls
-- ✅ Query.coupons - Needs coupon.graphqls
-- ✅ Query.validateCoupon - Needs coupon.graphqls
+- ✅ Query.coupon - ADDED to coupon.graphqls
+- ✅ Query.coupons - ADDED to coupon.graphqls
+- ✅ Query.validateCoupon - ADDED to coupon.graphqls
 - ✅ Query.ordersByStatus - ADDED to order.graphqls
 - ✅ Query.productsBySeller - ADDED to product.graphqls
 - ✅ Mutation.applyCouponToCart - FIXED in cart.graphqls
-- ✅ Mutation.createCoupon - Needs coupon.graphqls
-- ✅ Mutation.updateCoupon - Needs coupon.graphqls
-- ✅ Mutation.deleteCoupon - Needs coupon.graphqls
+- ✅ Mutation.createCoupon - ADDED to coupon.graphqls
+- ✅ Mutation.updateCoupon - ADDED to coupon.graphqls
+- ✅ Mutation.deleteCoupon - ADDED to coupon.graphqls
 - ✅ Mutation.cancelOrderAdmin - ADDED to order.graphqls
-- ✅ Mutation.updateOrderStatus - ADDED to order.graphqls
+- ✅ Mutation.updateOrderStatus - FIXED in order.graphqls (use OrderStatusUpdateRequest)
 
 ## FIXED: Unmapped arguments (2025-03-25)
 - ✅ ReviewResolver#productReviews - FIXED to use PageInput
 - ✅ ReviewResolver#searchReviews - FIXED to use PageInput
 - ✅ ReviewResolver#myReviews - FIXED to use PageInput
+- ✅ OrderResolver#updateOrderStatus - FIXED (now uses request argument)
+- ✅ SellerResolver#updateSellerOrderStatus - FIXED (now uses orderId, request)
 
 ## REMAINING: Unmapped fields
+These are fields in GraphQL types that don't have corresponding resolvers or are not exposed:
 - ContactMessage: assignedTo, response, isRead, ipAddress, userAgent
 - ContactStats: new
 - DeliveryFee: region, shippingMethod, weightBasedFee, freeShippingThreshold
@@ -47,7 +50,29 @@
 - SellerAnalytics: totalRevenue, topSellingProducts, ordersByStatus, revenueByDay, revenueByMonth
 - SiteSettings: createdAt, updatedAt
 - SocialLinks: createdAt, updatedAt
-- Tag: slug, productCount, isActive
+- Tag: slug, productCount, isActive, createdAt, updatedAt
 
-## REMAINING: Skipped types
-Types that need proper type mappings in GraphQL schema.
+## REMAINING: Unmapped Query fields
+These queries exist in schema but need resolvers:
+- categoryBySlug, activeCategories, activeCategoriesPaginated, featuredCategories
+- searchCategories, searchActiveCategories, filterCategories
+- categoriesWithProducts, categoriesByProductCount
+- categoriesCreatedBetween, categoriesUpdatedBetween
+- categoriesByIds, categoriesBySlugs
+- shippingZone, staffOrderManagement
+- productBySlug, productBySku
+- productsByCategory, productsByCategoryName, productsByPriceRange
+- featuredProducts, newProducts, discountedProducts, bestsellerProducts
+- topRatedProducts, trendingProducts, searchProducts
+- productsByInventoryStatus, productsNeedingReorder
+- lowStockProducts, outOfStockProducts, productStatistics
+
+## REMAINING: Unmapped Mutation fields
+- updateCategory, activateCategory, deactivateCategory
+- featureCategory, unfeatureCategory, deleteCategory
+- updateShippingZone, deleteShippingZone
+- confirmOrder, processOrder, shipOrder, deliverOrder, refundOrder
+- bulkUpdateFeatured, bulkDelete
+
+## Skipped types
+Types that need proper type mappings or don't have resolvers.
