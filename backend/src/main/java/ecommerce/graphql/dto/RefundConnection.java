@@ -1,6 +1,7 @@
 package ecommerce.graphql.dto;
 
 import ecommerce.common.response.PaginatedResponse;
+import ecommerce.modules.refund.dto.RefundResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,6 +14,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RefundConnection {
-    private List<Object> content;
-    private PaginatedResponse<Object> pageInfo;
+    private List<RefundResponse> content;
+    private PaginatedResponse<RefundResponse> pageInfo;
 }

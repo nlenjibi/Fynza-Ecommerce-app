@@ -90,11 +90,13 @@ public class RefundResolver {
         return RefundStats.builder()
                 .totalRefunds((int) stats.getTotalRefunds())
                 .totalAmount(stats.getTotalAmount())
-                .pendingCount((int) stats.getPendingCount())
-                .approvedCount((int) stats.getApprovedCount())
-                .rejectedCount((int) stats.getRejectedCount())
-                .completedCount((int) stats.getCompletedCount())
-                .averageRefundAmount(stats.getAverageRefundAmount())
+                .pendingCount((int) stats.getPending())
+                .approvedCount((int) stats.getApproved())
+                .rejectedCount((int) stats.getRejected())
+                .completedCount((int) stats.getCompleted())
+                .averageRefundAmount(stats.getTotalRefunds() > 0 
+                    ? stats.getTotalAmount().divide(BigDecimal.valueOf(stats.getTotalRefunds())) 
+                    : BigDecimal.ZERO)
                 .build();
     }
 
