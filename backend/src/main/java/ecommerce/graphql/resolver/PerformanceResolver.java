@@ -1,5 +1,11 @@
 package ecommerce.graphql.resolver;
 
+import ecommerce.graphql.dto.CacheMetrics;
+import ecommerce.graphql.dto.ContentAnalytics;
+import ecommerce.graphql.dto.DatabaseMetrics;
+import ecommerce.graphql.dto.PerformanceDashboard;
+import ecommerce.graphql.dto.SecurityMetrics;
+import ecommerce.graphql.dto.SystemMetrics;
 import ecommerce.graphql.input.ContentAnalyticsInput;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -193,155 +199,5 @@ public class PerformanceResolver {
     public boolean refreshMetrics() {
         log.info("GraphQL Mutation: refreshMetrics");
         return true;
-    }
-
-    // DTO Classes
-    @lombok.Data
-    @lombok.Builder
-    public static class ContentAnalytics {
-        private long totalPageViews;
-        private long totalClicks;
-        private String avgTimeOnPage;
-        private long uniqueVisitors;
-        private String bounceRate;
-        private int articlesPublished;
-        private String pageViewsChange;
-        private String clicksChange;
-        private String timeOnPageChange;
-        private String visitorsChange;
-        private String bounceRateChange;
-        private String articlesChange;
-        private String period;
-        private String contentType;
-        private List<Object> performanceTrend;
-        private List<Object> engagementByCategory;
-        private List<Object> topContent;
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class SystemMetrics {
-        private MemoryInfo memory;
-        private CpuInfo cpu;
-        private ServerInfo server;
-        private List<Object> rateLimits;
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class MemoryInfo {
-        private long maxMb;
-        private long usedMb;
-        private String usagePercent;
-        private boolean warning;
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class CpuInfo {
-        private int threadCount;
-        private int peakThreads;
-        private int daemonThreads;
-        private long nonHeapMemoryMb;
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class ServerInfo {
-        private String status;
-        private String message;
-        private long uptime;
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class CacheMetrics {
-        private CacheActions actions;
-        private List<Object> caches;
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class CacheActions {
-        private boolean canWarmup;
-        private boolean canClearAll;
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class CacheStatistics {
-        private String cacheName;
-        private long hits;
-        private long misses;
-        private String hitRate;
-        private long size;
-        private String hitRateStatus;
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class DatabaseMetrics {
-        private DatabaseInfo info;
-        private ConnectionPoolInfo connectionPool;
-        private QueryPerformanceInfo queryPerformance;
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class DatabaseInfo {
-        private String product;
-        private String driver;
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class ConnectionPoolInfo {
-        private int active;
-        private int idle;
-        private int total;
-        private int max;
-        private String utilization;
-        private String health;
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class QueryPerformanceInfo {
-        private long totalQueries;
-        private int slowQueries;
-        private String avgTime;
-        private String status;
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class SecurityMetrics {
-        private SecurityStats stats;
-        private SecurityActions actions;
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class SecurityStats {
-        private int failedLoginAttempts;
-        private String hitRate;
-        private long accessLogSize;
-        private int lockoutDurationMinutes;
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class SecurityActions {
-        private boolean canCleanup;
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class PerformanceDashboard {
-        private String timestamp;
-        private SystemMetrics system;
-        private CacheMetrics cache;
-        private DatabaseMetrics database;
-        private SecurityMetrics security;
     }
 }
