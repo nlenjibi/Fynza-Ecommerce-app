@@ -1,5 +1,9 @@
 package ecommerce.graphql.resolver;
 
+import ecommerce.graphql.dto.ShippingCalculation;
+import ecommerce.graphql.input.CalculateShippingInput;
+import ecommerce.graphql.input.DeliveryFeeInput;
+import ecommerce.graphql.input.DeliveryRegionInput;
 import ecommerce.modules.delivery.dto.DeliveryFeeRequest;
 import ecommerce.modules.delivery.dto.DeliveryFeeResponse;
 import ecommerce.modules.delivery.dto.DeliveryRegionRequest;
@@ -145,7 +149,7 @@ public class DeliveryResolver {
         
         DeliveryFeeRequest request = DeliveryFeeRequest.builder()
                 .regionId(input.getRegionId())
-                .deliveryMethod(input.getShippingMethod())
+                .deliveryMethod(DeliveryFee.DeliveryMethod.valueOf(input.getShippingMethod()))
                 .baseFee(input.getBaseFee())
                 .weightBasedFee(input.getWeightBasedFee())
                 .freeShippingThreshold(input.getFreeShippingThreshold())
@@ -164,7 +168,7 @@ public class DeliveryResolver {
         
         DeliveryFeeRequest request = DeliveryFeeRequest.builder()
                 .regionId(input.getRegionId())
-                .deliveryMethod(input.getShippingMethod())
+                .deliveryMethod(DeliveryFee.DeliveryMethod.valueOf(input.getShippingMethod()))
                 .baseFee(input.getBaseFee())
                 .weightBasedFee(input.getWeightBasedFee())
                 .freeShippingThreshold(input.getFreeShippingThreshold())
@@ -187,65 +191,5 @@ public class DeliveryResolver {
     public Object createShippingZone(@Argument Object input) {
         log.info("GraphQL Mutation: createShippingZone - not implemented");
         throw new UnsupportedOperationException("Shipping zone management not implemented");
-    }
-
-    public static class DeliveryRegionInput {
-        private String name;
-        private String code;
-        private String country;
-
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
-        public String getCode() { return code; }
-        public void setCode(String code) { this.code = code; }
-        public String getCountry() { return country; }
-        public void setCountry(String country) { this.country = country; }
-    }
-
-    public static class DeliveryFeeInput {
-        private UUID regionId;
-        private String shippingMethod;
-        private BigDecimal baseFee;
-        private BigDecimal weightBasedFee;
-        private BigDecimal freeShippingThreshold;
-        private Integer estimatedDays;
-
-        public UUID getRegionId() { return regionId; }
-        public void setRegionId(UUID regionId) { this.regionId = regionId; }
-        public String getShippingMethod() { return shippingMethod; }
-        public void setShippingMethod(String shippingMethod) { this.shippingMethod = shippingMethod; }
-        public BigDecimal getBaseFee() { return baseFee; }
-        public void setBaseFee(BigDecimal baseFee) { this.baseFee = baseFee; }
-        public BigDecimal getWeightBasedFee() { return weightBasedFee; }
-        public void setWeightBasedFee(BigDecimal weightBasedFee) { this.weightBasedFee = weightBasedFee; }
-        public BigDecimal getFreeShippingThreshold() { return freeShippingThreshold; }
-        public void setFreeShippingThreshold(BigDecimal freeShippingThreshold) { this.freeShippingThreshold = freeShippingThreshold; }
-        public Integer getEstimatedDays() { return estimatedDays; }
-        public void setEstimatedDays(Integer estimatedDays) { this.estimatedDays = estimatedDays; }
-    }
-
-    public static class CalculateShippingInput {
-        private UUID zoneId;
-        private UUID regionId;
-        private BigDecimal weight;
-        private BigDecimal subtotal;
-
-        public UUID getZoneId() { return zoneId; }
-        public void setZoneId(UUID zoneId) { this.zoneId = zoneId; }
-        public UUID getRegionId() { return regionId; }
-        public void setRegionId(UUID regionId) { this.regionId = regionId; }
-        public BigDecimal getWeight() { return weight; }
-        public void setWeight(BigDecimal weight) { this.weight = weight; }
-        public BigDecimal getSubtotal() { return subtotal; }
-        public void setSubtotal(BigDecimal subtotal) { this.subtotal = subtotal; }
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class ShippingCalculation {
-        private String shippingMethod;
-        private BigDecimal fee;
-        private Integer estimatedDays;
-        private Boolean isFreeShipping;
     }
 }
