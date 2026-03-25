@@ -73,6 +73,12 @@ input OrderFilterInput {
     isActive: Boolean = true
 }
 
+input OrderStatusUpdateRequest {
+    status: OrderStatus!
+    trackingNumber: String
+    notes: String
+}
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Queries
 # ─────────────────────────────────────────────────────────────────────────────
@@ -108,5 +114,5 @@ extend type Mutation {
     deliverOrder(id: ID!): OrderResponse!
     refundOrder(id: ID!, amount: BigDecimal!, reason: String!): OrderResponse!
     cancelOrderAdmin(id: ID!, reason: String!): OrderResponse!
-    updateOrderStatus(id: ID!, status: OrderStatus!): OrderResponse!
+    updateOrderStatus(id: ID!, request: OrderStatusUpdateRequest!): OrderResponse!
 }

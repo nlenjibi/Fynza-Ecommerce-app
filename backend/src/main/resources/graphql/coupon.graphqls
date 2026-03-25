@@ -1,0 +1,42 @@
+# Coupon GraphQL Schema
+
+extend type Query {
+    coupons: [CouponResponse!]!
+    coupon(id: ID!): CouponResponse
+    validateCoupon(code: String!, orderAmount: BigDecimal): CouponResponse
+}
+
+extend type Mutation {
+    createCoupon(input: CouponRequestInput!): CouponResponse!
+    updateCoupon(id: ID!, input: CouponRequestInput!): CouponResponse!
+    deleteCoupon(id: ID!): Boolean!
+}
+
+type CouponResponse {
+    id: ID!
+    code: String!
+    description: String
+    discountType: String!
+    discountValue: BigDecimal!
+    minOrderAmount: BigDecimal
+    maxDiscountAmount: BigDecimal
+    usageLimit: Int
+    usageCount: Int
+    perUserLimit: Int
+    startDate: DateTime!
+    endDate: DateTime!
+    isActive: Boolean!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}
+
+input CouponRequestInput {
+    code: String!
+    description: String
+    discountType: String!
+    discountValue: BigDecimal!
+    minOrderAmount: BigDecimal
+    maxUses: Int
+    validFrom: DateTime!
+    validUntil: DateTime!
+}
