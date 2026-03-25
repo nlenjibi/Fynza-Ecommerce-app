@@ -4,6 +4,7 @@ import ecommerce.graphql.dto.ContactMessageConnection;
 import ecommerce.modules.contact.dto.ContactMessageRequest;
 import ecommerce.modules.contact.dto.ContactMessageResponse;
 import ecommerce.modules.contact.dto.ContactResponseRequest;
+import ecommerce.modules.contact.dto.ContactStats;
 import ecommerce.modules.contact.entity.ContactMessage.ContactStatus;
 import ecommerce.modules.contact.entity.ContactMessage.ContactPriority;
 import ecommerce.modules.contact.service.ContactService;
@@ -64,20 +65,7 @@ public class ContactResolver {
     @PreAuthorize("hasRole('ADMIN')")
     public ContactStats contactMessageStats() {
         log.info("GraphQL Query: contactMessageStats");
-        
-        long total = contactService.countTotalMessages();
-        long newCount = contactService.countMessagesByStatus(ContactStatus.NEW);
-        long inProgress = contactService.countMessagesByStatus(ContactStatus.IN_PROGRESS);
-        long responded = contactService.countMessagesByStatus(ContactStatus.RESPONDED);
-        long closed = contactService.countMessagesByStatus(ContactStatus.CLOSED);
-        
-        return ContactStats.builder()
-                .total((int) total)
-                .newCount((int) newCount)
-                .inProgress((int) inProgress)
-                .responded((int) responded)
-                .closed((int) closed)
-                .build();
+        return contactService.getMessageStats();
     }
 
     @MutationMapping
@@ -210,15 +198,5 @@ public class ContactResolver {
         public void setResponse(String response) { this.response = response; }
         public ContactStatus getStatus() { return status; }
         public void setStatus(ContactStatus status) { this.status = status; }
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class ContactStats {
-        private int total;
-        private int newCount;
-        private int inProgress;
-        private int responded;
-        private int closed;
     }
 }
