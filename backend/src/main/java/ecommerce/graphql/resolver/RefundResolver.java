@@ -2,6 +2,7 @@ package ecommerce.graphql.resolver;
 
 import ecommerce.common.response.PaginatedResponse;
 import ecommerce.graphql.dto.RefundConnection;
+import ecommerce.graphql.dto.RefundStats;
 import ecommerce.graphql.input.PageInput;
 import ecommerce.graphql.input.RefundApprovalInput;
 import ecommerce.graphql.input.RefundRequestInput;
@@ -144,17 +145,5 @@ public class RefundResolver {
                 ? Sort.Direction.DESC : Sort.Direction.ASC;
         String sortBy = input.getSortBy() != null ? input.getSortBy() : "createdAt";
         return PageRequest.of(input.getPage(), input.getSize(), Sort.by(direction, sortBy));
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class RefundStats {
-        private int totalRefunds;
-        private BigDecimal totalAmount;
-        private int pendingCount;
-        private int approvedCount;
-        private int rejectedCount;
-        private int completedCount;
-        private BigDecimal averageRefundAmount;
     }
 }

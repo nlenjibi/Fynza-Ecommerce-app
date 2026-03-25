@@ -1,6 +1,7 @@
 package ecommerce.graphql.resolver;
 
 import ecommerce.common.response.PaginatedResponse;
+import ecommerce.graphql.dto.PaymentStats;
 import ecommerce.graphql.dto.PaymentTransactionConnection;
 import ecommerce.graphql.input.InitiatePaymentInput;
 import ecommerce.graphql.input.PageInput;
@@ -150,16 +151,5 @@ public class PaymentResolver {
                 ? Sort.Direction.DESC : Sort.Direction.ASC;
         String sortBy = input.getSortBy() != null ? input.getSortBy() : "createdAt";
         return PageRequest.of(input.getPage(), input.getSize(), Sort.by(direction, sortBy));
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class PaymentStats {
-        private BigDecimal totalAmount;
-        private BigDecimal successfulAmount;
-        private BigDecimal failedAmount;
-        private BigDecimal refundedAmount;
-        private int transactionCount;
-        private float successRate;
     }
 }
