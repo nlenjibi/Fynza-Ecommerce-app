@@ -2,6 +2,7 @@ package ecommerce.graphql.resolver;
 
 import ecommerce.common.response.PaginatedResponse;
 import ecommerce.graphql.dto.SubscriberConnection;
+import ecommerce.graphql.dto.SubscriberStats;
 import ecommerce.graphql.input.PageInput;
 import ecommerce.graphql.input.SubscriberInput;
 import lombok.RequiredArgsConstructor;
@@ -115,15 +116,5 @@ public class SubscriberResolver {
                 ? Sort.Direction.DESC : Sort.Direction.ASC;
         String sortBy = input.getSortBy() != null ? input.getSortBy() : "createdAt";
         return PageRequest.of(input.getPage(), input.getSize(), Sort.by(direction, sortBy));
-    }
-
-    @lombok.Data
-    @lombok.Builder
-    public static class SubscriberStats {
-        private int total;
-        private int active;
-        private int inactive;
-        private int subscribedToday;
-        private int unsubscribedToday;
     }
 }
