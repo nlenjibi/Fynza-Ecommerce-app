@@ -97,7 +97,7 @@ public class SpringDocConfig {
                         "/app-download-links",
                         "/swagger-ui/**",
                         "/swagger-ui.html",
-                        "/v3/api-docs/**",
+                        "/v3/api-docs/public",
                         "/graphiql/**"
                 )
                 .build();
@@ -138,7 +138,7 @@ public class SpringDocConfig {
     public GroupedOpenApi allApi() {
         return GroupedOpenApi.builder()
                 .group("all")
-                .pathsToMatch("/**")
+                .pathsToMatch("/v3/api-docs/all")
                 .build();
     }
 }
