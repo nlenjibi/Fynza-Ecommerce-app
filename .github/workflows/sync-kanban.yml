@@ -1,0 +1,133 @@
+name: Sync Kanban Board
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  sync-kanban:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fetch project data
+        id: project
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROJECT_OWNER: ${{ github.repository_owner }}
+          PROJECT_NUMBER: "1"
+        run: |
+          gh project view $PROJECT_NUMBER --owner $PROJECT_OWNER --json fields,items > project_data.json || echo "{}" > project_data.json
+
+      - name: Generate Markdown files
+        run: |
+          python3 << 'PYTHON_SCRIPT'
+          import json
+          import os
+          from datetime import datetime
+
+          try:
+              with open('project_data.json', 'r') as f:
+                  project_data = json.load(f)
+          except:
+              project_data = {'fields': [], 'items': {'nodes': []}}
+
+          fields = project_data.get('fields', [])
+          items = project_data.get('items', {}).get('nodes', [])
+
+          field_map = {}
+          for field in fields:
+              field_map[field['name']] = field
+
+          columns = {}
+          for field_name, field in field_map.items():
+              if field.get('fieldType') == 'singleSelect':
+                  options = field.get('options', [])
+                  columns[field_name] = {opt['name']: opt['id'] for opt in options}
+
+          status_groups = {}
+          for item in items:
+              field_values = item.get('fieldValues', {}).get('nodes', [])
+              
+              status = "No Status"
+              for fv in field_values:
+                  if fv.get('field'):
+                      field_name = fv['field'].get('name')
+                      if field_name in columns:
+                          if fv.get('name'):
+                              status = fv['name']
+                          elif fv.get('value'):
+                              option_id = fv['value']
+                              for opt_name, opt_id in columns[field_name].items():
+                                  if opt_id == option_id:
+                                      status = opt_name
+                                      break
+              
+              if status not in status_groups:
+                  status_groups[status] = []
+              
+              title = item.get('title', 'Untitled')
+              body = item.get('body', '')
+              issue_url = item.get('content', {}).get('url', '')
+              issue_number = item.get('content', {}).get('number', '')
+              
+              status_groups[status].append({
+                  'title': title,
+                  'body': body,
+                  'url': issue_url,
+                  'number': issue_number
+              })
+
+          md_content = "# Kanban Board Sync\n\n"
+          md_content += f"**Last Updated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}\n\n---\n\n"
+
+          for status, items_list in status_groups.items():
+              if status == "No Status" and not items_list:
+                  continue
+                  
+              md_content += f"## {status}\n\n"
+              
+              if items_list:
+                  for item in items_list:
+                      if item['number']:
+                          md_content += f"- [{item['title']} (#{item['number']})]({item['url']})\n"
+                      else:
+                          md_content += f"- {item['title']}\n"
+              else:
+                  md_content += "_No items_\n"
+              
+              md_content += "\n"
+
+          with open('KANBAN_BOARD.md', 'w') as f:
+              f.write(md_content)
+
+          summary = f"# Kanban Board Summary\n\n"
+          summary += f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}\n\n"
+          summary += "| Column | Items |\n|--------|-------|\n"
+
+          for status, items_list in status_groups.items():
+              if status != "No Status" or items_list:
+                  summary += f"| {status} | {len(items_list)} |\n"
+
+          with open('KANBAN_SUMMARY.md', 'w') as f:
+              f.write(summary)
+
+          print("Generated KANBAN_BOARD.md and KANBAN_SUMMARY.md")
+          PYTHON_SCRIPT
+
+      - name: Commit changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add KANBAN_BOARD.md KANBAN_SUMMARY.md project_data.json 2>/dev/null || true
+          git commit -m "docs: Sync Kanban board $(date -u +'%Y-%m-%d %H:%M:%S UTC')" || echo "No changes to commit"
+          git push || echo "Push skipped"
+
