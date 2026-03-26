@@ -1,9 +1,10 @@
 package ecommerce.graphql.resolver;
 
+import ecommerce.common.response.PaginatedResponse;
 import ecommerce.graphql.dto.FollowStats;
-import ecommerce.graphql.dto.StoreFollow;
-import ecommerce.graphql.dto.StoreFollowConnection;
-import ecommerce.graphql.dto.UserPage;
+import ecommerce.graphql.dto.FollowerPage;
+
+import ecommerce.graphql.dto.FollowedStoreConnection;
 import ecommerce.graphql.input.FollowInput;
 import ecommerce.graphql.input.PageInput;
 import ecommerce.graphql.input.SortDirection;
@@ -34,15 +35,28 @@ public class FollowResolver {
 
     @QueryMapping
     @PreAuthorize("isAuthenticated()")
-    public StoreFollowConnection myFollowing(@Argument PageInput pagination) {
+    public FollowedStoreConnection myFollowing(@Argument PageInput pagination) {
         log.info("GraphQL Query: myFollowing");
         
         Pageable pageable = createPageable(pagination);
         Page<FollowedStoreResponse> followedStores = followService.getFollowedStores(null, pageable);
         
-        return StoreFollowConnection.builder()
-                .content(followedStores.getContent())
-                .pageInfo(ecommerce.common.response.PaginatedResponse.from(followedStores))
+        return FollowedStoreConnection.builder()
+                .content(followedStores.getContent().stream()
+                        .map(store -> FollowedStoreResponse.builder()
+                                .id(store.getId())
+                                .sellerId(store.getSellerId())
+                                .storeName(store.getStoreName())
+                                .storeLogo(store.getStoreLogo())
+                                .isVerified(store.getIsVerified())
+                                .rating(store.getRating())
+                                .reviewCount(store.getReviewCount())
+                                .location(store.getLocation())
+                                .productCount(store.getProductCount())
+                                .followedDate(store.getFollowedDate())
+                                .build())
+                        .collect(java.util.stream.Collectors.toList()))
+                .pageInfo(PaginatedResponse.from(followedStores))
                 .build();
     }
 
@@ -58,31 +72,44 @@ public class FollowResolver {
         FollowStatsResponse stats = followService.getSellerFollowStats(sellerId);
         
         return FollowStats.builder()
-                .followerCount((int) stats.getTotalFollowers())
-                .followingCount(0)
-                .isFollowing(false)
+                .totalFollowers((int) stats.getTotalFollowers())
+                .activeThisMonth((int) stats.getActiveThisMonth())
+                .newThisWeek((int) stats.getNewThisWeek())
+                .avgFollowAge((float) stats.getAvgFollowAge())
                 .build();
     }
 
     @QueryMapping
-    public UserPage storeFollowers(@Argument UUID sellerId, @Argument PageInput pagination) {
+    public FollowerPage storeFollowers(@Argument UUID sellerId, @Argument PageInput pagination) {
         log.info("GraphQL Query: storeFollowers(sellerId: {})", sellerId);
         
         Pageable pageable = createPageable(pagination);
-        Page<FollowerResponse> followers = followService.getFollowers(sellerId, pageable);
+        Page<ecommerce.modules.follow.dto.FollowerResponse> followers = followService.getFollowers(sellerId, pageable);
         
-        return UserPage.builder()
-                .content(followers.getContent())
+        return FollowerPage.builder()
+                .content(followers.getContent().stream()
+                        .map(follower -> FollowerResponse.builder()
+                                .id(follower.getId())
+                                .customerId(follower.getCustomerId())
+                                .customerName(follower.getCustomerName())
+                                .customerEmail(follower.getCustomerEmail())
+                                .customerAvatar(follower.getCustomerAvatar())
+                                .joinedDate(follower.getJoinedDate())
+                                .orderCount(follower.getOrderCount())
+                                .totalSpent(follower.getTotalSpent())
+                                .lastActive(follower.getLastActive())
+                                .build())
+                        .collect(java.util.stream.Collectors.toList()))
                 .pageInfo(ecommerce.common.response.PaginatedResponse.from(followers))
                 .build();
     }
 
     @MutationMapping
     @PreAuthorize("isAuthenticated()")
-    public StoreFollow followStore(@Argument FollowInput input) {
+    public boolean followStore(@Argument FollowInput input) {
         log.info("GraphQL Mutation: followStore(sellerId: {})", input.getSellerId());
         followService.followStore(null, input.getSellerId());
-        return StoreFollow.builder().build();
+        return true;
     }
 
     @MutationMapping

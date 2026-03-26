@@ -1,5 +1,6 @@
 package ecommerce.graphql.resolver;
 
+import ecommerce.common.enums.DeliveryMethod;
 import ecommerce.graphql.dto.ShippingCalculation;
 import ecommerce.graphql.input.CalculateShippingInput;
 import ecommerce.graphql.input.DeliveryFeeInput;
@@ -149,7 +150,7 @@ public class DeliveryResolver {
         
         DeliveryFeeRequest request = DeliveryFeeRequest.builder()
                 .regionId(input.getRegionId())
-                .deliveryMethod(DeliveryFee.DeliveryMethod.valueOf(input.getShippingMethod()))
+                .deliveryMethod(DeliveryMethod.valueOf(input.getShippingMethod()))
                 .baseFee(input.getBaseFee())
                 .weightBasedFee(input.getWeightBasedFee())
                 .freeShippingThreshold(input.getFreeShippingThreshold())
@@ -168,7 +169,7 @@ public class DeliveryResolver {
         
         DeliveryFeeRequest request = DeliveryFeeRequest.builder()
                 .regionId(input.getRegionId())
-                .deliveryMethod(DeliveryFee.DeliveryMethod.valueOf(input.getShippingMethod()))
+                .deliveryMethod(DeliveryMethod.valueOf(input.getShippingMethod()))
                 .baseFee(input.getBaseFee())
                 .weightBasedFee(input.getWeightBasedFee())
                 .freeShippingThreshold(input.getFreeShippingThreshold())

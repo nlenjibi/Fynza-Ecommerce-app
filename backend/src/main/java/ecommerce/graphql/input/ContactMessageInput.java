@@ -1,5 +1,6 @@
 package ecommerce.graphql.input;
 
+import ecommerce.common.enums.ContactCategory;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,4 +16,6 @@ public class ContactMessageInput {
     private String phone;
     private String subject;
     private String message;
+    private String orderId;
+    private ContactCategory category;
 }

@@ -10,7 +10,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FollowStats {
-    private int followerCount;
-    private int followingCount;
-    private boolean isFollowing;
+    private int totalFollowers;
+    private int activeThisMonth;
+    private int newThisWeek;
+    private float avgFollowAge;
 }

@@ -1,7 +1,7 @@
 package ecommerce.modules.auth.service.impl;
 
+import ecommerce.common.enums.PaymentMethod;
 import ecommerce.common.enums.UserStatus;
-import ecommerce.modules.user.entity.Role;
 import ecommerce.exception.BadRequestException;
 import ecommerce.exception.DuplicateResourceException;
 import ecommerce.exception.InvalidTokenException;
@@ -64,9 +64,9 @@ public class AuthServiceImpl implements AuthService {
             throw new DuplicateResourceException("Email already registered");
         }
 
-        Role role = Role.CUSTOMER;
+        PaymentMethod.Role role = PaymentMethod.Role.CUSTOMER;
         if (request.getRole() != null && request.getRole().equalsIgnoreCase("SELLER")) {
-            role = Role.SELLER;
+            role = PaymentMethod.Role.SELLER;
         }
 
         User user = User.builder()
@@ -84,7 +84,7 @@ public class AuthServiceImpl implements AuthService {
         user = userRepository.save(user);
         log.info("User registered successfully with ID: {}", user.getId());
 
-        if (role == Role.SELLER) {
+        if (role == PaymentMethod.Role.SELLER) {
             SellerProfile sellerProfile = SellerProfile.builder()
                     .user(user)
                     .storeName(request.getFirstName() + "'s Store")

@@ -20,4 +20,10 @@ public enum PaymentMethod {
     public String getDisplayName() {
         return displayName;
     }
+
+    public enum Role {
+        ADMIN,
+        CUSTOMER,
+        SELLER
+    }
 }

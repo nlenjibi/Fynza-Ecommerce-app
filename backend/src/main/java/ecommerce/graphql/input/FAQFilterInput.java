@@ -14,6 +14,5 @@ import ecommerce.common.enums.FAQCategory;
 public class FAQFilterInput {
     private FAQCategory category;
     private Boolean isActive;
-    private Boolean isPublic;
     private String search;
 }

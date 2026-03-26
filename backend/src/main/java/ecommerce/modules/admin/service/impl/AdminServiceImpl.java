@@ -1,18 +1,17 @@
 package ecommerce.modules.admin.service.impl;
 
 import ecommerce.common.enums.InventoryStatus;
+import ecommerce.common.enums.PaymentMethod;
 import ecommerce.modules.admin.dto.AdminAnalyticsDto;
 import ecommerce.modules.admin.dto.AdminDashboardDto;
 import ecommerce.modules.admin.dto.ContentAnalyticsDto;
 import ecommerce.modules.admin.service.AdminService;
 import ecommerce.modules.category.repository.CategoryRepository;
 import ecommerce.modules.order.dto.OrderDashboardDto;
-import ecommerce.modules.order.entity.PaymentStatus;
 import ecommerce.modules.order.repository.OrderItemRepository;
 import ecommerce.modules.order.service.OrderService;
 import ecommerce.modules.product.entity.Product;
 import ecommerce.modules.product.repository.ProductRepository;
-import ecommerce.modules.user.entity.Role;
 import ecommerce.modules.user.entity.User;
 import ecommerce.modules.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -57,8 +56,8 @@ public class AdminServiceImpl implements AdminService {
         log.info("Calculating dashboard statistics");
 
         long totalUsers = userRepository.count();
-        long totalCustomers = userRepository.countByRole(Role.CUSTOMER);
-        long totalSellers = userRepository.countByRole(Role.SELLER);
+        long totalCustomers = userRepository.countByRole(PaymentMethod.Role.CUSTOMER);
+        long totalSellers = userRepository.countByRole(PaymentMethod.Role.SELLER);
         long totalProducts = productRepository.count();
         long lowStockProducts = productRepository.countByInventoryStatusAndIsActiveTrue(InventoryStatus.LOW_STOCK);
 
@@ -192,8 +191,8 @@ public class AdminServiceImpl implements AdminService {
         long totalProducts = productRepository.count();
         long totalCategories = categoryRepository.count();
         long totalOrders = orderService.getOrderDashboard().getTotalOrders();
-        long activeSellers = userRepository.countByRole(Role.SELLER);
-        long totalCustomers = userRepository.countByRole(Role.CUSTOMER);
+        long activeSellers = userRepository.countByRole(PaymentMethod.Role.SELLER);
+        long totalCustomers = userRepository.countByRole(PaymentMethod.Role.CUSTOMER);
 
         List<Product> products = productRepository.findAll();
         long articlesPublished = products.stream()

@@ -14,8 +14,10 @@ enum ReviewStatus {
 
 type Review {
     id: ID!
-    product: ProductResponse!
-    customer: User!
+    productId: ID!
+    productSlug: String!
+    productName: String!
+    user: UserInfo!
     rating: Int!
     title: String
     comment: String!
@@ -33,31 +35,31 @@ type Review {
     adminResponseAt: DateTime
     rejectionReason: String
     createdAt: DateTime!
-    updatedAt: DateTime
+    updatedAt: DateTime!
+}
+
+type UserInfo {
+    id: ID!
+    firstName: String!
+    lastName: String!
+    email: String!
+    avatarUrl: String
+    totalReviews: Int!
 }
 
 type ProductRatingStats {
     productId: ID!
     averageRating: Float!
-    totalReviews: Int!
-    verifiedPurchases: Int!
-    verifiedPurchasePercentage: Float!
-    distribution: RatingDistribution
-    topPros: [String!]
-    topCons: [String!]
+    totalReviews: Long!
+    distribution: RatingDistribution!
 }
 
 type RatingDistribution {
-    fiveStars: Int!
-    fiveStarsPercentage: Float!
-    fourStars: Int!
-    fourStarsPercentage: Float!
-    threeStars: Int!
-    threeStarsPercentage: Float!
-    twoStars: Int!
-    twoStarsPercentage: Float!
-    oneStar: Int!
-    oneStarPercentage: Float!
+    fiveStars: Long!
+    fourStars: Long!
+    threeStars: Long!
+    twoStars: Long!
+    oneStar: Long!
 }
 
 type ReviewResponseDto {

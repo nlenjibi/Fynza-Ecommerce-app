@@ -21,54 +21,57 @@ enum PaymentStatus {
     PARTIALLY_REFUNDED
 }
 
-type OrderItem {
+type OrderItemResponse {
     id: ID!
     productId: ID!
     productName: String!
+    variantId: ID
+    size: String
+    color: String
     quantity: Int!
-    unitPrice: BigDecimal!
-    discount: BigDecimal!
-    totalPrice: BigDecimal!
-    productImageUrl: String
+    price: BigDecimal!
+    image: String
+}
+
+type AddressResponse {
+    id: ID!
+    label: String
+    streetAddress: String!
+    city: String!
+    state: String!
+    postalCode: String!
+    country: String!
+}
+
+type TimelineItem {
+    status: String!
+    message: String!
+    timestamp: DateTime!
 }
 
 type Order {
     id: ID!
     orderNumber: String!
-    status: OrderStatus!
-    orderDate: DateTime!
+    status: String!
+    customerId: ID!
+    items: [OrderItemResponse!]!
     subtotal: BigDecimal!
-    taxAmount: BigDecimal!
+    tax: BigDecimal!
     shippingCost: BigDecimal!
-    discountAmount: BigDecimal!
-    couponDiscount: BigDecimal!
+    discount: BigDecimal!
     totalAmount: BigDecimal!
-    couponCode: String
-    paymentStatus: PaymentStatus!
-    paymentMethod: PaymentMethod
-    paidAt: DateTime
-    shippingAddress: String
+    paymentMethod: String!
+    paymentStatus: String!
+    shippingAddress: AddressResponse!
     trackingNumber: String
-    carrier: String
-    shippedAt: DateTime
-    estimatedDeliveryDate: DateTime
-    deliveredAt: DateTime
-    cancelledAt: DateTime
-    cancellationReason: String
-    refundedAt: DateTime
-    refundAmount: BigDecimal
-    refundReason: String
-    customerNotes: String
-    items: [OrderItem!]!
-    customerEmail: String
-    customerName: String
+    estimatedDelivery: DateTime
+    timeline: [TimelineItem!]!
     createdAt: DateTime!
-    updatedAt: DateTime!
 }
 
 # Input types for order operations
 input OrderStatusUpdateInput {
-    status: OrderStatus!
+    status: String!
     trackingNumber: String
     carrier: String
     notes: String

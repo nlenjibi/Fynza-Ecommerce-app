@@ -10,12 +10,11 @@ type ContactMessage {
     message: String!
     status: ContactStatus!
     priority: ContactPriority
-    assignedTo: User
-    response: String
+    category: ContactCategory
+    assignedTo: ID
+    adminResponse: String
     respondedAt: DateTime
-    isRead: Boolean!
-    ipAddress: String
-    userAgent: String
+    respondedBy: String
     createdAt: DateTime!
     updatedAt: DateTime!
 }
@@ -36,17 +35,31 @@ enum ContactPriority {
     URGENT
 }
 
+enum ContactCategory {
+    GENERAL_INQUIRY
+    TECHNICAL_SUPPORT
+    BILLING
+    FEATURE_REQUEST
+    BUG_REPORT
+    FEEDBACK
+    COMPLAINT
+    PARTNERSHIP
+    OTHER
+}
+
 input ContactMessageInput {
     name: String!
     email: String!
     phone: String
     subject: String!
     message: String!
+    orderId: String
+    category: ContactCategory
 }
 
 input ContactResponseInput {
-    response: String!
-    status: ContactStatus!
+    adminResponse: String!
+    adminId: String!
 }
 
 input ContactFilterInput {
@@ -82,7 +95,7 @@ type ContactMessageConnection {
 
 type ContactStats {
     total: Int!
-    new: Int!
+    newCount: Int!
     inProgress: Int!
     responded: Int!
     closed: Int!

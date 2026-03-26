@@ -1,6 +1,7 @@
 package ecommerce.modules.delivery.repository;
 
 import ecommerce.common.base.BaseRepository;
+import ecommerce.common.enums.DeliveryMethod;
 import ecommerce.modules.delivery.entity.DeliveryFee;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -21,5 +22,5 @@ public interface DeliveryFeeRepository extends BaseRepository<DeliveryFee, UUID>
     @Query("SELECT f FROM DeliveryFee f WHERE f.isActive = true")
     List<DeliveryFee> findAllActive();
 
-    boolean existsByTownNameAndDeliveryMethod(String townName, DeliveryFee.DeliveryMethod method);
+    boolean existsByTownNameAndDeliveryMethod(String townName, DeliveryMethod method);
 }

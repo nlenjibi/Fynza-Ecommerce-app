@@ -6,9 +6,8 @@ type FAQ {
     question: String!
     answer: String!
     category: FAQCategory!
-    order: Int
+    displayOrder: Int
     isActive: Boolean!
-    isPublic: Boolean!
     viewCount: Int!
     createdAt: DateTime!
     updatedAt: DateTime!
@@ -30,15 +29,20 @@ input FAQInput {
     question: String!
     answer: String!
     category: FAQCategory!
-    order: Int
-    isPublic: Boolean = true
+    displayOrder: Int
 }
 
 input FAQFilterInput {
     category: FAQCategory
     isActive: Boolean
-    isPublic: Boolean
     search: String
+}
+
+input UpdateFAQInput {
+    question: String
+    answer: String
+    category: FAQCategory
+    displayOrder: Int
 }
 
 extend type Query {
@@ -54,11 +58,20 @@ extend type Query {
     # Security: PUBLIC - Get FAQ categories with counts
     faqCategories: [FAQCategoryCount!]!
     
+    # Security: PUBLIC - Get help categories with FAQs
+    helpCategories: [HelpCategory!]!
+    
+    # Security: PUBLIC - Get contact support options
+    contactOptions: ContactOptions!
+    
     # Security: ADMIN only
     adminFaqs(
         filter: FAQFilterInput
         pagination: PageInput
     ): FAQConnection!
+    
+    # Security: ADMIN only
+    faqStats: FAQStats!
 }
 
 type FAQConnection {
@@ -71,12 +84,32 @@ type FAQCategoryCount {
     count: Int!
 }
 
+type FAQStats {
+    totalFAQs: Int!
+    activeFAQs: Int!
+    draftFAQs: Int!
+    totalViews: Int!
+}
+
+type HelpCategory {
+    name: String!
+    slug: String!
+    faqs: [FAQ!]!
+}
+
+type ContactOptions {
+    liveChat: String
+    emailSupport: String
+    phoneSupport: String
+    phoneHours: String
+}
+
 extend type Mutation {
     # Security: ADMIN only
     createFAQ(input: FAQInput!): FAQ!
     
     # Security: ADMIN only
-    updateFAQ(id: ID!, input: FAQInput!): FAQ!
+    updateFAQ(id: ID!, input: UpdateFAQInput!): FAQ!
     
     # Security: ADMIN only
     deleteFAQ(id: ID!): Boolean!

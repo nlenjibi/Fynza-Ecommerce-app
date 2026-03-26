@@ -58,9 +58,6 @@ type SiteSettings {
     # SEO
     metaKeywords: String
     metaDescription: String
-    
-    createdAt: DateTime!
-    updatedAt: DateTime!
 }
 
 type PaymentGatewayConfig {
@@ -82,8 +79,6 @@ type SocialLinks {
     whatsapp: String
     telegram: String
     isActive: Boolean!
-    createdAt: DateTime!
-    updatedAt: DateTime!
 }
 
 input SiteSettingsInput {

@@ -6,7 +6,7 @@ import ecommerce.modules.contact.dto.ContactMessageRequest;
 import ecommerce.modules.contact.dto.ContactMessageResponse;
 import ecommerce.modules.contact.dto.ContactResponseRequest;
 import ecommerce.modules.contact.dto.ContactStats;
-import ecommerce.modules.contact.entity.ContactMessage.ContactStatus;
+import ecommerce.common.enums.ContactStatus;
 import ecommerce.modules.contact.service.ContactService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -78,6 +78,8 @@ public class ContactResolver {
                 .phone(input.getPhone())
                 .subject(input.getSubject())
                 .message(input.getMessage())
+                .orderId(input.getOrderId())
+                .category(input.getCategory())
                 .build();
         
         return contactService.submitMessage(request);
@@ -98,7 +100,7 @@ public class ContactResolver {
             @Argument UUID id,
             @Argument UUID assignedToId) {
         log.info("GraphQL Mutation: assignContact(id: {}, assignedToId: {})", id, assignedToId);
-        return contactService.getMessageById(id);
+        return contactService.assignMessage(id, assignedToId);
     }
 
     @MutationMapping
@@ -109,7 +111,8 @@ public class ContactResolver {
         log.info("GraphQL Mutation: respondToContact(id: {})", id);
         
         ContactResponseRequest request = ContactResponseRequest.builder()
-                .adminResponse(input.getResponse())
+                .adminResponse(input.getAdminResponse())
+                .adminId(input.getAdminId())
                 .build();
         
         return contactService.respondToMessage(id, request);

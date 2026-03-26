@@ -5,12 +5,19 @@ import ecommerce.graphql.dto.FAQCategoryCount;
 import ecommerce.graphql.dto.FAQConnection;
 import ecommerce.graphql.input.FAQFilterInput;
 import ecommerce.graphql.input.FAQInput;
+import ecommerce.graphql.input.UpdateFAQInput;
 import ecommerce.graphql.input.PageInput;
 import ecommerce.graphql.input.SortDirection;
 import ecommerce.modules.faq.dto.CreateFAQRequest;
 import ecommerce.modules.faq.dto.FAQResponse;
+import ecommerce.modules.faq.dto.FAQStatsResponse;
+import ecommerce.modules.faq.dto.HelpCategoryResponse;
+import ecommerce.modules.faq.dto.ContactOptionsResponse;
 import ecommerce.modules.faq.dto.UpdateFAQRequest;
 import ecommerce.modules.faq.service.FAQService;
+import ecommerce.graphql.dto.FAQStats;
+import ecommerce.graphql.dto.HelpCategory;
+import ecommerce.graphql.dto.ContactOptions;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -77,6 +84,43 @@ public class FAQResolver {
     }
 
     @QueryMapping
+    public List<HelpCategory> helpCategories() {
+        log.info("GraphQL Query: helpCategories");
+        return faqService.getHelpCategories().stream()
+                .map(response -> HelpCategory.builder()
+                        .name(response.getName())
+                        .slug(response.getSlug())
+                        .faqs(response.getFaqs())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @QueryMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public FAQStats faqStats() {
+        log.info("GraphQL Query: faqStats");
+        FAQStatsResponse response = faqService.getStats();
+        return FAQStats.builder()
+                .totalFAQs((int) response.getTotalFAQs())
+                .activeFAQs((int) response.getActiveFAQs())
+                .draftFAQs((int) response.getDraftFAQs())
+                .totalViews((int) response.getTotalViews())
+                .build();
+    }
+
+    @QueryMapping
+    public ContactOptions contactOptions() {
+        log.info("GraphQL Query: contactOptions");
+        ContactOptionsResponse response = faqService.getContactOptions();
+        return ContactOptions.builder()
+                .liveChat(response.getLiveChat())
+                .emailSupport(response.getEmailSupport())
+                .phoneSupport(response.getPhoneSupport())
+                .phoneHours(response.getPhoneHours())
+                .build();
+    }
+
+    @QueryMapping
     @PreAuthorize("hasRole('ADMIN')")
     public FAQConnection adminFaqs(
             @Argument FAQFilterInput filter,
@@ -101,7 +145,7 @@ public class FAQResolver {
                 .question(input.getQuestion())
                 .answer(input.getAnswer())
                 .category(input.getCategory())
-                .displayOrder(input.getOrder())
+                .displayOrder(input.getDisplayOrder())
                 .build();
         
         return faqService.createFAQ(request);
@@ -111,14 +155,14 @@ public class FAQResolver {
     @PreAuthorize("hasRole('ADMIN')")
     public FAQResponse updateFAQ(
             @Argument UUID id,
-            @Argument FAQInput input) {
+            @Argument UpdateFAQInput input) {
         log.info("GraphQL Mutation: updateFAQ(id: {})", id);
         
         UpdateFAQRequest request = UpdateFAQRequest.builder()
                 .question(input.getQuestion())
                 .answer(input.getAnswer())
                 .category(input.getCategory())
-                .displayOrder(input.getOrder())
+                .displayOrder(input.getDisplayOrder())
                 .build();
         
         return faqService.updateFAQ(id, request);

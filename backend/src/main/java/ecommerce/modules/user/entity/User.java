@@ -1,13 +1,13 @@
 package ecommerce.modules.user.entity;
 
 import ecommerce.common.base.BaseEntity;
+import ecommerce.common.enums.PaymentMethod;
 import ecommerce.common.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "users", indexes = {
@@ -50,7 +50,7 @@ public class User extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     @Builder.Default
-    private Role role = Role.CUSTOMER;
+    private PaymentMethod.Role role = PaymentMethod.Role.CUSTOMER;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

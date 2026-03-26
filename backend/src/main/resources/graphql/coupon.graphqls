@@ -19,15 +19,11 @@ type CouponResponse {
     discountType: String!
     discountValue: BigDecimal!
     minOrderAmount: BigDecimal
-    maxDiscountAmount: BigDecimal
-    usageLimit: Int
+    maxUses: Int
     usageCount: Int
-    perUserLimit: Int
-    startDate: DateTime!
-    endDate: DateTime!
-    isActive: Boolean!
-    createdAt: DateTime!
-    updatedAt: DateTime!
+    validFrom: DateTime!
+    validUntil: DateTime!
+    status: String
 }
 
 input CouponRequestInput {
@@ -39,4 +35,5 @@ input CouponRequestInput {
     maxUses: Int
     validFrom: DateTime!
     validUntil: DateTime!
+    status: String
 }

@@ -3,6 +3,7 @@ package ecommerce.modules.user.entity;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.Expressions;
+import ecommerce.common.enums.PaymentMethod;
 
 import java.time.LocalDateTime;
 
@@ -55,9 +56,9 @@ public class UserPredicates {
     /**
      * Filter by exact role
      */
-    public UserPredicates withRole(Role role) {
+    public UserPredicates withRole(PaymentMethod.Role role) {
         if (role != null) {
-            builder.and(Expressions.enumPath(Role.class, "role").eq(role));
+            builder.and(Expressions.enumPath(PaymentMethod.Role.class, "role").eq(role));
         }
         return this;
     }

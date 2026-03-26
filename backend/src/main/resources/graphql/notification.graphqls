@@ -19,15 +19,12 @@ enum NotificationChannel {
 
 type Notification {
     id: ID!
-    userId: ID!
-    type: NotificationType!
+    type: String!
     title: String!
     message: String!
-    channel: NotificationChannel
     isRead: Boolean!
-    readAt: DateTime
+    relatedEntityId: ID
     createdAt: DateTime!
-    metadata: String
 }
 
 extend type Query {

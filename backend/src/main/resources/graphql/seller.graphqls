@@ -1,52 +1,5 @@
 # Seller GraphQL Schema
 
-type SellerDashboard {
-    totalOrders: Int!
-    pendingOrders: Int!
-    processingOrders: Int!
-    shippedOrders: Int!
-    completedOrders: Int!
-    cancelledOrders: Int!
-    totalRevenue: BigDecimal!
-    monthlyRevenue: BigDecimal!
-    totalProducts: Int!
-    activeProducts: Int!
-    lowStockProducts: Int!
-    outOfStockProducts: Int!
-    totalCustomers: Int!
-    averageOrderValue: BigDecimal!
-    conversionRate: Float!
-}
-
-type SellerAnalytics {
-    totalOrders: Int!
-    totalRevenue: BigDecimal!
-    averageOrderValue: BigDecimal!
-    topSellingProducts: [ProductSales!]!
-    ordersByStatus: [StatusCount!]!
-    revenueByDay: [DailyRevenue!]!
-    revenueByMonth: [MonthlyRevenue!]!
-}
-
-type ProductSales {
-    productId: ID!
-    productName: String!
-    quantitySold: Int!
-    revenue: BigDecimal!
-}
-
-
-type DailyRevenue {
-    date: DateTime!
-    revenue: BigDecimal!
-    orders: Int!
-}
-
-type MonthlyRevenue {
-    month: String!
-    revenue: BigDecimal!
-    orders: Int!
-}
 
 extend type Query {
     # Security: SELLER only

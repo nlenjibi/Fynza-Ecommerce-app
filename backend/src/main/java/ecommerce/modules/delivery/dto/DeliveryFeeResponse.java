@@ -1,5 +1,6 @@
 package ecommerce.modules.delivery.dto;
 
+import ecommerce.common.enums.DeliveryMethod;
 import ecommerce.modules.delivery.entity.DeliveryFee;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,7 +18,7 @@ import java.util.UUID;
 public class DeliveryFeeResponse {
     private UUID id;
     private String townName;
-    private DeliveryFee.DeliveryMethod deliveryMethod;
+    private DeliveryMethod deliveryMethod;
     private BigDecimal baseFee;
     private BigDecimal perKmFee;
     private Integer estimatedDays;

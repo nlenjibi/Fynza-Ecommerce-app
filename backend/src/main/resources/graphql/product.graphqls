@@ -89,14 +89,8 @@ type SearchFilters {
     brands: [FilterOption!]!
     priceRange: PriceRange
     ratingRange: RatingRange
-    availableFilters: [String!]!
 }
 
-type FilterOption {
-    id: ID!
-    name: String!
-    count: Long
-}
 
 type PriceRange {
     min: BigDecimal!
@@ -108,13 +102,6 @@ type RatingRange {
     max: Float!
 }
 
-type PaginationInfo {
-    total: Long!
-    page: Int!
-    limit: Int!
-    totalPages: Int!
-    hasMore: Boolean!
-}
 
 type ProductStatisticsResponse {
     totalProducts: Long!

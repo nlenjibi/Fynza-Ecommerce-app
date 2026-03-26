@@ -28,18 +28,15 @@ type OrderPage {
 
 type OrderResponse {
     order: Order
-    errors: [String!]
 }
 
 type OrderResponseDto {
     content: [Order!]!
     pageInfo: PageInfo!
-    errors: [String!]
 }
 
 type OrderStatsResponse {
     stats: OrderStats!
-    errors: [String!]
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -53,14 +50,14 @@ input OrderItemInput {
 input OrderCreateInput {
     items: [OrderItemInput!]!
     shippingCost: BigDecimal
-    paymentMethod: PaymentMethod
+    paymentMethod: String
     shippingAddress: String
     customerNotes: String
     couponCode: String
 }
 
 input OrderFilterInput {
-    status: OrderStatus
+    status: String
     userId: ID
     minAmount: BigDecimal
     maxAmount: BigDecimal
@@ -74,7 +71,7 @@ input OrderFilterInput {
 }
 
 input OrderStatusUpdateRequest {
-    status: OrderStatus!
+    status: String!
     trackingNumber: String
     notes: String
 }
@@ -92,7 +89,7 @@ extend type Query {
     # Security: ADMIN or STAFF only
     # Admin
     allOrders(pagination: PageInput): OrderResponseDto!
-    ordersByStatus(status: OrderStatus!, pagination: PageInput): OrderResponseDto!
+    ordersByStatus(status: String!, pagination: PageInput): OrderResponseDto!
     orderStatistics: OrderStatsResponse!
     staffOrderManagement(pagination: PageInput): OrderResponseDto!
 }

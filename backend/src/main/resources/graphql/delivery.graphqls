@@ -1,11 +1,11 @@
 # Delivery GraphQL Schema
-# Shipping zones, regions, and delivery fees
+# Town-based delivery fees and shipping methods
 
 type DeliveryRegion {
     id: ID!
     name: String!
     code: String!
-    country: String!
+    country: String
     isActive: Boolean!
     createdAt: DateTime!
     updatedAt: DateTime!
@@ -13,67 +13,68 @@ type DeliveryRegion {
 
 type DeliveryFee {
     id: ID!
-    region: DeliveryRegion!
-    shippingMethod: ShippingMethod!
+    townName: String!
+    deliveryMethod: DeliveryMethod!
     baseFee: BigDecimal!
+    perKmFee: BigDecimal!
     weightBasedFee: BigDecimal
     freeShippingThreshold: BigDecimal
-    estimatedDays: Int
+    estimatedDays: Int!
+    regionId: ID
+    regionName: String
     isActive: Boolean!
     createdAt: DateTime!
     updatedAt: DateTime!
 }
 
-type ShippingZone {
-    id: ID!
-    name: String!
-    description: String
-    regions: [DeliveryRegion!]!
-    defaultDeliveryFee: BigDecimal
-    isActive: Boolean!
-    createdAt: DateTime!
-    updatedAt: DateTime!
-}
-
-enum ShippingMethod {
+enum DeliveryMethod {
+    DIRECT_ADDRESS
+    BUS_STATION
+    SHIPPING
     STANDARD
     EXPRESS
     OVERNIGHT
-    INTERNATIONAL
-    PICKUP
+    FREE_SHIPPING
 }
 
-input DeliveryRegionInput {
+input DeliveryRegionRequest {
     name: String!
     code: String!
-    country: String!
+    country: String
 }
 
-input DeliveryFeeInput {
-    regionId: ID!
-    shippingMethod: ShippingMethod!
+input DeliveryFeeRequest {
+    townName: String!
+    deliveryMethod: DeliveryMethod!
     baseFee: BigDecimal!
+    perKmFee: BigDecimal!
+    weightBasedFee: BigDecimal
+    freeShippingThreshold: BigDecimal
+    estimatedDays: Int!
+    regionId: ID
+}
+
+input DeliveryFeeUpdateInput {
+    townName: String
+    deliveryMethod: DeliveryMethod
+    baseFee: BigDecimal
+    perKmFee: BigDecimal
     weightBasedFee: BigDecimal
     freeShippingThreshold: BigDecimal
     estimatedDays: Int
-}
-
-input ShippingZoneInput {
-    name: String!
-    description: String
-    regionIds: [ID!]
-    defaultDeliveryFee: BigDecimal
+    regionId: ID
 }
 
 input CalculateShippingInput {
-    zoneId: ID
-    regionId: ID
+    townName: String!
+    deliveryMethod: DeliveryMethod!
     weight: BigDecimal!
     subtotal: BigDecimal!
+    distance: BigDecimal
 }
 
 type ShippingCalculation {
-    shippingMethod: ShippingMethod!
+    shippingMethod: String
     fee: BigDecimal!
     estimatedDays: Int
     isFreeShipping: Boolean!
@@ -81,34 +82,29 @@ type ShippingCalculation {
 
 extend type Query {
     # Security: PUBLIC
-    deliveryRegions(country: String): [DeliveryRegion!]!
+    deliveryRegions(country: String, isActive: Boolean): [DeliveryRegion!]!
     deliveryRegion(id: ID!): DeliveryRegion
     
     # Security: PUBLIC
-    deliveryFees(regionId: ID, shippingMethod: ShippingMethod): [DeliveryFee!]!
+    deliveryFees(regionId: ID, shippingMethod: DeliveryMethod): [DeliveryFee!]!
     deliveryFee(id: ID!): DeliveryFee
     
     # Security: PUBLIC
     shippingZones: [ShippingZone!]!
-    shippingZone(id: ID!): ShippingZone
-    
-    # Security: PUBLIC
-    calculateShipping(input: CalculateShippingInput!): ShippingCalculation!
 }
 
 extend type Mutation {
     # Security: ADMIN only
-    createDeliveryRegion(input: DeliveryRegionInput!): DeliveryRegion!
-    updateDeliveryRegion(id: ID!, input: DeliveryRegionInput!): DeliveryRegion!
+    createDeliveryRegion(input: DeliveryRegionRequest!): DeliveryRegion!
+    updateDeliveryRegion(id: ID!, input: DeliveryRegionRequest!): DeliveryRegion!
     deleteDeliveryRegion(id: ID!): Boolean!
     
     # Security: ADMIN only
-    createDeliveryFee(input: DeliveryFeeInput!): DeliveryFee!
-    updateDeliveryFee(id: ID!, input: DeliveryFeeInput!): DeliveryFee!
+    createDeliveryFee(input: DeliveryFeeRequest!): DeliveryFee!
+    updateDeliveryFee(id: ID!, input: DeliveryFeeUpdateInput!): DeliveryFee!
     deleteDeliveryFee(id: ID!): Boolean!
     
     # Security: ADMIN only
-    createShippingZone(input: ShippingZoneInput!): ShippingZone!
-    updateShippingZone(id: ID!, input: ShippingZoneInput!): ShippingZone!
-    deleteShippingZone(id: ID!): Boolean!
+    activateDeliveryFee(id: ID!): DeliveryFee!
+    deactivateDeliveryFee(id: ID!): DeliveryFee!
 }

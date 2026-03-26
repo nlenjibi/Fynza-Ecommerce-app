@@ -1,5 +1,6 @@
 package ecommerce.modules.user.service.impl;
 
+import ecommerce.common.enums.PaymentMethod;
 import ecommerce.common.enums.SellerStatus;
 import ecommerce.common.enums.UserStatus;
 import ecommerce.exception.DuplicateResourceException;
@@ -8,7 +9,6 @@ import ecommerce.modules.auth.service.SecurityService;
 import ecommerce.modules.notification.entity.Notification;
 import ecommerce.modules.notification.repository.NotificationRepository;
 import ecommerce.modules.user.dto.*;
-import ecommerce.modules.user.entity.Role;
 import ecommerce.modules.user.entity.User;
 import ecommerce.modules.user.entity.Address;
 import ecommerce.modules.user.entity.SellerProfile;
@@ -82,12 +82,12 @@ public class UserServiceImpl implements UserService {
 
         if (request.getRole() != null && !request.getRole().isBlank()) {
             try {
-                user.setRole(Role.valueOf(request.getRole().toUpperCase()));
+                user.setRole(PaymentMethod.Role.valueOf(request.getRole().toUpperCase()));
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Invalid role: " + request.getRole());
             }
         } else {
-            user.setRole(Role.CUSTOMER);
+            user.setRole(PaymentMethod.Role.CUSTOMER);
         }
 
         userRepository.save(user);
@@ -125,7 +125,7 @@ public class UserServiceImpl implements UserService {
         userMapper.updateEntity(user, request);
         if (request.getRole() != null && !request.getRole().isBlank()) {
             try {
-                user.setRole(Role.valueOf(request.getRole().toUpperCase()));
+                user.setRole(PaymentMethod.Role.valueOf(request.getRole().toUpperCase()));
             } catch (IllegalArgumentException e) {
                 log.warn("Invalid role provided for user update: {}", request.getRole());
             }
@@ -181,10 +181,10 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND + userId));
         
-        Role oldRole = user.getRole();
+        PaymentMethod.Role oldRole = user.getRole();
         if (request.getRole() != null && !request.getRole().isBlank()) {
             try {
-                user.setRole(Role.valueOf(request.getRole().toUpperCase()));
+                user.setRole(PaymentMethod.Role.valueOf(request.getRole().toUpperCase()));
             } catch (IllegalArgumentException e) {
                 log.warn("Invalid role provided for user update: {}", request.getRole());
             }
@@ -287,8 +287,8 @@ public class UserServiceImpl implements UserService {
                 // Update role if provided
                 if (request.getRole() != null && !request.getRole().isBlank()) {
                     try {
-                        Role oldRole = user.getRole();
-                        user.setRole(Role.valueOf(request.getRole().toUpperCase()));
+                        PaymentMethod.Role oldRole = user.getRole();
+                        user.setRole(PaymentMethod.Role.valueOf(request.getRole().toUpperCase()));
                         userRepository.save(user);
                         
                         if (Boolean.TRUE.equals(request.getSendNotification())) {
@@ -326,7 +326,7 @@ public class UserServiceImpl implements UserService {
     /**
      * Send notification to user about role change
      */
-    private void sendRoleChangeNotification(User user, Role oldRole, Role newRole) {
+    private void sendRoleChangeNotification(User user, PaymentMethod.Role oldRole, PaymentMethod.Role newRole) {
         try {
             String message = String.format(
                     "Your account role has been changed from %s to %s.",

@@ -3,16 +3,20 @@
 
 type Refund {
     id: ID!
-    order: OrderResponse!
-    user: User!
+    refundNumber: String!
+    orderId: ID!
+    customerId: ID!
+    sellerId: ID
     amount: BigDecimal!
-    currency: String!
-    reason: RefundReason!
-    reasonDescription: String!
     status: RefundStatus!
-    paymentMethod: String
-    refundTransactionId: String
-    processedAt: DateTime
+    reason: RefundReason!
+    customerNote: String
+    adminNote: String
+    rejectionReason: String
+    reviewedAt: DateTime
+    reviewedBy: ID
+    completedAt: DateTime
+    transactionId: String
     createdAt: DateTime!
     updatedAt: DateTime!
 }

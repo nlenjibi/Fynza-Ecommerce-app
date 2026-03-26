@@ -1,18 +1,46 @@
 # Follow GraphQL Schema
 # Store following functionality
 
-type StoreFollow {
-    id: ID!
-    user: User!
-    seller: User!
-    isActive: Boolean!
-    createdAt: DateTime!
+type FollowStats {
+    totalFollowers: Int!
+    activeThisMonth: Int!
+    newThisWeek: Int!
+    avgFollowAge: Float!
 }
 
-type FollowStats {
-    followerCount: Int!
-    followingCount: Int!
-    isFollowing: Boolean!
+type FollowerResponse {
+    id: ID!
+    customerId: ID!
+    customerName: String!
+    customerEmail: String!
+    customerAvatar: String
+    joinedDate: DateTime!
+    orderCount: Int!
+    totalSpent: BigDecimal!
+    lastActive: DateTime
+}
+
+type FollowerPage {
+    content: [FollowerResponse!]!
+    pageInfo: PageInfo!
+}
+
+type FollowedStoreResponse {
+    id: ID!
+    sellerId: ID!
+    storeName: String!
+    storeLogo: String
+    isVerified: Boolean!
+    rating: BigDecimal!
+    reviewCount: Int!
+    location: String
+    productCount: Int!
+    followedDate: DateTime!
+}
+
+type FollowedStoreConnection {
+    content: [FollowedStoreResponse!]!
+    pageInfo: PageInfo!
 }
 
 input FollowInput {
@@ -21,7 +49,7 @@ input FollowInput {
 
 extend type Query {
     # Security: AUTHENTICATED
-    myFollowing(pagination: PageInput): StoreFollowConnection!
+    myFollowing(pagination: PageInput): FollowedStoreConnection!
     
     # Security: PUBLIC - Check if following a store
     isFollowing(sellerId: ID!): Boolean!
@@ -30,17 +58,12 @@ extend type Query {
     followStats(sellerId: ID!): FollowStats!
     
     # Security: PUBLIC - Get store followers
-    storeFollowers(sellerId: ID!, pagination: PageInput): UserPage!
-}
-
-type StoreFollowConnection {
-    content: [StoreFollow!]!
-    pageInfo: PageInfo!
+    storeFollowers(sellerId: ID!, pagination: PageInput): FollowerPage!
 }
 
 extend type Mutation {
     # Security: AUTHENTICATED
-    followStore(input: FollowInput!): StoreFollow!
+    followStore(input: FollowInput!): Boolean!
     
     # Security: AUTHENTICATED
     unfollowStore(sellerId: ID!): Boolean!

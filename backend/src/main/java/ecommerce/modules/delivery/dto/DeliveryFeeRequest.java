@@ -1,5 +1,6 @@
 package ecommerce.modules.delivery.dto;
 
+import ecommerce.common.enums.DeliveryMethod;
 import ecommerce.modules.delivery.entity.DeliveryFee;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -22,7 +23,7 @@ public class DeliveryFeeRequest {
     private String townName;
 
     @NotNull(message = "Delivery method is required")
-    private DeliveryFee.DeliveryMethod deliveryMethod;
+    private DeliveryMethod deliveryMethod;
 
     @NotNull(message = "Base fee is required")
     @Positive(message = "Base fee must be positive")
