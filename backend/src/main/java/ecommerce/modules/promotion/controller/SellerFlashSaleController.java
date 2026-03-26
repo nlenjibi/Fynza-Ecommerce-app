@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/seller/flash-sales")
+@RequestMapping("/v1/seller/flash-sales")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('SELLER')")
 public class SellerFlashSaleController {

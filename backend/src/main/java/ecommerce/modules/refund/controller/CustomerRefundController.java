@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/customer/refunds")
+@RequestMapping("/v1/customer/refunds")
 @RequiredArgsConstructor
 @Tag(name = "Customer Refunds", description = "Customer refund request endpoints")
 public class CustomerRefundController {

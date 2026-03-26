@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/admin/refunds")
+@RequestMapping("/v1/admin/refunds")
 @RequiredArgsConstructor
 @Tag(name = "Admin Refunds", description = "Admin refund management endpoints")
 public class RefundController {

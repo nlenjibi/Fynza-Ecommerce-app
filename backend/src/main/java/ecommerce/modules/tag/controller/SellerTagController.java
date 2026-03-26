@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/seller/tags")
+@RequestMapping("/v1/seller/tags")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('SELLER')")
 public class SellerTagController {

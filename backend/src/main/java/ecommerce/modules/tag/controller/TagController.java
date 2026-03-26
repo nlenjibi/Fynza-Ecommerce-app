@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/tags")
+@RequestMapping("/v1/tags")
 @RequiredArgsConstructor
 @Tag(name = "Tags", description = "Tag management endpoints")
 public class TagController {

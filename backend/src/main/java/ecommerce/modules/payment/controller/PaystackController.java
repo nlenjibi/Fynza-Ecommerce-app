@@ -18,7 +18,7 @@ import java.util.Map;
  * REST controller for Paystack payment operations.
  */
 @RestController
-@RequestMapping("/api/v1/payments/paystack")
+@RequestMapping("/v1/payments/paystack")
 @RequiredArgsConstructor
 @Slf4j
 public class PaystackController {

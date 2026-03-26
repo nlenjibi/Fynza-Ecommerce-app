@@ -39,7 +39,7 @@ import java.util.UUID;
 import java.time.LocalDateTime;
 
 @RestController
-@RequestMapping("/api/v1/sellers")
+@RequestMapping("/v1/sellers")
 @RequiredArgsConstructor
 @Tag(name = "Seller Management", description = "Seller management endpoints")
 public class SellerController {

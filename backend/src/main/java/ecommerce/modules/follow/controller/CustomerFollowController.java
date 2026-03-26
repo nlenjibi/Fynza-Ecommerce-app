@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/customer/follows")
+@RequestMapping("/v1/customer/follows")
 @RequiredArgsConstructor
 @Tag(name = "Customer Following", description = "Customer following stores endpoints")
 public class CustomerFollowController {

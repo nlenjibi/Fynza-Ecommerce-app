@@ -69,41 +69,6 @@ public class AdminResolver {
                 .build();
     }
 
-    @MutationMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public UserDto createUser(@Argument UserCreateRequest input) {
-        log.info("GraphQL Mutation: createUser");
-        return userService.createUser(input);
-    }
-
-    @MutationMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public UserDto updateUser(@Argument UUID id, @Argument UserUpdateRequest input) {
-        log.info("GraphQL Mutation: updateUser(id: {})", id);
-        return userService.updateUser(id, input);
-    }
-
-    @MutationMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public Boolean deleteUser(@Argument UUID id) {
-        log.info("GraphQL Mutation: deleteUser(id: {})", id);
-        userService.deleteUser(id);
-        return true;
-    }
-
-    @MutationMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public Boolean lockAccount(@Argument UUID userId) {
-        log.info("GraphQL Mutation: lockAccount(userId: {})", userId);
-        return userService.lockUserAccount(userId);
-    }
-
-    @MutationMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public Boolean unlockAccount(@Argument UUID userId) {
-        log.info("GraphQL Mutation: unlockAccount(userId: {})", userId);
-        return userService.unlockUserAccount(userId);
-    }
 
     private Pageable createPageable(PageInput input) {
         if (input == null) {

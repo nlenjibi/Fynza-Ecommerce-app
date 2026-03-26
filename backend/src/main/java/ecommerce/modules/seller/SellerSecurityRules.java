@@ -1,4 +1,4 @@
-package ecommerce.modules.cart;
+package ecommerce.modules.seller;
 
 import ecommerce.security.SecurityRules;
 import org.springframework.http.HttpMethod;
@@ -7,13 +7,13 @@ import org.springframework.security.config.annotation.web.configurers.AuthorizeH
 import org.springframework.stereotype.Component;
 
 @Component
-public class CartSecurityRules implements SecurityRules {
+public class SellerSecurityRules implements SecurityRules {
     @Override
     public void configure(AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry registry) {
         registry
-                // All cart endpoints require CUSTOMER role (class-level @PreAuthorize)
-                .requestMatchers( "/v1/cart").hasRole("CUSTOMER")
-                .requestMatchers( "/v1/cart/reservations/{reservationId}").hasRole("CUSTOMER")
-                .requestMatchers( "/v1/cart/**").hasRole("CUSTOMER");
+
+                // Product management
+                .requestMatchers("/v1/sellers/**").hasRole("SELLER");
+
     }
 }

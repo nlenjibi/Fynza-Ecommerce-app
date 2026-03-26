@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/sellers/followers")
+@RequestMapping("/v1/sellers/followers")
 @RequiredArgsConstructor
 @Tag(name = "Seller Followers", description = "Seller follower management endpoints")
 public class SellerFollowerController {

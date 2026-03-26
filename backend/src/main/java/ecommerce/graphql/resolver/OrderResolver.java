@@ -130,6 +130,45 @@ public class OrderResolver {
         return orderService.updateOrderStatus(id, request);
     }
 
+    @MutationMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    public OrderResponse confirmOrder(@Argument UUID id) {
+        log.info("GQL confirmOrder(id={})", id);
+        return orderService.updateOrderStatus(id, OrderStatus.CONFIRMED);
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    public OrderResponse processOrder(@Argument UUID id) {
+        log.info("GQL processOrder(id={})", id);
+        return orderService.updateOrderStatus(id, OrderStatus.PROCESSING);
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    public OrderResponse shipOrder(@Argument UUID id,
+                                   @Argument String trackingNumber,
+                                   @Argument String carrier) {
+        log.info("GQL shipOrder(id={}, tracking={})", id, trackingNumber);
+        return orderService.updateOrderStatus(id, OrderStatus.SHIPPED);
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    public OrderResponse deliverOrder(@Argument UUID id) {
+        log.info("GQL deliverOrder(id={})", id);
+        return orderService.updateOrderStatus(id, OrderStatus.DELIVERED);
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    public OrderResponse refundOrder(@Argument UUID id,
+                                       @Argument java.math.BigDecimal amount,
+                                       @Argument String reason) {
+        log.info("GQL refundOrder(id={}, amount={})", id, amount);
+        return orderService.requestRefund(id, new OrderService.RefundRequest(reason, null, null));
+    }
+
     private Pageable toPageable(PageInput input) {
         if (input == null) {
             return PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));

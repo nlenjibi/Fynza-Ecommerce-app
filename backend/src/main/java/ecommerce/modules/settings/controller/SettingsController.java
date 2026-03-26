@@ -12,7 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/settings")
+@RequestMapping("/v1/settings")
 @RequiredArgsConstructor
 @Tag(name = "Settings Management", description = "APIs for managing platform settings")
 public class SettingsController {

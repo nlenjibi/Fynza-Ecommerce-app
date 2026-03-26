@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/seller/coupons")
+@RequestMapping("/v1/seller/coupons")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('SELLER')")
 public class SellerCouponController {

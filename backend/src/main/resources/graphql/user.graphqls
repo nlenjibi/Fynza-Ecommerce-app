@@ -117,9 +117,4 @@ extend type Query {
     myAddresses: [Address!]!
 }
 
-extend type Mutation {
-    # Address mutations
-    addAddress(input: AddressInput!): Address!
-    updateAddress(id: ID!, input: AddressInput!): Address!
-    deleteAddress(id: ID!): Boolean!
-}
+

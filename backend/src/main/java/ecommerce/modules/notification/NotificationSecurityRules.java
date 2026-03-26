@@ -1,4 +1,4 @@
-package ecommerce.modules.cart;
+package ecommerce.modules.notification;
 
 import ecommerce.security.SecurityRules;
 import org.springframework.http.HttpMethod;
@@ -7,13 +7,13 @@ import org.springframework.security.config.annotation.web.configurers.AuthorizeH
 import org.springframework.stereotype.Component;
 
 @Component
-public class CartSecurityRules implements SecurityRules {
+public class NotificationSecurityRules implements SecurityRules {
     @Override
     public void configure(AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry registry) {
         registry
-                // All cart endpoints require CUSTOMER role (class-level @PreAuthorize)
-                .requestMatchers( "/v1/cart").hasRole("CUSTOMER")
-                .requestMatchers( "/v1/cart/reservations/{reservationId}").hasRole("CUSTOMER")
-                .requestMatchers( "/v1/cart/**").hasRole("CUSTOMER");
+                // Notification endpoints - all require authentication
+                .requestMatchers(HttpMethod.GET, "/v1/notifications").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/v1/notifications/{id}/read").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/v1/notifications/read-all").authenticated();
     }
 }

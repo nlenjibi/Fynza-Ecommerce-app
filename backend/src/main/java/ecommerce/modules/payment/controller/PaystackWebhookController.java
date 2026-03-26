@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
  * Controller for handling Paystack webhook events.
  */
 @RestController
-@RequestMapping("/api/v1/webhooks/paystack")
+@RequestMapping("/v1/webhooks/paystack")
 @RequiredArgsConstructor
 @Slf4j
 public class PaystackWebhookController {

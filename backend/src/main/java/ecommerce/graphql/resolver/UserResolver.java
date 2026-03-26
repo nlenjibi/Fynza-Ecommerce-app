@@ -75,27 +75,6 @@ public class UserResolver {
         return userService.getCustomerAddresses(userId);
     }
 
-    @MutationMapping
-    @PreAuthorize("hasRole('CUSTOMER')")
-    public AddressDto addAddress(@Argument AddressRequest input, @ContextValue UUID userId) {
-        log.info("GraphQL Mutation: addAddress for user {}", userId);
-        return userService.addCustomerAddress(userId, input);
-    }
-
-    @MutationMapping
-    @PreAuthorize("hasRole('CUSTOMER')")
-    public AddressDto updateAddress(@Argument UUID id, @Argument AddressRequest input, @ContextValue UUID userId) {
-        log.info("GraphQL Mutation: updateAddress(id: {})", id);
-        return userService.updateCustomerAddress(userId, id, input);
-    }
-
-    @MutationMapping
-    @PreAuthorize("hasRole('CUSTOMER')")
-    public Boolean deleteAddress(@Argument UUID id, @ContextValue UUID userId) {
-        log.info("GraphQL Mutation: deleteAddress(id: {})", id);
-        userService.deleteCustomerAddress(userId, id);
-        return true;
-    }
 
     private Pageable createPageable(PageInput input) {
         if (input == null) {

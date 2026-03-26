@@ -1,4 +1,4 @@
-package ecommerce.modules.help.controller;
+package ecommerce.modules.faq.controller;
 
 import ecommerce.common.enums.FAQCategory;
 import ecommerce.common.response.ApiResponse;
@@ -24,7 +24,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/v1/help")
 @RequiredArgsConstructor
 @Tag(name = "Help & FAQ", description = "Public and customer help APIs")
 public class HelpController {

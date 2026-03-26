@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/admin/reports")
+@RequestMapping("/v1/admin/reports")
 @RequiredArgsConstructor
 @Tag(name = "Admin Reports", description = "Admin report generation and scheduling endpoints")
 public class ReportController {

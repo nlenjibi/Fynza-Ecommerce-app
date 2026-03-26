@@ -25,11 +25,3 @@ extend type Query {
     allUsers(pagination: PageInput, filter: UserFilterInput): UserPage!
 }
 
-extend type Mutation {
-    # Security: ADMIN only
-    createUser(input: UserCreateInput!): User!
-    updateUser(id: ID!, input: UserUpdateInput!): User!
-    deleteUser(id: ID!): Boolean!
-    lockAccount(userId: ID!): Boolean!
-    unlockAccount(userId: ID!): Boolean!
-}

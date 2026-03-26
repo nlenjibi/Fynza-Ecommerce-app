@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/coupons")
+@RequestMapping("/v1/coupons")
 @RequiredArgsConstructor
 @Tag(name = "Coupon Management", description = "Coupon management endpoints")
 public class CouponController {
