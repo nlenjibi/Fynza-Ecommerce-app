@@ -86,6 +86,17 @@ public class OrderResolver {
         return orderService.getOrderStatistics();
     }
 
+    @QueryMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    public OrderResponseDto staffOrderManagement(@Argument PageInput pagination) {
+        log.debug("GQL staffOrderManagement");
+        Page<OrderResponse> page = orderService.getAllOrders(toPageable(pagination));
+        return OrderResponseDto.builder()
+                .content(page.getContent())
+                .pageInfo(PaginatedResponse.from(page))
+                .build();
+    }
+
     // ==================== Mutations ====================
 
     @MutationMapping

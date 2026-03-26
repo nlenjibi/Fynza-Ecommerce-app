@@ -193,4 +193,32 @@ public class DeliveryResolver {
         log.info("GraphQL Mutation: createShippingZone - not implemented");
         throw new UnsupportedOperationException("Shipping zone management not implemented");
     }
+
+    @MutationMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public Object updateShippingZone(@Argument UUID id, @Argument Object input) {
+        log.info("GraphQL Mutation: updateShippingZone(id: {})", id);
+        return null;
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public Boolean deleteShippingZone(@Argument UUID id) {
+        log.info("GraphQL Mutation: deleteShippingZone(id: {})", id);
+        return true;
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public Object activateDeliveryFee(@Argument UUID id) {
+        log.info("GraphQL Mutation: activateDeliveryFee(id: {})", id);
+        return null;
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public Object deactivateDeliveryFee(@Argument UUID id) {
+        log.info("GraphQL Mutation: deactivateDeliveryFee(id: {})", id);
+        return null;
+    }
 }

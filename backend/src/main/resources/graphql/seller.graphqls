@@ -1,4 +1,65 @@
 # Seller GraphQL Schema
+type SellerDashboard {
+    totalProducts: Long!
+    activeProducts: Long!
+    totalOrders: Long!
+    ordersThisMonth: Long!
+    pendingOrders: Long!
+    processingOrders: Long!
+    shippedOrders: Long!
+    cancelledOrders: Long!
+    lowStockProducts: Long!
+    outOfStockProducts: Long!
+    totalRevenue: BigDecimal!
+    monthlyRevenue: BigDecimal!
+    averageOrderValue: BigDecimal!
+    conversionRate: Float!
+    averageRating: Float!
+    totalCustomers: Long!
+    storeVisits: Long!
+    visitGrowth: Float!
+}
+
+# SellerAnalytics Type
+type SellerAnalytics {
+    totalOrders: Long!
+    totalRevenue: BigDecimal!
+    averageOrderValue: BigDecimal!
+    conversionRate: Float!
+    topSellingProducts: [ProductSales!]!
+    ordersByStatus: [StatusCount!]!
+    revenueByDay: [DailyRevenue!]!
+    revenueByMonth: [MonthlyRevenue!]!
+}
+
+type ProductSales {
+    productId: ID!
+    productName: String!
+    quantitySold: Int!
+    revenue: BigDecimal!
+}
+
+type DailyRevenue {
+    date: String!
+    revenue: BigDecimal!
+    orders: Int!
+}
+
+type MonthlyRevenue {
+    month: String!
+    revenue: BigDecimal!
+    orders: Int!
+}
+
+
+input ShippingZoneUpdateInput {
+    zoneName: String
+    description: String
+    regions: [String!]
+    defaultDeliveryFee: BigDecimal
+    deliveryMethod: DeliveryMethod
+    isActive: Boolean
+}
 
 
 extend type Query {
@@ -11,4 +72,6 @@ extend type Query {
 extend type Mutation {
     # Security: SELLER only
     updateSellerOrderStatus(orderId: ID!, request: OrderStatusUpdateInput!): OrderResponse!
+    # ShippingZone Mutations
+
 }

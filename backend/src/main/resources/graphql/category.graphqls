@@ -83,3 +83,12 @@ input CategoryFilterInput {
     maxOrder: Int
 }
 
+input CategoryUpdateInput {
+    name: String
+    description: String
+    parentId: ID
+    imageUrl: String
+    isActive: Boolean
+    isFeatured: Boolean
+    sortOrder: Int
+}

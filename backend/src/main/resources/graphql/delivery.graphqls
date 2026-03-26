@@ -17,14 +17,22 @@ type DeliveryFee {
     deliveryMethod: DeliveryMethod!
     baseFee: BigDecimal!
     perKmFee: BigDecimal!
-    weightBasedFee: BigDecimal
-    freeShippingThreshold: BigDecimal
     estimatedDays: Int!
     regionId: ID
     regionName: String
     isActive: Boolean!
     createdAt: DateTime!
     updatedAt: DateTime!
+}
+
+type ShippingZone {
+    id: ID!
+    zoneName: String!
+    description: String
+    regions: [String!]!
+    defaultDeliveryFee: BigDecimal!
+    deliveryMethod: DeliveryMethod!
+    isActive: Boolean!
 }
 
 enum DeliveryMethod {
@@ -91,6 +99,7 @@ extend type Query {
     
     # Security: PUBLIC
     shippingZones: [ShippingZone!]!
+    calculateShipping(input: CalculateShippingInput!): ShippingCalculation!
 }
 
 extend type Mutation {
@@ -107,4 +116,17 @@ extend type Mutation {
     # Security: ADMIN only
     activateDeliveryFee(id: ID!): DeliveryFee!
     deactivateDeliveryFee(id: ID!): DeliveryFee!
+    
+    # Security: ADMIN only
+    createShippingZone(input: ShippingZoneInput!): ShippingZone!
+    updateShippingZone(id: ID!, input: ShippingZoneInput!): ShippingZone!
+    deleteShippingZone(id: ID!): Boolean!
+}
+
+input ShippingZoneInput {
+    zoneName: String!
+    description: String
+    regions: [String!]!
+    defaultDeliveryFee: BigDecimal!
+    deliveryMethod: DeliveryMethod!
 }

@@ -4,13 +4,11 @@ import ecommerce.common.response.PaginatedResponse;
 import ecommerce.graphql.dto.ProductDto;
 import ecommerce.graphql.input.PageInput;
 import ecommerce.graphql.input.SortDirection;
-import ecommerce.modules.product.dto.CreateProductRequest;
-import ecommerce.modules.product.dto.ProductResponse;
-import ecommerce.modules.product.dto.SearchRequest;
-import ecommerce.modules.product.dto.SearchResponse;
-import ecommerce.modules.product.dto.UpdateProductRequest;
+import ecommerce.modules.product.dto.*;
 import ecommerce.modules.product.service.ProductService;
 import ecommerce.modules.product.service.SearchService;
+import ecommerce.common.enums.InventoryStatus;
+import ecommerce.common.enums.ProductStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -110,6 +108,142 @@ public class ProductResolver {
                 .build();
     }
 
+    @QueryMapping
+    public ProductDto productsByCategory(
+            @Argument UUID categoryId,
+            @Argument PageInput pagination) {
+        log.debug("GraphQL Query: productsByCategory(categoryId: {})", categoryId);
+
+        Pageable pageable = createPageable(pagination);
+        ProductFilterRequest filterRequest = ProductFilterRequest.builder()
+                .categoryId(categoryId)
+                .build();
+        Page<ProductResponse> productPage = productService.findAll(filterRequest, pageable);
+
+        return ProductDto.builder()
+                .content(productPage.getContent())
+                .pageInfo(PaginatedResponse.from(productPage))
+                .build();
+    }
+
+    @QueryMapping
+    public ProductDto productsByCategoryName(
+            @Argument String categoryName,
+            @Argument PageInput pagination) {
+        log.debug("GraphQL Query: productsByCategoryName(categoryName: {})", categoryName);
+
+        Pageable pageable = createPageable(pagination);
+        ProductFilterRequest filterRequest = ProductFilterRequest.builder()
+                .categoryName(categoryName)
+                .build();
+        Page<ProductResponse> productPage = productService.findAll(filterRequest, pageable);
+
+        return ProductDto.builder()
+                .content(productPage.getContent())
+                .pageInfo(PaginatedResponse.from(productPage))
+                .build();
+    }
+
+    @QueryMapping
+    public ProductDto productsByPriceRange(
+            @Argument BigDecimal minPrice,
+            @Argument BigDecimal maxPrice,
+            @Argument PageInput pagination) {
+        log.debug("GraphQL Query: productsByPriceRange(minPrice: {}, maxPrice: {})", minPrice, maxPrice);
+
+        Pageable pageable = createPageable(pagination);
+        ProductFilterRequest filterRequest = ProductFilterRequest.builder()
+                .minPrice(minPrice)
+                .maxPrice(maxPrice)
+                .build();
+        Page<ProductResponse> productPage = productService.findAll(filterRequest, pageable);
+
+        return ProductDto.builder()
+                .content(productPage.getContent())
+                .pageInfo(PaginatedResponse.from(productPage))
+                .build();
+    }
+
+    @QueryMapping
+    public ProductDto searchProducts(
+            @Argument String keyword,
+            @Argument PageInput pagination) {
+        log.debug("GraphQL Query: searchProducts(keyword: {})", keyword);
+
+        Pageable pageable = createPageable(pagination);
+        ProductFilterRequest filterRequest = ProductFilterRequest.builder()
+                .keyword(keyword)
+                .build();
+        Page<ProductResponse> productPage = productService.findAll(filterRequest, pageable);
+
+        return ProductDto.builder()
+                .content(productPage.getContent())
+                .pageInfo(PaginatedResponse.from(productPage))
+                .build();
+    }
+
+    @QueryMapping
+    public ProductDto productsByInventoryStatus(
+            @Argument InventoryStatus status,
+            @Argument PageInput pagination) {
+        log.debug("GraphQL Query: productsByInventoryStatus(status: {})", status);
+
+        Pageable pageable = createPageable(pagination);
+        ProductFilterRequest filterRequest = ProductFilterRequest.builder()
+                .inventoryStatus(status.name())
+                .build();
+        Page<ProductResponse> productPage = productService.findAll(filterRequest, pageable);
+
+        return ProductDto.builder()
+                .content(productPage.getContent())
+                .pageInfo(PaginatedResponse.from(productPage))
+                .build();
+    }
+
+    @QueryMapping
+    public ProductDto productsNeedingReorder(@Argument PageInput pagination) {
+        log.debug("GraphQL Query: productsNeedingReorder");
+
+        Pageable pageable = createPageable(pagination);
+        ProductFilterRequest filterRequest = ProductFilterRequest.builder()
+                .needsReorderOnly(true)
+                .build();
+        Page<ProductResponse> productPage = productService.findAll(filterRequest, pageable);
+
+        return ProductDto.builder()
+                .content(productPage.getContent())
+                .pageInfo(PaginatedResponse.from(productPage))
+                .build();
+    }
+
+    @QueryMapping
+    public List<ProductResponse> lowStockProducts() {
+        log.debug("GraphQL Query: lowStockProducts");
+        
+        ProductFilterRequest filterRequest = ProductFilterRequest.builder()
+                .inventoryStatus(InventoryStatus.LOW_STOCK.name())
+                .build();
+        
+        return productService.findAll(filterRequest, PageRequest.of(0, 50)).getContent();
+    }
+
+    @QueryMapping
+    public List<ProductResponse> outOfStockProducts() {
+        log.debug("GraphQL Query: outOfStockProducts");
+        
+        ProductFilterRequest filterRequest = ProductFilterRequest.builder()
+                .inventoryStatus(InventoryStatus.OUT_OF_STOCK.name())
+                .build();
+        
+        return productService.findAll(filterRequest, PageRequest.of(0, 50)).getContent();
+    }
+
+    @QueryMapping
+    public AdminProductStatsResponse productStatistics() {
+        log.debug("GraphQL Query: productStatistics");
+        return productService.getAdminProductStats();
+    }
+
     // ==================== Mutations ====================
 
     @MutationMapping
@@ -198,6 +332,36 @@ public class ProductResolver {
             @Argument Float rating) {
         log.info("GraphQL Mutation: updateRating(id: {}, rating: {})", id, rating);
         return productService.updateRating(id, rating);
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public Boolean bulkUpdateFeatured(
+            @Argument List<UUID> productIds,
+            @Argument Boolean featured) {
+        log.info("GraphQL Mutation: bulkUpdateFeatured(productIds: {}, featured: {})", productIds, featured);
+        for (UUID id : productIds) {
+            try {
+                productService.updateProductStatus(id, featured ? ProductStatus.ACTIVE : ProductStatus.INACTIVE);
+            } catch (Exception e) {
+                log.warn("Failed to update product {}: {}", id, e.getMessage());
+            }
+        }
+        return true;
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public Boolean bulkDelete(@Argument List<UUID> productIds) {
+        log.info("GraphQL Mutation: bulkDelete(productIds: {})", productIds);
+        for (UUID id : productIds) {
+            try {
+                productService.delete(id);
+            } catch (Exception e) {
+                log.warn("Failed to delete product {}: {}", id, e.getMessage());
+            }
+        }
+        return true;
     }
 
     private Pageable createPageable(PageInput input) {

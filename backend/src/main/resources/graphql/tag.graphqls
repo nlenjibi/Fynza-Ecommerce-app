@@ -4,13 +4,13 @@
 type Tag {
     id: ID!
     name: String!
-    slug: String
     description: String
     color: String
-    productCount: Int
-    isActive: Boolean
-    createdAt: DateTime
-    updatedAt: DateTime
+    icon: String
+    isFeatured: Boolean
+    usageCount: Int
+    createdAt: DateTime!
+    updatedAt: DateTime!
 }
 
 type SellerProductTag {

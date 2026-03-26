@@ -80,8 +80,14 @@ type ProductDto {
 
 type SearchResponse {
     results: [ProductResponse!]!
-    pagination: PaginationInfo!
+    pageInfo: PageInfo!
     filters: SearchFilters
+}
+
+# FilterOption Type
+type FilterOption {
+    value: String!
+    label: String!
 }
 
 type SearchFilters {
@@ -90,7 +96,6 @@ type SearchFilters {
     priceRange: PriceRange
     ratingRange: RatingRange
 }
-
 
 type PriceRange {
     min: BigDecimal!
@@ -116,9 +121,6 @@ type ProductStatisticsResponse {
     totalViews: Long!
     totalSales: Long!
 }
-
-
-
 
 # Inventory Status Enum
 enum InventoryStatus {
