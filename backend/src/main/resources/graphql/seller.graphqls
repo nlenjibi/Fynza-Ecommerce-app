@@ -51,6 +51,11 @@ type MonthlyRevenue {
     orders: Int!
 }
 
+enum DeliveryMethod {
+    DIRECT_ADDRESS
+    BUS_STATION
+    SHIPPING
+}
 
 input ShippingZoneUpdateInput {
     zoneName: String

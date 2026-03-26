@@ -8,7 +8,7 @@ import ecommerce.modules.order.dto.OrderResponse;
 import ecommerce.modules.order.dto.PaymentProcessRequest;
 import ecommerce.modules.order.service.OrderService;
 import ecommerce.security.UserPrincipal;
-import ecommerce.service.IdempotencyService;
+import ecommerce.services.IdempotencyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

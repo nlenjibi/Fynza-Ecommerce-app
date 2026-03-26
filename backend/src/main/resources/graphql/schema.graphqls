@@ -1,3 +1,5 @@
+# GraphQL Directives
+
 schema {
     query: Query
     mutation: Mutation
