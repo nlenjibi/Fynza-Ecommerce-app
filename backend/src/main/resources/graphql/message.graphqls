@@ -4,6 +4,42 @@
 # =============================================================================
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Enums
+# ─────────────────────────────────────────────────────────────────────────────
+
+enum ConversationCategory {
+    GENERAL
+    ORDER
+    PRODUCT
+    SHIPPING
+    PAYMENT
+    REFUND
+    TECHNICAL
+}
+
+enum MessagePriority {
+    LOW
+    MEDIUM
+    HIGH
+    URGENT
+}
+
+enum MessageStatus {
+    OPEN
+    PENDING
+    RESOLVED
+    CLOSED
+    ARCHIVED
+}
+
+enum MessageType {
+    CUSTOMER
+    SELLER
+    SUPPORT
+    SYSTEM
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Types
 # ─────────────────────────────────────────────────────────────────────────────
 

@@ -43,18 +43,6 @@ type LowStockAlert {
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Admin Product Stats Type
-# ─────────────────────────────────────────────────────────────────────────────
-
-type AdminProductStats {
-    totalProducts: Long!
-    activeProducts: Long!
-    pendingProducts: Long!
-    outOfStockProducts: Long!
-    lowStockProducts: Long!
-}
-
-# ─────────────────────────────────────────────────────────────────────────────
 # Admin Customer Stats Type
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -145,7 +133,6 @@ extend type Query {
 
     # ── Product Management (ADMIN) ───────────────────────────────────────
     adminProducts(pagination: PageInput, filter: AdminProductSearchInput): ProductDto!
-    adminProductStats: AdminProductStats!
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -163,8 +150,6 @@ extend type Mutation {
     bulkUpdateUsers(input: BulkUserUpdateInput!): [User!]!
 
     # ── Product Management (ADMIN) ───────────────────────────────────────
-    approveProduct(id: ID!): ProductResponse!
-    rejectProduct(id: ID!, reason: String!): ProductResponse!
     adminUpdateProductInventory(id: ID!, stock: Int!): ProductResponse!
 
     # ── Seller Management (ADMIN) ────────────────────────────────────────

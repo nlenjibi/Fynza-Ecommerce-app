@@ -184,19 +184,6 @@ type SellerReviewStats {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Product Stats Type
-# ─────────────────────────────────────────────────────────────────────────────
-
-type SellerProductStats {
-    totalProducts: Long!
-    activeProducts: Long!
-    pendingProducts: Long!
-    outOfStockProducts: Long!
-    lowStockProducts: Long!
-}
-
-
-# ─────────────────────────────────────────────────────────────────────────────
 # Settings Types
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -358,13 +345,12 @@ extend type Query {
 
     # ── Products (SELLER) ────────────────────────────────────────────────
     sellerProducts(pagination: PageInput, filter: SellerProductFilterInput): ProductDto!
-    sellerProductStats: SellerProductStats!
 
     # ── Store (SELLER) ───────────────────────────────────────────────────
     sellerStore: SellerStore!
 
     # ── Reviews (SELLER) ─────────────────────────────────────────────────
-    sellerReviews(pagination: PageInput): ReviewResponseDto!
+    sellerReviews(pagination: PageInput): ReviewPage!
     sellerReviewStats: SellerReviewStats!
 
     # ── Tags (SELLER) ────────────────────────────────────────────────────
