@@ -139,11 +139,10 @@
 
 
         <!-- GraphQL Extended Scalars (for DateTime, UUID, BigDecimal) -->
-        <!-- GraphQL Extended Scalars (for DateTime, UUID, BigDecimal) -->
         <dependency>
             <groupId>com.graphql-java</groupId>
             <artifactId>graphql-java-extended-scalars</artifactId>
-            <version>21.0</version>
+            <version>19.0</version>
         </dependency>
 
 
