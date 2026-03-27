@@ -114,9 +114,26 @@ public class RedisConfig {
         cacheConfigs.put("products", defaultConfig.entryTtl(Duration.ofMinutes(5)));
         cacheConfigs.put("categories", defaultConfig.entryTtl(Duration.ofHours(1)));
         cacheConfigs.put("userSessions", defaultConfig.entryTtl(Duration.ofMinutes(15)));
+        cacheConfigs.put("user-profile", defaultConfig.entryTtl(Duration.ofMinutes(15)));
+        cacheConfigs.put("wishlists", defaultConfig.entryTtl(Duration.ofMinutes(30)));
+        cacheConfigs.put("wishlists-paginated", defaultConfig.entryTtl(Duration.ofMinutes(30)));
+        cacheConfigs.put("wishlists-summary", defaultConfig.entryTtl(Duration.ofMinutes(30)));
+        cacheConfigs.put("wishlists-check", defaultConfig.entryTtl(Duration.ofMinutes(30)));
+        cacheConfigs.put("wishlists-drops", defaultConfig.entryTtl(Duration.ofMinutes(30)));
+        cacheConfigs.put("wishlists-analytics", defaultConfig.entryTtl(Duration.ofMinutes(30)));
+        cacheConfigs.put("orders", defaultConfig.entryTtl(Duration.ofMinutes(15)));
+        cacheConfigs.put("order", defaultConfig.entryTtl(Duration.ofMinutes(15)));
+        cacheConfigs.put("order-stats", defaultConfig.entryTtl(Duration.ofMinutes(15)));
+        cacheConfigs.put("reviews", defaultConfig.entryTtl(Duration.ofMinutes(15)));
+        cacheConfigs.put("review-stats", defaultConfig.entryTtl(Duration.ofMinutes(15)));
+        cacheConfigs.put("admin-dashboard", defaultConfig.entryTtl(Duration.ofMinutes(5)));
+        cacheConfigs.put("users", defaultConfig.entryTtl(Duration.ofMinutes(15)));
+        cacheConfigs.put("users-page", defaultConfig.entryTtl(Duration.ofMinutes(15)));
+        cacheConfigs.put("seller-dashboard", defaultConfig.entryTtl(Duration.ofMinutes(10)));
         
         // Security-critical, longer TTL
         cacheConfigs.put("tokenBlacklist", defaultConfig.entryTtl(Duration.ofHours(24)));
+        cacheConfigs.put("userPrincipals", defaultConfig.entryTtl(Duration.ofMinutes(5)));
         
         // Stock reservations - per architecture.md
         cacheConfigs.put("stockReservations", defaultConfig.entryTtl(Duration.ofMinutes(15)));
