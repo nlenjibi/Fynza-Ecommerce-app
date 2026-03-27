@@ -6,6 +6,7 @@ import graphql.schema.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.graphql.execution.RuntimeWiringConfigurer;
+import org.springframework.graphql.execution.TypeDefinitionConfigurer;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -34,6 +35,13 @@ public class GraphQLScalarConfiguration {
                 .scalar(ExtendedScalars.UUID)
                 .scalar(ExtendedScalars.GraphQLLong)
                 .scalar(uploadScalar());
+    }
+
+    @Bean
+    public TypeDefinitionConfigurer removeOneOfDirective() {
+        return registry -> {
+            registry.removeDirectiveDefinition("oneOf");
+        };
     }
 
     /**
