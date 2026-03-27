@@ -249,21 +249,6 @@ public class AdminResolver {
 
     @MutationMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ProductResponse approveProduct(@Argument UUID id) {
-        log.info("GQL approveProduct(id={})", id);
-        return productService.approveProduct(id);
-    }
-
-    @MutationMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ProductResponse rejectProduct(@Argument UUID id,
-                                          @Argument String reason) {
-        log.info("GQL rejectProduct(id={}, reason={})", id, reason);
-        return productService.rejectProduct(id, reason);
-    }
-
-    @MutationMapping
-    @PreAuthorize("hasRole('ADMIN')")
     public ProductResponse adminUpdateProductInventory(@Argument UUID id,
                                                         @Argument Integer stock) {
         log.info("GQL adminUpdateProductInventory(id={}, stock={})", id, stock);
