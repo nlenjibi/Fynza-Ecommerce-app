@@ -207,7 +207,14 @@ public class CacheConfig implements CachingConfigurer {
                 buildCaffeineCache(WISHLIST_DROPS_CACHE,      500, 30),
                 buildCaffeineCache(WISHLIST_ANALYTICS_CACHE,  500, 60),
 
-                buildCaffeineCache(DASHBOARD_CACHE, 10, 10)
+                buildCaffeineCache(DASHBOARD_CACHE, 10, 10),
+
+                // --- Missing caches used by @Cacheable annotations ---
+                buildCaffeineCache("admin-analytics",     50, 10),
+                buildCaffeineCache("faqs",              1000, 60),
+                buildCaffeineCache("searchFilters",       50, 60),
+                buildCaffeineCache("settings",            50, 60),
+                buildCaffeineCache("users-predicate",   1000, 60)
         ));
         return cacheManager;
     }

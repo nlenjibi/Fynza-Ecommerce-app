@@ -125,11 +125,20 @@ public class RedisConfig {
         cacheConfigs.put("order", defaultConfig.entryTtl(Duration.ofMinutes(15)));
         cacheConfigs.put("order-stats", defaultConfig.entryTtl(Duration.ofMinutes(15)));
         cacheConfigs.put("reviews", defaultConfig.entryTtl(Duration.ofMinutes(15)));
+        cacheConfigs.put("review", defaultConfig.entryTtl(Duration.ofMinutes(15)));
         cacheConfigs.put("review-stats", defaultConfig.entryTtl(Duration.ofMinutes(15)));
+        cacheConfigs.put("review-lists", defaultConfig.entryTtl(Duration.ofMinutes(15)));
+        cacheConfigs.put("reviews-predicate", defaultConfig.entryTtl(Duration.ofMinutes(15)));
+        cacheConfigs.put("user-reviews", defaultConfig.entryTtl(Duration.ofMinutes(15)));
         cacheConfigs.put("admin-dashboard", defaultConfig.entryTtl(Duration.ofMinutes(5)));
+        cacheConfigs.put("admin-analytics", defaultConfig.entryTtl(Duration.ofMinutes(10)));
         cacheConfigs.put("users", defaultConfig.entryTtl(Duration.ofMinutes(15)));
         cacheConfigs.put("users-page", defaultConfig.entryTtl(Duration.ofMinutes(15)));
+        cacheConfigs.put("users-predicate", defaultConfig.entryTtl(Duration.ofMinutes(15)));
         cacheConfigs.put("seller-dashboard", defaultConfig.entryTtl(Duration.ofMinutes(10)));
+        cacheConfigs.put("faqs", defaultConfig.entryTtl(Duration.ofMinutes(60)));
+        cacheConfigs.put("searchFilters", defaultConfig.entryTtl(Duration.ofMinutes(60)));
+        cacheConfigs.put("settings", defaultConfig.entryTtl(Duration.ofMinutes(60)));
         
         // Security-critical, longer TTL
         cacheConfigs.put("tokenBlacklist", defaultConfig.entryTtl(Duration.ofHours(24)));
