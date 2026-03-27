@@ -2,6 +2,7 @@ package ecommerce.graphql.resolver;
 
 import ecommerce.common.response.PaginatedResponse;
 import ecommerce.graphql.dto.CategoryPage;
+import ecommerce.graphql.dto.CategoryStats;
 import ecommerce.graphql.input.CategoryCreateInput;
 import ecommerce.graphql.input.CategoryFilterInput;
 import ecommerce.graphql.input.CategoryUpdateInput;
@@ -128,9 +129,15 @@ public class CategoryResolver {
 
     @QueryMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public Map<String, Object> categoryStats() {
+    public CategoryStats categoryStats() {
         log.info("GQL categoryStats");
-        return categoryService.getCategoryStats();
+        Map<String, Object> stats = categoryService.getCategoryStats();
+        return CategoryStats.builder()
+                .totalCategories((Long) stats.getOrDefault("totalCategories", 0L))
+                .activeCategories((Long) stats.getOrDefault("activeCategories", 0L))
+                .featuredCategories((Long) stats.getOrDefault("featuredCategories", 0L))
+                .rootCategories((Long) stats.getOrDefault("rootCategories", 0L))
+                .build();
     }
 
     // =========================================================================

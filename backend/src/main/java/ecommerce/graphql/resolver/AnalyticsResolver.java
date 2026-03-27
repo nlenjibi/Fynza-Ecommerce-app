@@ -1,5 +1,7 @@
 package ecommerce.graphql.resolver;
 
+import ecommerce.graphql.dto.AdminStats;
+import ecommerce.graphql.dto.PerformanceMetrics;
 import ecommerce.modules.admin.dto.AdminAnalyticsDto;
 import ecommerce.modules.admin.dto.ContentAnalyticsDto;
 import ecommerce.modules.admin.service.AdminService;
@@ -43,20 +45,18 @@ public class AnalyticsResolver {
 
     @QueryMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public Map<String, Object> adminStats() {
+    public AdminStats adminStats() {
         log.info("GQL adminStats");
         Map<String, Object> customerStats = userService.getCustomerStats();
         Map<String, Object> sellerStats = userService.getSellerStats();
-        var productStats = productService.getAdminProductStats();
-
-        return Map.of(
-                "totalUsers", customerStats.getOrDefault("totalCustomers", 0L),
-                "totalRevenue", analyticsService.getTotalRevenue(),
-                "totalOrderCount", analyticsService.getTotalOrderCount(),
-                "totalProducts", productStats.getTotalProducts(),
-                "totalSellers", sellerStats.getOrDefault("totalSellers", 0L),
-                "totalCustomers", customerStats.getOrDefault("totalCustomers", 0L)
-        );
+        return AdminStats.builder()
+                .totalUsers((Long) customerStats.getOrDefault("totalCustomers", 0L))
+                .totalRevenue(analyticsService.getTotalRevenue())
+                .totalOrderCount(analyticsService.getTotalOrderCount())
+                .totalProducts(productService.getAdminProductStats().getTotalProducts())
+                .totalSellers((Long) sellerStats.getOrDefault("totalSellers", 0L))
+                .totalCustomers((Long) customerStats.getOrDefault("totalCustomers", 0L))
+                .build();
     }
 
     // =========================================================================
@@ -136,7 +136,7 @@ public class AnalyticsResolver {
 
     @QueryMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public Map<String, Object> performanceMetrics() {
+    public PerformanceMetrics performanceMetrics() {
         log.info("GQL performanceMetrics");
         Runtime runtime = Runtime.getRuntime();
         long maxMemory = runtime.maxMemory();
@@ -144,14 +144,12 @@ public class AnalyticsResolver {
         long freeMemory = runtime.freeMemory();
         long usedMemory = totalMemory - freeMemory;
 
-        return Map.of(
-                "avgResponseTimeMs", 0.0,
-                "cacheHitRate", 0.95,
-                "activeConnections", 0,
-                "uptimeSeconds", (System.currentTimeMillis() - getStartTime()) / 1000,
-                "usedMemoryMB", usedMemory / (1024 * 1024),
-                "maxMemoryMB", maxMemory / (1024 * 1024)
-        );
+        return PerformanceMetrics.builder()
+                .avgResponseTimeMs(0.0)
+                .cacheHitRate(0.95)
+                .activeConnections(0)
+                .uptimeSeconds((System.currentTimeMillis() - getStartTime()) / 1000)
+                .build();
     }
 
     // =========================================================================

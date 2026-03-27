@@ -2,6 +2,7 @@ package ecommerce.graphql.resolver;
 
 import ecommerce.common.response.PaginatedResponse;
 import ecommerce.graphql.dto.AdminPromotionPage;
+import ecommerce.graphql.dto.AdminPromotionStats;
 import ecommerce.graphql.dto.SellerPromotionPage;
 import ecommerce.graphql.input.AdminPromotionCreateInput;
 import ecommerce.graphql.input.PageInput;
@@ -63,12 +64,12 @@ public class PromotionResolver {
 
     @QueryMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public Map<String, Object> adminPromotionStats() {
+    public AdminPromotionStats adminPromotionStats() {
         log.info("GQL adminPromotionStats");
-        return Map.of(
-                "activeCount", adminPromotionService.countActivePromotions(),
-                "totalRevenue", adminPromotionService.getTotalRevenue()
-        );
+        return AdminPromotionStats.builder()
+                .activeCount(adminPromotionService.countActivePromotions())
+                .totalRevenue(adminPromotionService.getTotalRevenue())
+                .build();
     }
 
     // =========================================================================

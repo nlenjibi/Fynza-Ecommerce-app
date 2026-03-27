@@ -3,6 +3,8 @@ package ecommerce.graphql.resolver;
 import com.querydsl.core.types.Predicate;
 import ecommerce.common.enums.ProductStatus;
 import ecommerce.common.response.PaginatedResponse;
+import ecommerce.graphql.dto.CustomerStats;
+import ecommerce.graphql.dto.SellerStats;
 import ecommerce.graphql.dto.UserResponceDto;
 import ecommerce.graphql.input.*;
 import ecommerce.modules.admin.dto.AdminAnalyticsDto;
@@ -98,9 +100,14 @@ public class AdminResolver {
 
     @QueryMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public Map<String, Object> customerStats() {
+    public CustomerStats customerStats() {
         log.info("GQL customerStats");
-        return userService.getCustomerStats();
+        Map<String, Object> stats = userService.getCustomerStats();
+        return CustomerStats.builder()
+                .totalCustomers((Long) stats.getOrDefault("totalCustomers", 0L))
+                .activeCustomers((Long) stats.getOrDefault("activeCustomers", 0L))
+                .newCustomersThisMonth((Long) stats.getOrDefault("newCustomersThisMonth", 0L))
+                .build();
     }
 
     @QueryMapping
@@ -139,9 +146,15 @@ public class AdminResolver {
 
     @QueryMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public Map<String, Object> sellerStats() {
+    public SellerStats sellerStats() {
         log.info("GQL sellerStats");
-        return userService.getSellerStats();
+        Map<String, Object> stats = userService.getSellerStats();
+        return SellerStats.builder()
+                .totalSellers((Long) stats.getOrDefault("totalSellers", 0L))
+                .activeSellers((Long) stats.getOrDefault("activeSellers", 0L))
+                .pendingSellers((Long) stats.getOrDefault("pendingSellers", 0L))
+                .suspendedSellers((Long) stats.getOrDefault("suspendedSellers", 0L))
+                .build();
     }
 
     // =========================================================================
