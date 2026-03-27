@@ -141,6 +141,8 @@ public class CacheConfig implements CachingConfigurer {
                 buildCaffeineCache(ORDER_COUNTS_CACHE,      500, 15),
                 buildCaffeineCache(CARTS_CACHE,             3000, 15),
                 buildCaffeineCache(USER_PRINCIPALS_CACHE,    5000, 5),
+                buildCaffeineCache("user-profile",           5000, 15),
+                buildCaffeineCache("seller-dashboard",        100, 10),
 
                 // --- MEDIUM_LIVED (30-60 min) - Moderately changing data ---
                 buildCaffeineCache(PRODUCTS_CACHE,               2000, 60),
