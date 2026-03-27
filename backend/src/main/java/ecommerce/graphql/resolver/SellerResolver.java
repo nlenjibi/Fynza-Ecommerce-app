@@ -112,13 +112,6 @@ public class SellerResolver {
                 .build();
     }
 
-    @QueryMapping
-    @PreAuthorize("hasRole('SELLER')")
-    public SellerProductStatsResponse sellerProductStats(@ContextValue UUID sellerId) {
-        log.info("GQL sellerProductStats(seller={})", sellerId);
-        return productService.getSellerProductStats(sellerId);
-    }
-
     // =========================================================================
     // STORE QUERIES
     // =========================================================================

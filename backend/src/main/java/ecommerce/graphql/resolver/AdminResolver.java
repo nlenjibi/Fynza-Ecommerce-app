@@ -61,17 +61,6 @@ public class AdminResolver {
     }
 
     // =========================================================================
-    // ANALYTICS QUERIES
-    // =========================================================================
-
-    @QueryMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public AdminAnalyticsDto adminAnalytics(@Argument String filter) {
-        log.info("GQL adminAnalytics(filter={})", filter);
-        return adminService.getAnalytics(filter != null ? filter : "month");
-    }
-
-    // =========================================================================
     // USER MANAGEMENT QUERIES
     // =========================================================================
 
@@ -178,13 +167,6 @@ public class AdminResolver {
                 .content(page.getContent())
                 .pageInfo(PaginatedResponse.from(page))
                 .build();
-    }
-
-    @QueryMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public AdminProductStatsResponse adminProductStats() {
-        log.info("GQL adminProductStats");
-        return productService.getAdminProductStats();
     }
 
     // =========================================================================
