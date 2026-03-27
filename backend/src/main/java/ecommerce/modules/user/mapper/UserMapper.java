@@ -3,6 +3,7 @@ package ecommerce.modules.user.mapper;
 
 
 import ecommerce.common.enums.PaymentMethod;
+import ecommerce.common.enums.Role;
 import ecommerce.modules.user.dto.UserCreateRequest;
 import ecommerce.modules.user.dto.UserDto;
 import ecommerce.modules.user.dto.UserUpdateRequest;
@@ -23,12 +24,12 @@ public interface UserMapper {
     @Mapping(target = "role", source = "role")
     void updateEntity(@MappingTarget User user, UserUpdateRequest request);
 
-    default PaymentMethod.Role map(String role) {
+    default Role map(String role) {
         if (role == null) return null;
         try {
-            return PaymentMethod.Role.valueOf(role.toUpperCase());
+            return Role.valueOf(role.toUpperCase());
         } catch (IllegalArgumentException e) {
-            return PaymentMethod.Role.CUSTOMER;
+            return Role.CUSTOMER;
         }
     }
 }

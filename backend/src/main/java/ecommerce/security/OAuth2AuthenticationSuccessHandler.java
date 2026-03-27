@@ -1,6 +1,7 @@
 package ecommerce.security;
 
 import ecommerce.common.enums.PaymentMethod;
+import ecommerce.common.enums.Role;
 import ecommerce.modules.auth.dto.AuthResponse;
 import ecommerce.modules.auth.service.AuthService;
 import ecommerce.modules.user.entity.User;
@@ -176,7 +177,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
                 .firstName(nameParts[0])
                 .lastName(nameParts[1])
                 .profileImageUrl(avatar)
-                .role(PaymentMethod.Role.CUSTOMER)
+                .role(Role.CUSTOMER)
                 .isActive(true)
                 .isLocked(false)
                 .lastPasswordChange(LocalDateTime.now())

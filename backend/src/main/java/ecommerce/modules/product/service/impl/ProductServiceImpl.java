@@ -3,6 +3,7 @@ package ecommerce.modules.product.service.impl;
 import ecommerce.common.enums.InventoryStatus;
 import ecommerce.common.enums.PaymentMethod;
 import ecommerce.common.enums.ProductStatus;
+import ecommerce.common.enums.Role;
 import ecommerce.exception.ResourceNotFoundException;
 import ecommerce.modules.category.entity.Category;
 import ecommerce.modules.category.repository.CategoryRepository;
@@ -592,7 +593,7 @@ public class ProductServiceImpl implements ProductService {
             return false;
         }
         boolean isOwner = product.getSeller() != null && product.getSeller().getId().equals(userUuid);
-        boolean isAdmin = product.getSeller() != null && product.getSeller().getRole() == PaymentMethod.Role.ADMIN;
+        boolean isAdmin = product.getSeller() != null && product.getSeller().getRole() == Role.ADMIN;
         return isOwner || isAdmin;
     }
 
@@ -605,7 +606,7 @@ public class ProductServiceImpl implements ProductService {
             return false;
         }
         boolean isOwner = product.getSeller() != null && product.getSeller().getId().equals(userUuid);
-        boolean isAdmin = product.getSeller() != null && product.getSeller().getRole() == PaymentMethod.Role.ADMIN;
+        boolean isAdmin = product.getSeller() != null && product.getSeller().getRole() == Role.ADMIN;
         return isOwner || isAdmin;
     }
 }

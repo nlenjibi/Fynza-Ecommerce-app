@@ -1,6 +1,7 @@
 package ecommerce.security;
 
 import ecommerce.common.enums.PaymentMethod;
+import ecommerce.common.enums.Role;
 import ecommerce.modules.user.entity.User;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -27,7 +28,7 @@ public class UserPrincipal implements UserDetails {
     private final Long lastPasswordChangeEpoch;
     @Getter
     @Enumerated(value = EnumType.STRING)
-    private final PaymentMethod.Role role;
+    private final Role role;
     private final Collection<? extends GrantedAuthority> authorities;
 
     public UserPrincipal(User user) {
@@ -59,7 +60,7 @@ public class UserPrincipal implements UserDetails {
         return Boolean.TRUE.equals(isLocked);
     }
 
-    public PaymentMethod.Role getRole() {
+    public Role getRole() {
         return role;
     }
 

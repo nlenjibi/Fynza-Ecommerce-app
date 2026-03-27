@@ -2,6 +2,7 @@ package ecommerce.modules.user.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import ecommerce.common.enums.PaymentMethod;
+import ecommerce.common.enums.Role;
 import ecommerce.common.enums.UserStatus;
 import lombok.*;
 
@@ -22,7 +23,7 @@ public class UserDto {
     private String lastName;
     private String fullName;
     private String phone;
-    private PaymentMethod.Role role;
+    private Role role;
     private Boolean isActive;
     private String profileImageUrl;
     private UserStatus status;

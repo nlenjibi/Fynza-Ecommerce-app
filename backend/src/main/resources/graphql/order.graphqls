@@ -1,115 +1,122 @@
-# REMOVED enum OrderStatus, enum PaymentStatus, type OrderItem, type Order from order.graphqls to avoid redefinition error. These should only be defined once, ideally in a shared or core schema file.
-# OrderStatus, PaymentStatus, OrderItem, and Order types/enums are now defined in shared/orderTypes.graphqls. Only reference them here.
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Enums
-# ─────────────────────────────────────────────────────────────────────────────
-# PaymentMethod enum is defined in payment.graphqls to avoid redefinition
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Core types
-# ─────────────────────────────────────────────────────────────────────────────
-type OrderStats {
-    totalOrders: Int!
-    pendingOrders: Int!
-    processingOrders: Int!
-    shippedOrders: Int!
-    deliveredOrders: Int!
-    cancelledOrders: Int!
-    totalRevenue: BigDecimal!
-    monthlyRevenue: BigDecimal!
-    averageOrderValue: BigDecimal!
-}
-
-type OrderPage {
-    content: [Order!]!
-    pageInfo: PageInfo!
-}
-
-type OrderResponse {
-    order: Order
-}
-
-type OrderResponseDto {
-    content: [Order!]!
-    pageInfo: PageInfo!
-}
-
-type OrderStatsResponse {
-    stats: OrderStats!
-}
+# =============================================================================
+# Order GraphQL Schema
+# Covers: Customer, Admin, and Seller order operations
+# =============================================================================
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Inputs
 # ─────────────────────────────────────────────────────────────────────────────
+
 input OrderItemInput {
     productId: ID!
     quantity: Int!
 }
 
 input OrderCreateInput {
-    items: [OrderItemInput!]!
-    shippingCost: BigDecimal
+    shippingAddressId: ID
+    billingAddressId: ID
     paymentMethod: String
-    shippingAddress: String
-    customerNotes: String
     couponCode: String
+    items: [OrderItemInput!]
+    shippingCost: BigDecimal
+    customerNotes: String
 }
 
 input OrderFilterInput {
     status: String
-    userId: ID
+    paymentStatus: String
+    dateFrom: DateTime
+    dateTo: DateTime
     minAmount: BigDecimal
     maxAmount: BigDecimal
-    startDate: DateTime
-    endDate: DateTime
+    query: String
     orderNumber: String
     customerEmail: String
     highValue: Boolean
     overdue: Boolean
-    isActive: Boolean = true
 }
 
-input OrderStatusUpdateRequest {
+input OrderStatusUpdateInput {
     status: String!
     trackingNumber: String
     notes: String
 }
 
+input OrderSearchInput {
+    query: String
+    status: String
+    paymentStatus: String
+    dateFrom: DateTime
+    dateTo: DateTime
+    minAmount: BigDecimal
+    maxAmount: BigDecimal
+}
+
+input CancelOrderInput {
+    reason: String
+}
+
+input RefundOrderInput {
+    reason: String!
+    amount: BigDecimal
+}
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Queries
 # ─────────────────────────────────────────────────────────────────────────────
-extend type Query {
-    # Security: AUTHENTICATED - Customer's own orders only
-    # Customer
-    order(id: ID!): OrderResponse
-    orderByNumber(orderNumber: String!): OrderResponse
-    myOrders(pagination: PageInput): OrderResponseDto!
 
-    # Security: ADMIN or STAFF only
-    # Admin
-    allOrders(pagination: PageInput): OrderResponseDto!
-    ordersByStatus(status: String!, pagination: PageInput): OrderResponseDto!
-    orderStatistics: OrderStatsResponse!
-    staffOrderManagement(pagination: PageInput): OrderResponseDto!
+extend type Query {
+
+    # ── Customer Queries (AUTHENTICATED) ──────────────────────────────────
+
+    order(id: ID!): Order
+    orderByNumber(orderNumber: String!): Order
+    myOrders(pagination: PageInput): OrderPage!
+
+    # ── Order Tracking (CUSTOMER, ADMIN, SELLER) ─────────────────────────
+
+    orderTracking(orderId: ID!): OrderTracking!
+    orderTimeline(orderId: ID!): [OrderTimeline!]!
+
+    # ── Admin Queries (ADMIN) ────────────────────────────────────────────
+
+    allOrders(pagination: PageInput): OrderPage!
+    adminSearchOrders(filter: OrderSearchInput, pagination: PageInput): OrderPage!
+    ordersByStatus(status: String!, pagination: PageInput): OrderPage!
+    orderStatistics: OrderStats!
+    orderDashboard: OrderDashboard!
+    customerOrders(customerId: ID!, pagination: PageInput): OrderPage!
+
+    # ── Seller Queries (SELLER) ──────────────────────────────────────────
+
+    sellerOrders(pagination: PageInput, filter: OrderSearchInput): OrderPage!
+    sellerOrderStats: SellerOrderStats!
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Mutations
 # ─────────────────────────────────────────────────────────────────────────────
-extend type Mutation {
-    # Security: AUTHENTICATED - Customer can create/cancel their own orders
-    # Customer
-    createOrder(input: OrderCreateInput!): OrderResponse!
-    cancelOrder(id: ID!, reason: String!): OrderResponse!
 
-    # Security: ADMIN or STAFF only
-    # Admin
-    confirmOrder(id: ID!): OrderResponse!
-    processOrder(id: ID!): OrderResponse!
-    shipOrder(id: ID!, trackingNumber: String!, carrier: String): OrderResponse!
-    deliverOrder(id: ID!): OrderResponse!
-    refundOrder(id: ID!, amount: BigDecimal!, reason: String!): OrderResponse!
-    cancelOrderAdmin(id: ID!, reason: String!): OrderResponse!
-    updateOrderStatus(id: ID!, request: OrderStatusUpdateRequest!): OrderResponse!
+extend type Mutation {
+
+    # ── Customer Mutations (AUTHENTICATED) ───────────────────────────────
+
+    createOrder(input: OrderCreateInput!): Order!
+    cancelOrder(id: ID!, reason: String): Order!
+    requestOrderRefund(orderId: ID!, input: RefundOrderInput): Order!
+
+    # ── Admin Mutations (ADMIN) ──────────────────────────────────────────
+
+    adminUpdateOrderStatus(id: ID!, input: OrderStatusUpdateInput!): Order!
+    adminCancelOrder(id: ID!, reason: String): Order!
+    confirmOrder(id: ID!): Order!
+    processOrder(id: ID!): Order!
+    shipOrder(id: ID!, trackingNumber: String!, carrier: String): Order!
+    deliverOrder(id: ID!): Order!
+    refundOrder(id: ID!, amount: BigDecimal!, reason: String!): Order!
+
+    # ── Seller Mutations (SELLER) ────────────────────────────────────────
+
+    sellerUpdateOrderStatus(orderId: ID!, input: OrderStatusUpdateInput!): Order!
 }

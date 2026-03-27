@@ -3,6 +3,7 @@ package ecommerce.modules.user.repository;
 import com.querydsl.core.types.Predicate;
 import ecommerce.common.base.BaseRepository;
 import ecommerce.common.enums.PaymentMethod;
+import ecommerce.common.enums.Role;
 import ecommerce.common.enums.UserStatus;
 import ecommerce.modules.user.entity.User;
 import org.springframework.data.domain.Page;
@@ -29,13 +30,13 @@ public interface UserRepository extends BaseRepository<User, UUID> {
     boolean existsByUsernameAndIsActiveTrue(String username);
 
     @Query("SELECT u FROM User u WHERE u.role = :role")
-    Page<User> findByRole(@Param("role") PaymentMethod.Role role, Pageable pageable);
+    Page<User> findByRole(@Param("role") Role role, Pageable pageable);
 
     @Query("SELECT u FROM User u WHERE u.status = :status")
     Page<User> findByStatus(@Param("status") UserStatus status, Pageable pageable);
 
     @Query("SELECT COUNT(u) FROM User u WHERE u.role = :role")
-    long countByRole(@Param("role") PaymentMethod.Role role);
+    long countByRole(@Param("role") Role role);
 
     @Query("SELECT COUNT(u) FROM User u WHERE u.isActive = true")
     long countActiveUsers();

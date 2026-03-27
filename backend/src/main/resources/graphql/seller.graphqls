@@ -70,13 +70,9 @@ input ShippingZoneUpdateInput {
 extend type Query {
     # Security: SELLER only
     sellerDashboard: SellerDashboard!
-    sellerOrders(pagination: PageInput): OrderResponseDto!
     sellerAnalytics(days: Int = 30): SellerAnalytics!
 }
 
 extend type Mutation {
-    # Security: SELLER only
-    updateSellerOrderStatus(orderId: ID!, request: OrderStatusUpdateInput!): OrderResponse!
-    # ShippingZone Mutations
-
+    # Order mutations are in order.graphqls (sellerUpdateOrderStatus)
 }

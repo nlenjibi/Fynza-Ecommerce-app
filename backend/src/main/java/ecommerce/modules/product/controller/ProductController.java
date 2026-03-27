@@ -1,6 +1,7 @@
 package ecommerce.modules.product.controller;
 
 import ecommerce.common.enums.PaymentMethod;
+import ecommerce.common.enums.Role;
 import ecommerce.common.response.ApiResponse;
 import ecommerce.common.response.PaginatedResponse;
 import ecommerce.modules.product.dto.CreateProductRequest;
@@ -124,7 +125,7 @@ public class ProductController {
         ProductResponse existingProduct = productService.findById(id);
         boolean isOwner = existingProduct.getSeller() != null && 
                 existingProduct.getSeller().getId().toString().equals(principal.getId().toString());
-        boolean isAdmin = principal.getRole() == PaymentMethod.Role.ADMIN;
+        boolean isAdmin = principal.getRole() == Role.ADMIN;
         
         if (!isOwner && !isAdmin) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -145,7 +146,7 @@ public class ProductController {
         ProductResponse existingProduct = productService.findById(id);
         boolean isOwner = existingProduct.getSeller() != null && 
                 existingProduct.getSeller().getId().toString().equals(principal.getId().toString());
-        boolean isAdmin = principal.getRole() == PaymentMethod.Role.ADMIN;
+        boolean isAdmin = principal.getRole() == Role.ADMIN;
         
         if (!isOwner && !isAdmin) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -186,7 +187,7 @@ public class ProductController {
         ProductResponse existingProduct = productService.findById(id);
         boolean isOwner = existingProduct.getSeller() != null && 
                 existingProduct.getSeller().getId().toString().equals(principal.getId().toString());
-        boolean isAdmin = principal.getRole() == PaymentMethod.Role.ADMIN;
+        boolean isAdmin = principal.getRole() == Role.ADMIN;
         
         if (!isOwner && !isAdmin) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)

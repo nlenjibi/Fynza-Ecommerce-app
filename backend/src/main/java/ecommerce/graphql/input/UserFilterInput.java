@@ -1,6 +1,7 @@
 package ecommerce.graphql.input;
 
 import ecommerce.common.enums.PaymentMethod;
+import ecommerce.common.enums.Role;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -11,7 +12,7 @@ import java.time.LocalDateTime;
 @Data
 public class UserFilterInput {
     private String search;
-    private PaymentMethod.Role role;
+    private Role role;
     private Boolean active;
     private Boolean emailVerified;
     private LocalDateTime createdAfter;

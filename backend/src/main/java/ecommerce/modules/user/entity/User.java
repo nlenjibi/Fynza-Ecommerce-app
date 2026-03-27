@@ -2,6 +2,7 @@ package ecommerce.modules.user.entity;
 
 import ecommerce.common.base.BaseEntity;
 import ecommerce.common.enums.PaymentMethod;
+import ecommerce.common.enums.Role;
 import ecommerce.common.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -50,7 +51,7 @@ public class User extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     @Builder.Default
-    private PaymentMethod.Role role = PaymentMethod.Role.CUSTOMER;
+    private Role role = Role.CUSTOMER;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

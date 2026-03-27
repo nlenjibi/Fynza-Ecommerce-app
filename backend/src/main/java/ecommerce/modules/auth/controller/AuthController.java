@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import ecommerce.security.UserPrincipal;
 
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/v1/auth")
 @Validated
 @RequiredArgsConstructor
 public class AuthController {

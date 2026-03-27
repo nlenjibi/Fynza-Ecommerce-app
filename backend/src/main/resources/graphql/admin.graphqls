@@ -1,27 +1,253 @@
+# =============================================================================
 # Admin GraphQL Schema
+# Covers: Dashboard, User CRUD, Seller Management, Product Management, Analytics
+# =============================================================================
 
-"""
-Admin Dashboard - Returns key metrics for admin overview
-"""
+# ─────────────────────────────────────────────────────────────────────────────
+# Admin Dashboard Types
+# ─────────────────────────────────────────────────────────────────────────────
+
 type AdminDashboard {
     totalUsers: Long!
+    totalCustomers: Long!
+    totalSellers: Long!
     totalProducts: Long!
     totalOrders: Long!
     totalRevenue: BigDecimal!
     pendingOrders: Long!
     activeUsers: Long!
     lowStockProducts: Long!
+    ordersByStatus: [StatusEntry!]
+    recentOrders: [RecentOrder!]!
+    topSellers: [TopSeller!]!
+    lowStockAlerts: [LowStockAlert!]!
+    orderCompletionRate: Float
+    cancellationRate: Float
 }
 
+type TopSeller {
+    sellerId: String!
+    sellerName: String!
+    productCount: Long!
+    revenue: BigDecimal!
+    orderCount: Long!
+}
+
+type LowStockAlert {
+    productId: String!
+    productName: String!
+    sku: String
+    sellerName: String
+    currentStock: Int!
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Admin Analytics Types
+# ─────────────────────────────────────────────────────────────────────────────
+
+type AdminAnalytics {
+    filterPeriod: String!
+    startDate: String
+    endDate: String
+    totalRevenue: BigDecimal!
+    revenueGrowth: Float
+    totalOrders: Long!
+    ordersGrowth: Float
+    totalCustomers: Long!
+    customersGrowth: Float
+    totalSellers: Long!
+    sellersGrowth: Float
+    productsSold: Long!
+    productsSoldGrowth: Float
+    averageOrderValue: BigDecimal!
+    avgOrderValueGrowth: Float
+    revenueOverview: RevenueOverview
+    salesByCategory: [SalesByCategory!]!
+    topSellers: [AdminTopSellerMetric!]!
+    topProducts: [AdminTopProductMetric!]!
+    monthlyTrend: [MonthlySalesTrend!]!
+    todayRevenue: BigDecimal
+    pendingPayments: BigDecimal
+    refundsProcessed: BigDecimal
+}
+
+type RevenueOverview {
+    monthly: [MonthlyRevenue!]!
+    total: BigDecimal!
+    growth: Float
+}
+
+type MonthlyRevenue {
+    month: String!
+    revenue: BigDecimal!
+    orders: Long!
+}
+
+type SalesByCategory {
+    category: String!
+    revenue: BigDecimal!
+    sales: Long!
+    percentage: Float
+}
+
+type AdminTopSellerMetric {
+    rank: Int!
+    sellerId: String!
+    sellerName: String!
+    orders: Long!
+    revenue: BigDecimal!
+    growth: Float
+}
+
+type AdminTopProductMetric {
+    rank: Int!
+    productId: String!
+    productName: String!
+    salesCount: Long!
+    revenue: BigDecimal!
+    growth: Float
+    rating: Float
+}
+
+type MonthlySalesTrend {
+    month: String!
+    revenue: BigDecimal!
+    orders: Long!
+    avgOrderValue: BigDecimal
+    growth: Float
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Admin Product Stats Type
+# ─────────────────────────────────────────────────────────────────────────────
+
+type AdminProductStats {
+    totalProducts: Long!
+    activeProducts: Long!
+    pendingProducts: Long!
+    outOfStockProducts: Long!
+    lowStockProducts: Long!
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Admin Customer Stats Type
+# ─────────────────────────────────────────────────────────────────────────────
+
+type CustomerStats {
+    totalCustomers: Long!
+    activeCustomers: Long!
+    newCustomersThisMonth: Long!
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Admin Seller Stats Type
+# ─────────────────────────────────────────────────────────────────────────────
+
+type SellerStats {
+    totalSellers: Long!
+    activeSellers: Long!
+    pendingSellers: Long!
+    suspendedSellers: Long!
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Inputs
+# ─────────────────────────────────────────────────────────────────────────────
+
+input AdminUserCreateInput {
+    username: String!
+    email: String!
+    password: String!
+    firstName: String!
+    lastName: String!
+    phone: String
+    role: String!
+}
+
+input AdminUserUpdateInput {
+    username: String
+    email: String
+    firstName: String
+    lastName: String
+    phone: String
+    role: String
+    isActive: Boolean
+}
+
+input BulkUserUpdateInput {
+    userIds: [ID!]!
+    role: String
+    isActive: Boolean
+    sendNotification: Boolean = true
+}
+
+input CustomerSearchInput {
+    query: String
+    status: String
+}
+
+input SellerSearchInput {
+    query: String
+    status: String
+}
+
+input AdminProductSearchInput {
+    status: String
+    search: String
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Queries
+# ─────────────────────────────────────────────────────────────────────────────
 
 extend type Query {
-    # Security: ADMIN only
+
+    # ── Admin Dashboard (ADMIN) ──────────────────────────────────────────
     adminDashboard: AdminDashboard!
-    
-    # Security: ADMIN or STAFF
     staffDashboard: AdminDashboard!
-    
-    # Security: ADMIN or MANAGER
+
+    # ── Admin Analytics (ADMIN) ──────────────────────────────────────────
+    adminAnalytics(filter: String = "month"): AdminAnalytics!
+
+    # ── User Management (ADMIN) ──────────────────────────────────────────
     allUsers(pagination: PageInput, filter: UserFilterInput): UserPage!
+    adminUser(id: ID!): User
+
+    # ── Customer Management (ADMIN) ──────────────────────────────────────
+    customerStats: CustomerStats
+    searchCustomers(filter: CustomerSearchInput, pagination: PageInput): UserPage!
+    customerOrders(customerId: ID!, pagination: PageInput): OrderPage!
+
+    # ── Seller Management (ADMIN) ────────────────────────────────────────
+    adminSellers(filter: SellerSearchInput, pagination: PageInput): UserPage!
+    sellerStats: SellerStats
+
+    # ── Product Management (ADMIN) ───────────────────────────────────────
+    adminProducts(pagination: PageInput, filter: AdminProductSearchInput): ProductDto!
+    adminProductStats: AdminProductStats!
 }
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Mutations
+# ─────────────────────────────────────────────────────────────────────────────
+
+extend type Mutation {
+
+    # ── User CRUD (ADMIN) ────────────────────────────────────────────────
+    createUser(input: AdminUserCreateInput!): User!
+    updateUser(id: ID!, input: AdminUserUpdateInput!): User!
+    deleteUser(id: ID!): Boolean!
+    updateUserRole(id: ID!, role: String!): User!
+    updateUserStatus(id: ID!, isActive: Boolean!): User!
+    bulkUpdateUsers(input: BulkUserUpdateInput!): [User!]!
+
+    # ── Product Management (ADMIN) ───────────────────────────────────────
+    approveProduct(id: ID!): ProductResponse!
+    rejectProduct(id: ID!, reason: String!): ProductResponse!
+    adminUpdateProductInventory(id: ID!, stock: Int!): ProductResponse!
+
+    # ── Seller Management (ADMIN) ────────────────────────────────────────
+    approveSeller(id: ID!): User!
+    suspendSeller(id: ID!): User!
+    reactivateSeller(id: ID!): User!
+}

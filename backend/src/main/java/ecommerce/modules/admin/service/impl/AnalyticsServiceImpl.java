@@ -2,6 +2,7 @@ package ecommerce.modules.admin.service.impl;
 
 import ecommerce.common.enums.OrderStatus;
 import ecommerce.common.enums.PaymentMethod;
+import ecommerce.common.enums.Role;
 import ecommerce.modules.admin.service.AnalyticsService;
 import ecommerce.modules.order.entity.Order;
 import ecommerce.modules.order.repository.OrderItemRepository;
@@ -74,7 +75,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
     @Override
     public List<SellerMetrics> getTopSellers(int limit) {
-        List<User> sellers = userRepository.findByRole(PaymentMethod.Role.SELLER,
+        List<User> sellers = userRepository.findByRole(Role.SELLER,
                 org.springframework.data.domain.Pageable.ofSize(limit)).getContent();
         
         List<SellerMetrics> metrics = new ArrayList<>();

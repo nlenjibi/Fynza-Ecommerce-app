@@ -21,9 +21,5 @@ public enum PaymentMethod {
         return displayName;
     }
 
-    public enum Role {
-        ADMIN,
-        CUSTOMER,
-        SELLER
-    }
+
 }
