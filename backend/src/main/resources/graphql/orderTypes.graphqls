@@ -69,16 +69,6 @@ type OrderItem {
     image: String
 }
 
-type Address {
-    id: ID!
-    label: String
-    streetAddress: String!
-    city: String!
-    state: String!
-    postalCode: String!
-    country: String!
-}
-
 type TimelineEntry {
     status: String!
     message: String!

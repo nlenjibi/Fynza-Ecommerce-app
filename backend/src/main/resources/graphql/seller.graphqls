@@ -195,19 +195,6 @@ type SellerProductStats {
     lowStockProducts: Long!
 }
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Tag Types
-# ─────────────────────────────────────────────────────────────────────────────
-
-type Tag {
-    id: ID!
-    name: String!
-    description: String
-    color: String
-    icon: String
-    isFeatured: Boolean
-    usageCount: Int
-}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Settings Types

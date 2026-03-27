@@ -41,81 +41,6 @@ type LowStockAlert {
     currentStock: Int!
 }
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Admin Analytics Types
-# ─────────────────────────────────────────────────────────────────────────────
-
-type AdminAnalytics {
-    filterPeriod: String!
-    startDate: String
-    endDate: String
-    totalRevenue: BigDecimal!
-    revenueGrowth: Float
-    totalOrders: Long!
-    ordersGrowth: Float
-    totalCustomers: Long!
-    customersGrowth: Float
-    totalSellers: Long!
-    sellersGrowth: Float
-    productsSold: Long!
-    productsSoldGrowth: Float
-    averageOrderValue: BigDecimal!
-    avgOrderValueGrowth: Float
-    revenueOverview: RevenueOverview
-    salesByCategory: [SalesByCategory!]!
-    topSellers: [AdminTopSellerMetric!]!
-    topProducts: [AdminTopProductMetric!]!
-    monthlyTrend: [MonthlySalesTrend!]!
-    todayRevenue: BigDecimal
-    pendingPayments: BigDecimal
-    refundsProcessed: BigDecimal
-}
-
-type RevenueOverview {
-    monthly: [MonthlyRevenue!]!
-    total: BigDecimal!
-    growth: Float
-}
-
-type MonthlyRevenue {
-    month: String!
-    revenue: BigDecimal!
-    orders: Long!
-}
-
-type SalesByCategory {
-    category: String!
-    revenue: BigDecimal!
-    sales: Long!
-    percentage: Float
-}
-
-type AdminTopSellerMetric {
-    rank: Int!
-    sellerId: String!
-    sellerName: String!
-    orders: Long!
-    revenue: BigDecimal!
-    growth: Float
-}
-
-type AdminTopProductMetric {
-    rank: Int!
-    productId: String!
-    productName: String!
-    salesCount: Long!
-    revenue: BigDecimal!
-    growth: Float
-    rating: Float
-}
-
-type MonthlySalesTrend {
-    month: String!
-    revenue: BigDecimal!
-    orders: Long!
-    avgOrderValue: BigDecimal
-    growth: Float
-}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Admin Product Stats Type
@@ -206,9 +131,6 @@ extend type Query {
     adminDashboard: AdminDashboard!
     staffDashboard: AdminDashboard!
 
-    # ── Admin Analytics (ADMIN) ──────────────────────────────────────────
-    adminAnalytics(filter: String = "month"): AdminAnalytics!
-
     # ── User Management (ADMIN) ──────────────────────────────────────────
     allUsers(pagination: PageInput, filter: UserFilterInput): UserPage!
     adminUser(id: ID!): User
@@ -216,7 +138,6 @@ extend type Query {
     # ── Customer Management (ADMIN) ──────────────────────────────────────
     customerStats: CustomerStats
     searchCustomers(filter: CustomerSearchInput, pagination: PageInput): UserPage!
-    customerOrders(customerId: ID!, pagination: PageInput): OrderPage!
 
     # ── Seller Management (ADMIN) ────────────────────────────────────────
     adminSellers(filter: SellerSearchInput, pagination: PageInput): UserPage!

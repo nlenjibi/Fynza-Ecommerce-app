@@ -1,59 +1,5 @@
 # Performance GraphQL Schema
-# Admin performance monitoring - Content, System, Cache, Database, Security tabs
-
-# ==================== Content Tab ====================
-
-type ContentAnalytics {
-    # Metrics Cards (6)
-    totalPageViews: Long!
-    totalClicks: Long!
-    avgTimeOnPage: String!
-    uniqueVisitors: Long!
-    bounceRate: String!
-    articlesPublished: Int!
-    
-    # Changes
-    pageViewsChange: String!
-    clicksChange: String!
-    timeOnPageChange: String!
-    visitorsChange: String!
-    bounceRateChange: String!
-    articlesChange: String!
-    
-    # Date range info
-    period: String!
-    contentType: String!
-    
-    # Charts data
-    performanceTrend: [ContentTrendPoint!]!
-    engagementByCategory: [CategoryEngagement!]!
-    topContent: [TopContentItem!]!
-}
-
-type ContentTrendPoint {
-    date: String!
-    articlesPublished: Int!
-    pageViews: Long!
-}
-
-type CategoryEngagement {
-    category: String!
-    engagement: Float!
-    avgTime: String!
-}
-
-type TopContentItem {
-    title: String!
-    pageViews: Long!
-    clicks: Long!
-    ctr: String!
-    trend: String!
-}
-
-input ContentAnalyticsInput {
-    period: String = "month"  # "7days", "30days", "12months"
-    contentType: String       # "all", "articles", "products", "categories"
-}
+# Admin performance monitoring - System, Cache, Database, Security tabs
 
 # ==================== System Tab ====================
 
@@ -178,9 +124,6 @@ type PerformanceDashboard {
 }
 
 extend type Query {
-    # Security: ADMIN only
-    contentAnalytics(input: ContentAnalyticsInput): ContentAnalytics!
-    
     # Security: ADMIN only
     systemMetrics: SystemMetrics!
     
