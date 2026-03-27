@@ -1,10 +1,16 @@
+# =============================================================================
 # Follow GraphQL Schema
-# Store following functionality
+# Covers: Customer following stores, Seller viewing followers
+# =============================================================================
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Types
+# ─────────────────────────────────────────────────────────────────────────────
 
 type FollowStats {
-    totalFollowers: Int!
-    activeThisMonth: Int!
-    newThisWeek: Int!
+    totalFollowers: Long!
+    activeThisMonth: Long!
+    newThisWeek: Long!
     avgFollowAge: Float!
 }
 
@@ -15,7 +21,7 @@ type FollowerResponse {
     customerEmail: String!
     customerAvatar: String
     joinedDate: DateTime!
-    orderCount: Int!
+    orderCount: Long!
     totalSpent: BigDecimal!
     lastActive: DateTime
 }
@@ -43,28 +49,32 @@ type FollowedStoreConnection {
     pageInfo: PageInfo!
 }
 
-input FollowInput {
-    sellerId: ID!
-}
+# ─────────────────────────────────────────────────────────────────────────────
+# Queries
+# ─────────────────────────────────────────────────────────────────────────────
 
 extend type Query {
-    # Security: AUTHENTICATED
-    myFollowing(pagination: PageInput): FollowedStoreConnection!
-    
-    # Security: PUBLIC - Check if following a store
-    isFollowing(sellerId: ID!): Boolean!
-    
-    # Security: AUTHENTICATED
-    followStats(sellerId: ID!): FollowStats!
-    
-    # Security: PUBLIC - Get store followers
-    storeFollowers(sellerId: ID!, pagination: PageInput): FollowerPage!
+
+    # ── Customer Queries (CUSTOMER) ──────────────────────────────────────
+    myFollowedStores(pagination: PageInput): FollowedStoreConnection!
+    isFollowingStore(sellerId: ID!): Boolean!
+    myFollowStats: FollowStats!
+
+    # ── Seller Queries (SELLER) ──────────────────────────────────────────
+    myFollowers(pagination: PageInput): FollowerPage!
+    sellerFollowerStats: FollowStats!
+
+    # ── Public Queries ───────────────────────────────────────────────────
+    storeFollowerCount(sellerId: ID!): Long!
 }
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Mutations
+# ─────────────────────────────────────────────────────────────────────────────
+
 extend type Mutation {
-    # Security: AUTHENTICATED
+
+    # ── Customer Mutations (CUSTOMER) ────────────────────────────────────
     followStore(input: FollowInput!): Boolean!
-    
-    # Security: AUTHENTICATED
     unfollowStore(sellerId: ID!): Boolean!
 }
