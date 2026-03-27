@@ -12,8 +12,8 @@ import lombok.Setter;
 @Setter
 @Builder
 public class FAQStats {
-    private Integer totalFAQs;
-    private Integer activeFAQs;
-    private Integer draftFAQs;
-    private Integer totalViews;
+    private Long totalFAQs;
+    private Long activeFAQs;
+    private Long draftFAQs;
+    private Long totalViews;
 }

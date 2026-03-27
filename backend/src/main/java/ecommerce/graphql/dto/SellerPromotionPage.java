@@ -1,7 +1,7 @@
 package ecommerce.graphql.dto;
 
 import ecommerce.common.response.PaginatedResponse;
-import ecommerce.modules.message.dto.ConversationResponse;
+import ecommerce.modules.promotion.dto.SellerPromotionDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,7 +13,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ConversationConnection {
-    private List<ConversationResponse> content;
-    private PaginatedResponse<ConversationResponse> pageInfo;
+public class SellerPromotionPage {
+    private List<SellerPromotionDto> content;
+    private PaginatedResponse<SellerPromotionDto> pageInfo;
 }

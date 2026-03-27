@@ -1,175 +1,121 @@
+# =============================================================================
 # Promotion GraphQL Schema
-# Flash sales, promotions, and campaigns
+# Covers: Admin promotions, Seller promotions
+# =============================================================================
 
-type Promotion {
-    id: ID!
-    name: String!
-    description: String
-    type: PromotionType!
-    discountValue: BigDecimal!
-    discountType: DiscountType!
-    minOrderAmount: BigDecimal
-    maxDiscount: BigDecimal
-    startDate: DateTime!
-    endDate: DateTime!
-    isActive: Boolean!
-    usageLimit: Int
-    usageCount: Int
-    applicableProducts: [ProductResponse!]
-    applicableCategories: [CategoryInfo!]
-    createdAt: DateTime!
-    updatedAt: DateTime!
-}
-
-type FlashSale {
-    id: ID!
-    name: String!
-    description: String
-    startDate: DateTime!
-    endDate: DateTime!
-    discountPercentage: BigDecimal!
-    maxParticipants: Int
-    products: [FlashSaleProduct!]!
-    isActive: Boolean!
-    createdAt: DateTime!
-    updatedAt: DateTime!
-}
-
-type FlashSaleProduct {
-    id: ID!
-    product: ProductResponse!
-    flashPrice: BigDecimal!
-    originalPrice: BigDecimal!
-    stockAllocated: Int!
-    stockSold: Int!
-    status: FlashSaleStatus!
-}
-
-enum FlashSaleStatus {
-    UPCOMING
-    ACTIVE
-    ENDED
-    SOLD_OUT
-}
+# ─────────────────────────────────────────────────────────────────────────────
+# Types
+# ─────────────────────────────────────────────────────────────────────────────
 
 type AdminPromotion {
     id: ID!
     name: String!
-    description: String
-    type: PromotionType!
+    promotionType: String!
+    code: String
     discountValue: BigDecimal!
-    discountType: DiscountType!
-    minOrderAmount: BigDecimal
+    discountType: String!
+    minPurchase: BigDecimal
     maxDiscount: BigDecimal
     startDate: DateTime!
     endDate: DateTime!
+    usageLimit: Int
+    usageCount: Int!
+    totalRevenue: BigDecimal!
+    status: String!
+    isGlobal: Boolean!
+    targetCategoryId: ID
     isActive: Boolean!
-    usageLimit: Int
-    usageCount: Int
-    sellerIds: [ID!]
-    categoryIds: [ID!]
-    productIds: [ID!]
     createdAt: DateTime!
-    updatedAt: DateTime!
 }
 
-enum PromotionType {
-    PERCENTAGE
-    FIXED_AMOUNT
-    FREE_SHIPPING
-    BUNDLE
-    BUY_X_GET_Y
-}
-
-enum DiscountType {
-    PERCENTAGE
-    FIXED_AMOUNT
-    FREE_SHIPPING
-}
-
-input PromotionInput {
+type SellerPromotion {
+    id: ID!
+    sellerId: ID!
     name: String!
-    description: String
-    type: PromotionType!
+    promotionType: String!
+    discountType: String
     discountValue: BigDecimal!
-    discountType: DiscountType!
-    minOrderAmount: BigDecimal
+    minPurchase: BigDecimal
     maxDiscount: BigDecimal
     startDate: DateTime!
     endDate: DateTime!
     usageLimit: Int
-    productIds: [ID!]
-    categoryIds: [ID!]
+    usageCount: Int!
+    status: String!
+    isActive: Boolean!
+    createdAt: DateTime!
 }
 
-input FlashSaleInput {
+type AdminPromotionPage {
+    content: [AdminPromotion!]!
+    pageInfo: PageInfo!
+}
+
+type SellerPromotionPage {
+    content: [SellerPromotion!]!
+    pageInfo: PageInfo!
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Inputs
+# ─────────────────────────────────────────────────────────────────────────────
+
+input AdminPromotionCreateInput {
     name: String!
-    description: String
+    promotionType: String!
+    code: String
+    discountValue: BigDecimal!
+    minPurchase: BigDecimal
+    maxDiscount: BigDecimal
     startDate: DateTime!
     endDate: DateTime!
-    discountPercentage: BigDecimal!
-    maxParticipants: Int
-    productIds: [ID!]!
+    usageLimit: Int
+    categoryId: ID
+    isGlobal: Boolean = false
 }
+
+input SellerPromotionCreateInput {
+    name: String!
+    promotionType: String!
+    discountValue: BigDecimal!
+    minPurchase: BigDecimal
+    startDate: DateTime!
+    endDate: DateTime!
+    usageLimit: Int
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Queries
+# ─────────────────────────────────────────────────────────────────────────────
 
 extend type Query {
-    # Security: PUBLIC
-    activePromotions: [Promotion!]!
-    
-    # Security: PUBLIC
-    promotion(id: ID!): Promotion
-    
-    # Security: PUBLIC
-    promotions(pagination: PageInput): PromotionConnection!
-    
-    # Security: PUBLIC
-    activeFlashSales: [FlashSale!]!
-    
-    # Security: PUBLIC
-    flashSale(id: ID!): FlashSale
-    
-    # Security: PUBLIC
-    flashSales(pagination: PageInput): FlashSaleConnection!
-    
-    # Security: ADMIN only
-    adminPromotions(pagination: PageInput): PromotionConnection!
-    
-    # Security: SELLER only
-    sellerPromotions(pagination: PageInput): PromotionConnection!
+
+    # ── Admin Queries (ADMIN) ────────────────────────────────────────────
+    adminPromotions(pagination: PageInput): AdminPromotionPage!
+    activeAdminPromotions: [AdminPromotion!]!
+    adminPromotionStats: AdminPromotionStats!
+
+    # ── Seller Queries (SELLER) ──────────────────────────────────────────
+    sellerPromotions(pagination: PageInput): SellerPromotionPage!
+    activeSellerPromotions: [SellerPromotion!]!
 }
 
-type PromotionConnection {
-    content: [Promotion!]!
-    pageInfo: PageInfo!
+type AdminPromotionStats {
+    activeCount: Long!
+    totalRevenue: BigDecimal!
 }
 
-type FlashSaleConnection {
-    content: [FlashSale!]!
-    pageInfo: PageInfo!
-}
+# ─────────────────────────────────────────────────────────────────────────────
+# Mutations
+# ─────────────────────────────────────────────────────────────────────────────
 
 extend type Mutation {
-    # Security: ADMIN only
-    createPromotion(input: PromotionInput!): Promotion!
-    
-    # Security: ADMIN only
-    updatePromotion(id: ID!, input: PromotionInput!): Promotion!
-    
-    # Security: ADMIN only
-    deletePromotion(id: ID!): Boolean!
-    
-    # Security: ADMIN only
-    togglePromotionActive(id: ID!): Promotion!
-    
-    # Security: ADMIN only
-    createFlashSale(input: FlashSaleInput!): FlashSale!
-    
-    # Security: ADMIN only
-    updateFlashSale(id: ID!, input: FlashSaleInput!): FlashSale!
-    
-    # Security: ADMIN only
-    deleteFlashSale(id: ID!): Boolean!
-    
-    # Security: SELLER only
-    applyForFlashSale(flashSaleId: ID!, productIds: [ID!]!): Boolean!
+
+    # ── Admin Mutations (ADMIN) ──────────────────────────────────────────
+    createAdminPromotion(input: AdminPromotionCreateInput!): AdminPromotion!
+    deleteAdminPromotion(id: ID!): Boolean!
+
+    # ── Seller Mutations (SELLER) ────────────────────────────────────────
+    createSellerPromotion(input: SellerPromotionCreateInput!): SellerPromotion!
+    deleteSellerPromotion(id: ID!): Boolean!
 }

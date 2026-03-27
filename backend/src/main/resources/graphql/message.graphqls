@@ -1,137 +1,108 @@
+# =============================================================================
 # Message GraphQL Schema
-# User-to-seller messaging and conversations
+# Covers: Customer/Seller conversations, Admin message management
+# =============================================================================
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Types
+# ─────────────────────────────────────────────────────────────────────────────
 
 type Conversation {
     id: ID!
-    participants: [User!]!
-    category: ConversationCategory!
-    subject: String
-    lastMessage: Message
-    unreadCount: Int!
-    isArchived: Boolean!
+    subject: String!
+    category: ConversationCategory
+    priority: MessagePriority
+    status: MessageStatus
+    type: MessageType
+    participantType: MessageType
+    isStarred: Boolean
+    isPinned: Boolean
+    lastMessagePreview: String
+    unreadCount: Int
+    orderId: ID
+    productId: ID
     createdAt: DateTime!
     updatedAt: DateTime!
+    messages: [Message!]
 }
 
 type Message {
     id: ID!
-    conversation: Conversation!
-    sender: User!
     content: String!
-    messageType: MessageType!
-    attachments: [MessageAttachment!]
-    isRead: Boolean!
-    readAt: DateTime
-    priority: MessagePriority
+    senderType: MessageType
+    senderName: String
+    isRead: Boolean
     createdAt: DateTime!
 }
 
-type MessageAttachment {
-    id: ID!
-    fileName: String!
-    fileUrl: String!
-    fileType: String
-    fileSize: Long
+type ConversationStats {
+    unreadCount: Long!
+    openCount: Long!
+    pendingCount: Long!
+    resolvedCount: Long!
 }
 
-enum ConversationCategory {
-    GENERAL
-    ORDER_INQUIRY
-    PRODUCT_QUESTION
-    REFUND_REQUEST
-    COMPLAINT
-    PARTNERSHIP
+type ConversationPage {
+    content: [Conversation!]!
+    pageInfo: PageInfo!
 }
 
-enum MessageType {
-    TEXT
-    IMAGE
-    FILE
-    SYSTEM
-}
+# ─────────────────────────────────────────────────────────────────────────────
+# Inputs
+# ─────────────────────────────────────────────────────────────────────────────
 
-enum MessagePriority {
-    LOW
-    NORMAL
-    HIGH
-}
-
-input MessageInput {
-    conversationId: ID
-    recipientId: ID
-    subject: String
-    category: ConversationCategory
+input CreateConversationInput {
+    subject: String!
+    category: ConversationCategory = GENERAL
     content: String!
-    messageType: MessageType = TEXT
-    attachments: [AttachmentInput]
-    priority: MessagePriority = NORMAL
+    orderId: ID
+    productId: ID
 }
 
-input AttachmentInput {
-    fileName: String!
-    fileUrl: String!
-    fileType: String
-    fileSize: Long
+input SendMessageInput {
+    content: String!
 }
 
 input ConversationFilterInput {
+    status: String
+    priority: String
+    search: String
     category: ConversationCategory
     isArchived: Boolean
     hasUnread: Boolean
 }
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Queries
+# ─────────────────────────────────────────────────────────────────────────────
+
 extend type Query {
-    # Security: AUTHENTICATED
-    conversations(
-        filter: ConversationFilterInput
-        pagination: PageInput
-    ): ConversationConnection!
-    
-    # Security: AUTHENTICATED
+
+    # ── Customer/Seller Queries (AUTHENTICATED) ──────────────────────────
+    myConversations(pagination: PageInput, status: String): ConversationPage!
     conversation(id: ID!): Conversation
-    
-    # Security: AUTHENTICATED
-    messages(
-        conversationId: ID!
-        pagination: PageInput
-    ): MessageConnection!
-    
-    # Security: AUTHENTICATED
-    unreadMessageCount: Int!
-    
-    # Security: ADMIN only
-    allConversations(
-        filter: ConversationFilterInput
-        pagination: PageInput
-    ): ConversationConnection!
+    myMessageStats: ConversationStats!
+
+    # ── Admin Queries (ADMIN) ────────────────────────────────────────────
+    adminConversations(pagination: PageInput, status: String, search: String): ConversationPage!
+    adminMessageStats: ConversationStats!
 }
 
-type ConversationConnection {
-    content: [Conversation!]!
-    pageInfo: PageInfo!
-}
-
-type MessageConnection {
-    content: [Message!]!
-    pageInfo: PageInfo!
-}
+# ─────────────────────────────────────────────────────────────────────────────
+# Mutations
+# ─────────────────────────────────────────────────────────────────────────────
 
 extend type Mutation {
-    # Security: AUTHENTICATED
-    createConversation(input: MessageInput!): Conversation!
-    
-    # Security: AUTHENTICATED
-    sendMessage(input: MessageInput!): Message!
-    
-    # Security: AUTHENTICATED
-    markMessageAsRead(messageId: ID!): Message!
-    
-    # Security: AUTHENTICATED
-    markConversationAsRead(conversationId: ID!): Conversation!
-    
-    # Security: AUTHENTICATED
-    archiveConversation(conversationId: ID!): Boolean!
-    
-    # Security: AUTHENTICATED
-    deleteConversation(conversationId: ID!): Boolean!
+
+    # ── Customer/Seller Mutations (AUTHENTICATED) ────────────────────────
+    createConversation(input: CreateConversationInput!): Conversation!
+    replyToConversation(id: ID!, input: SendMessageInput!): Conversation!
+    markConversationAsRead(id: ID!): Boolean!
+    toggleConversationStar(id: ID!): Conversation!
+    deleteConversation(id: ID!): Boolean!
+
+    # ── Admin Mutations (ADMIN) ──────────────────────────────────────────
+    adminReplyToConversation(id: ID!, input: SendMessageInput!): Conversation!
+    updateConversationStatus(id: ID!, status: String!): Conversation!
+    adminDeleteConversation(id: ID!): Boolean!
 }

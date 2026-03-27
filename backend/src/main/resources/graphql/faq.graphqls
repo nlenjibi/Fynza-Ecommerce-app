@@ -1,17 +1,11 @@
+# =============================================================================
 # FAQ GraphQL Schema
-# Frequently Asked Questions management
+# Covers: Public FAQ browsing, Admin FAQ CRUD, help categories
+# =============================================================================
 
-type FAQ {
-    id: ID!
-    question: String!
-    answer: String!
-    category: FAQCategory!
-    displayOrder: Int
-    isActive: Boolean!
-    viewCount: Int!
-    createdAt: DateTime!
-    updatedAt: DateTime!
-}
+# ─────────────────────────────────────────────────────────────────────────────
+# Enums
+# ─────────────────────────────────────────────────────────────────────────────
 
 enum FAQCategory {
     GENERAL
@@ -25,70 +19,27 @@ enum FAQCategory {
     SUPPORT
 }
 
-input FAQInput {
+# ─────────────────────────────────────────────────────────────────────────────
+# Types
+# ─────────────────────────────────────────────────────────────────────────────
+
+type FAQ {
+    id: ID!
     question: String!
     answer: String!
     category: FAQCategory!
+    isActive: Boolean!
+    viewCount: Int!
     displayOrder: Int
-}
-
-input FAQFilterInput {
-    category: FAQCategory
-    isActive: Boolean
-    search: String
-}
-
-input UpdateFAQInput {
-    question: String
-    answer: String
-    category: FAQCategory
-    displayOrder: Int
-}
-
-extend type Query {
-    # Security: PUBLIC
-    faqs(
-        filter: FAQFilterInput
-        pagination: PageInput
-    ): FAQConnection!
-    
-    # Security: PUBLIC
-    faq(id: ID!): FAQ
-    
-    # Security: PUBLIC - Get FAQ categories with counts
-    faqCategories: [FAQCategoryCount!]!
-    
-    # Security: PUBLIC - Get help categories with FAQs
-    helpCategories: [HelpCategory!]!
-    
-    # Security: PUBLIC - Get contact support options
-    contactOptions: ContactOptions!
-    
-    # Security: ADMIN only
-    adminFaqs(
-        filter: FAQFilterInput
-        pagination: PageInput
-    ): FAQConnection!
-    
-    # Security: ADMIN only
-    faqStats: FAQStats!
-}
-
-type FAQConnection {
-    content: [FAQ!]!
-    pageInfo: PageInfo!
-}
-
-type FAQCategoryCount {
-    category: FAQCategory!
-    count: Int!
+    createdAt: DateTime!
+    updatedAt: DateTime!
 }
 
 type FAQStats {
-    totalFAQs: Int!
-    activeFAQs: Int!
-    draftFAQs: Int!
-    totalViews: Int!
+    totalFAQs: Long!
+    activeFAQs: Long!
+    draftFAQs: Long!
+    totalViews: Long!
 }
 
 type HelpCategory {
@@ -104,19 +55,68 @@ type ContactOptions {
     phoneHours: String
 }
 
+type FAQCategoryCount {
+    category: FAQCategory!
+    count: Int!
+}
+
+type FAQPage {
+    content: [FAQ!]!
+    pageInfo: PageInfo!
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Inputs
+# ─────────────────────────────────────────────────────────────────────────────
+
+input FAQCreateInput {
+    question: String!
+    answer: String!
+    category: FAQCategory!
+    displayOrder: Int
+}
+
+input FAQUpdateInput {
+    question: String
+    answer: String
+    category: FAQCategory
+    displayOrder: Int
+}
+
+input FAQFilterInput {
+    category: FAQCategory
+    isActive: Boolean
+    search: String
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Queries
+# ─────────────────────────────────────────────────────────────────────────────
+
+extend type Query {
+
+    # ── Public Queries ───────────────────────────────────────────────────
+    faqs(pagination: PageInput, filter: FAQFilterInput): FAQPage!
+    faq(id: ID!): FAQ
+    faqCategories: [FAQCategoryCount!]!
+    helpCategories: [HelpCategory!]!
+    contactOptions: ContactOptions!
+
+    # ── Admin Queries (ADMIN) ────────────────────────────────────────────
+    adminFaqs(pagination: PageInput, filter: FAQFilterInput): FAQPage!
+    faqStats: FAQStats!
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Mutations
+# ─────────────────────────────────────────────────────────────────────────────
+
 extend type Mutation {
-    # Security: ADMIN only
-    createFAQ(input: FAQInput!): FAQ!
-    
-    # Security: ADMIN only
-    updateFAQ(id: ID!, input: UpdateFAQInput!): FAQ!
-    
-    # Security: ADMIN only
+
+    # ── Admin Mutations (ADMIN) ──────────────────────────────────────────
+    createFAQ(input: FAQCreateInput!): FAQ!
+    updateFAQ(id: ID!, input: FAQUpdateInput!): FAQ!
     deleteFAQ(id: ID!): Boolean!
-    
-    # Security: ADMIN only
-    reorderFAQs(faqIds: [ID!]!): Boolean!
-    
-    # Security: ADMIN only
     toggleFAQActive(id: ID!): FAQ!
+    reorderFAQs(faqIds: [ID!]!): Boolean!
 }

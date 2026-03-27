@@ -1,13 +1,16 @@
 package ecommerce.graphql.resolver;
 
 import ecommerce.common.response.PaginatedResponse;
-import ecommerce.graphql.dto.FlashSaleConnection;
-import ecommerce.graphql.dto.PromotionConnection;
-import ecommerce.graphql.input.FlashSaleInput;
+import ecommerce.graphql.dto.AdminPromotionPage;
+import ecommerce.graphql.dto.SellerPromotionPage;
+import ecommerce.graphql.input.AdminPromotionCreateInput;
 import ecommerce.graphql.input.PageInput;
-import ecommerce.graphql.input.PromotionInput;
-import ecommerce.modules.promotion.dto.PromotionResponse;
-import ecommerce.modules.promotion.service.PromotionService;
+import ecommerce.graphql.input.SellerPromotionCreateInput;
+import ecommerce.graphql.input.SortDirection;
+import ecommerce.modules.promotion.entity.AdminPromotion;
+import ecommerce.modules.promotion.dto.SellerPromotionDto;
+import ecommerce.modules.promotion.service.AdminPromotionService;
+import ecommerce.modules.promotion.service.SellerPromotionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -21,156 +24,152 @@ import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
 @Slf4j
 public class PromotionResolver {
 
-    private final PromotionService promotionService;
+    private final AdminPromotionService adminPromotionService;
+    private final SellerPromotionService sellerPromotionService;
+
+    // =========================================================================
+    // ADMIN QUERIES
+    // =========================================================================
 
     @QueryMapping
-    public List<Object> activePromotions() {
-        log.info("GraphQL Query: activePromotions");
-        return List.of();
-    }
-
-    @QueryMapping
-    public Object promotion(@Argument UUID id) {
-        log.info("GraphQL Query: promotion(id: {})", id);
-        return null;
-    }
-
-    @QueryMapping
-    public PromotionConnection promotions(@Argument PageInput pagination) {
-        log.info("GraphQL Query: promotions");
-        
-        Pageable pageable = createPageable(pagination);
-        
-        return PromotionConnection.builder()
-                .content(List.of())
-                .pageInfo(PaginatedResponse.from(Page.empty()))
-                .build();
-    }
-
-    @QueryMapping
-    public List<Object> activeFlashSales() {
-        log.info("GraphQL Query: activeFlashSales");
-        return List.of();
-    }
-
-    @QueryMapping
-    public Object flashSale(@Argument UUID id) {
-        log.info("GraphQL Query: flashSale(id: {})", id);
-        return null;
-    }
-
-    @QueryMapping
-    public FlashSaleConnection flashSales(@Argument PageInput pagination) {
-        log.info("GraphQL Query: flashSales");
-        
-        Pageable pageable = createPageable(pagination);
-        
-        return FlashSaleConnection.builder()
-                .content(List.of())
-                .pageInfo(PaginatedResponse.from(Page.empty()))
+    @PreAuthorize("hasRole('ADMIN')")
+    public AdminPromotionPage adminPromotions(@Argument PageInput pagination) {
+        log.info("GQL adminPromotions");
+        Pageable pageable = toPageable(pagination);
+        Page<AdminPromotion> page = adminPromotionService.getPromotions(pageable);
+        return AdminPromotionPage.builder()
+                .content(page.getContent())
+                .pageInfo(PaginatedResponse.from(page))
                 .build();
     }
 
     @QueryMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public PromotionConnection adminPromotions(@Argument PageInput pagination) {
-        log.info("GraphQL Query: adminPromotions");
-        
-        Pageable pageable = createPageable(pagination);
-        
-        return PromotionConnection.builder()
-                .content(List.of())
-                .pageInfo(PaginatedResponse.from(Page.empty()))
+    public List<AdminPromotion> activeAdminPromotions() {
+        log.info("GQL activeAdminPromotions");
+        return adminPromotionService.getActivePromotions();
+    }
+
+    @QueryMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public Map<String, Object> adminPromotionStats() {
+        log.info("GQL adminPromotionStats");
+        return Map.of(
+                "activeCount", adminPromotionService.countActivePromotions(),
+                "totalRevenue", adminPromotionService.getTotalRevenue()
+        );
+    }
+
+    // =========================================================================
+    // SELLER QUERIES
+    // =========================================================================
+
+    @QueryMapping
+    @PreAuthorize("hasRole('SELLER')")
+    public SellerPromotionPage sellerPromotions(@Argument PageInput pagination,
+                                                  @ContextValue UUID sellerId) {
+        log.info("GQL sellerPromotions(seller={})", sellerId);
+        Pageable pageable = toPageable(pagination);
+        Page<SellerPromotionDto> page = sellerPromotionService.getPromotions(sellerId, pageable);
+        return SellerPromotionPage.builder()
+                .content(page.getContent())
+                .pageInfo(PaginatedResponse.from(page))
                 .build();
     }
 
     @QueryMapping
     @PreAuthorize("hasRole('SELLER')")
-    public PromotionConnection sellerPromotions(@Argument PageInput pagination) {
-        log.info("GraphQL Query: sellerPromotions");
-        
-        Pageable pageable = createPageable(pagination);
-        
-        return PromotionConnection.builder()
-                .content(List.of())
-                .pageInfo(PaginatedResponse.from(Page.empty()))
-                .build();
+    public List<SellerPromotionDto> activeSellerPromotions(@ContextValue UUID sellerId) {
+        log.info("GQL activeSellerPromotions(seller={})", sellerId);
+        return sellerPromotionService.getActivePromotions(sellerId);
+    }
+
+    // =========================================================================
+    // ADMIN MUTATIONS
+    // =========================================================================
+
+    @MutationMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public AdminPromotion createAdminPromotion(@Argument AdminPromotionCreateInput input,
+                                                @ContextValue UUID userId) {
+        log.info("GQL createAdminPromotion(admin={})", userId);
+        return adminPromotionService.createPromotion(
+                userId,
+                input.getName(),
+                AdminPromotion.PromotionType.valueOf(input.getPromotionType().toUpperCase()),
+                input.getCode(),
+                input.getDiscountValue(),
+                input.getMinPurchase(),
+                input.getMaxDiscount(),
+                input.getStartDate(),
+                input.getEndDate(),
+                input.getUsageLimit(),
+                input.getCategoryId(),
+                input.getIsGlobal() != null ? input.getIsGlobal() : false,
+                "0.0.0.0"
+        );
     }
 
     @MutationMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public Object createPromotion(@Argument PromotionInput input) {
-        log.info("GraphQL Mutation: createPromotion(name: {})", input.getName());
-        return null;
-    }
-
-    @MutationMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public Object updatePromotion(@Argument UUID id, @Argument PromotionInput input) {
-        log.info("GraphQL Mutation: updatePromotion(id: {})", id);
-        return null;
-    }
-
-    @MutationMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public boolean deletePromotion(@Argument UUID id) {
-        log.info("GraphQL Mutation: deletePromotion(id: {})", id);
+    public boolean deleteAdminPromotion(@Argument UUID id, @ContextValue UUID userId) {
+        log.info("GQL deleteAdminPromotion(id={}, admin={})", id, userId);
+        adminPromotionService.deletePromotion(userId, id, "0.0.0.0");
         return true;
     }
 
-    @MutationMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public Object togglePromotionActive(@Argument UUID id) {
-        log.info("GraphQL Mutation: togglePromotionActive(id: {})", id);
-        return null;
-    }
+    // =========================================================================
+    // SELLER MUTATIONS
+    // =========================================================================
 
     @MutationMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public Object createFlashSale(@Argument FlashSaleInput input) {
-        log.info("GraphQL Mutation: createFlashSale(name: {})", input.getName());
-        return null;
-    }
-
-    @MutationMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public Object updateFlashSale(@Argument UUID id, @Argument FlashSaleInput input) {
-        log.info("GraphQL Mutation: updateFlashSale(id: {})", id);
-        return null;
-    }
-
-    @MutationMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public boolean deleteFlashSale(@Argument UUID id) {
-        log.info("GraphQL Mutation: deleteFlashSale(id: {})", id);
-        return true;
+    @PreAuthorize("hasRole('SELLER')")
+    public SellerPromotionDto createSellerPromotion(@Argument SellerPromotionCreateInput input,
+                                                      @ContextValue UUID sellerId) {
+        log.info("GQL createSellerPromotion(seller={})", sellerId);
+        return sellerPromotionService.createPromotion(
+                sellerId,
+                input.getName(),
+                input.getPromotionType(),
+                input.getDiscountValue(),
+                input.getMinPurchase(),
+                input.getStartDate(),
+                input.getEndDate(),
+                input.getUsageLimit(),
+                "0.0.0.0"
+        );
     }
 
     @MutationMapping
     @PreAuthorize("hasRole('SELLER')")
-    public boolean applyForFlashSale(
-            @Argument UUID flashSaleId,
-            @Argument List<UUID> productIds,
-            @ContextValue UUID sellerId) {
-        log.info("GraphQL Mutation: applyForFlashSale(flashSaleId: {}, sellerId: {})", flashSaleId, sellerId);
+    public boolean deleteSellerPromotion(@Argument UUID id, @ContextValue UUID sellerId) {
+        log.info("GQL deleteSellerPromotion(id={}, seller={})", id, sellerId);
+        sellerPromotionService.deletePromotion(sellerId, id, "0.0.0.0");
         return true;
     }
 
-    private Pageable createPageable(PageInput input) {
+    // =========================================================================
+    // HELPERS
+    // =========================================================================
+
+    private Pageable toPageable(PageInput input) {
         if (input == null) {
             return PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
         }
-        Sort.Direction direction = input.getDirection() == ecommerce.graphql.input.SortDirection.DESC
-                ? Sort.Direction.DESC : Sort.Direction.ASC;
-        String sortBy = input.getSortBy() != null ? input.getSortBy() : "createdAt";
-        return PageRequest.of(input.getPage(), input.getSize(), Sort.by(direction, sortBy));
+        Sort sort = input.getDirection() == SortDirection.DESC
+                ? Sort.by(input.getSortBy()).descending()
+                : Sort.by(input.getSortBy()).ascending();
+        return PageRequest.of(input.getPage(), input.getSize(), sort);
     }
 }
