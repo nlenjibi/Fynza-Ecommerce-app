@@ -1,14 +1,17 @@
 package ecommerce.graphql.resolver;
 
+import ecommerce.common.enums.ProductStatus;
 import ecommerce.common.response.PaginatedResponse;
 import ecommerce.graphql.dto.ProductDto;
 import ecommerce.graphql.input.PageInput;
+import ecommerce.graphql.input.ProductCreateInput;
+import ecommerce.graphql.input.ProductFilterInput;
+import ecommerce.graphql.input.ProductUpdateInput;
+import ecommerce.graphql.input.SearchInput;
 import ecommerce.graphql.input.SortDirection;
 import ecommerce.modules.product.dto.*;
 import ecommerce.modules.product.service.ProductService;
 import ecommerce.modules.product.service.SearchService;
-import ecommerce.common.enums.InventoryStatus;
-import ecommerce.common.enums.ProductStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -25,11 +28,7 @@ import org.springframework.stereotype.Controller;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
-/**
- * GraphQL Resolver for Product operations
- */
 @Controller
 @RequiredArgsConstructor
 @Slf4j
@@ -38,308 +37,316 @@ public class ProductResolver {
     private final ProductService productService;
     private final SearchService searchService;
 
+    // =========================================================================
+    // PUBLIC PRODUCT QUERIES
+    // =========================================================================
+
     @QueryMapping
     public ProductResponse product(@Argument UUID id) {
-        log.debug("GraphQL Query: product(id: {})", id);
+        log.info("GQL product(id={})", id);
         return productService.findById(id);
     }
 
     @QueryMapping
-    public ProductDto products(
-            @Argument PageInput pagination,
-            @Argument ecommerce.graphql.input.ProductFilterInput filter) {
-        log.debug("GraphQL Query: products");
-
-        Pageable pageable = createPageable(pagination);
-        
-        // Handle filter if provided
-        ecommerce.modules.product.dto.ProductFilterRequest filterRequest = null;
-        if (filter != null) {
-            filterRequest = filter.toFilterRequest();
-        }
-        
-        Page<ProductResponse> productPage = productService.findAll(filterRequest, pageable);
-
+    public ProductDto products(@Argument PageInput pagination,
+                                @Argument ProductFilterInput filter) {
+        log.info("GQL products");
+        Pageable pageable = toPageable(pagination);
+        ProductFilterRequest filterRequest = filter != null ? filter.toFilterRequest() : null;
+        Page<ProductResponse> page = productService.findAll(filterRequest, pageable);
         return ProductDto.builder()
-                .content(productPage.getContent())
-                .pageInfo(PaginatedResponse.from(productPage))
+                .content(page.getContent())
+                .pageInfo(PaginatedResponse.from(page))
                 .build();
     }
 
     @QueryMapping
-    public SearchResponse search(
-            @Argument ecommerce.graphql.input.SearchInput input) {
-        log.debug("GraphQL Query: search(q: {})", input != null ? input.getQ() : null);
-
-        SearchRequest request = mapToSearchRequest(input);
-        SearchResponse response = searchService.search(request);
-
-        return response;
-    }
-
-    @QueryMapping
-    public List<String> searchSuggestions(
-            @Argument String query,
-            @Argument Integer limit) {
-        log.debug("GraphQL Query: searchSuggestions(query: {}, limit: {})", query, limit);
-        return searchService.getSuggestions(query, limit != null ? limit : 10);
-    }
-
-    @QueryMapping
-    public List<String> trendingSearches(
-            @Argument Integer limit) {
-        log.debug("GraphQL Query: trendingSearches(limit: {})", limit);
-        return searchService.getTrending(limit != null ? limit : 10, "week");
-    }
-
-    @QueryMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ProductDto productsBySeller(
-            @Argument UUID sellerId,
-            @Argument PageInput pagination) {
-        log.debug("GraphQL Query: productsBySeller(sellerId: {})", sellerId);
-
-        Pageable pageable = createPageable(pagination);
-        Page<ProductResponse> productPage = productService.findBySellerId(sellerId, pageable);
-
-        return ProductDto.builder()
-                .content(productPage.getContent())
-                .pageInfo(PaginatedResponse.from(productPage))
-                .build();
-    }
-
-    @QueryMapping
-    public ProductDto productsByCategory(
-            @Argument UUID categoryId,
-            @Argument PageInput pagination) {
-        log.debug("GraphQL Query: productsByCategory(categoryId: {})", categoryId);
-
-        Pageable pageable = createPageable(pagination);
-        ProductFilterRequest filterRequest = ProductFilterRequest.builder()
+    public ProductDto productsByCategory(@Argument UUID categoryId,
+                                          @Argument PageInput pagination) {
+        log.info("GQL productsByCategory(categoryId={})", categoryId);
+        Pageable pageable = toPageable(pagination);
+        ProductFilterRequest filter = ProductFilterRequest.builder()
                 .categoryId(categoryId)
                 .build();
-        Page<ProductResponse> productPage = productService.findAll(filterRequest, pageable);
-
+        Page<ProductResponse> page = productService.findAll(filter, pageable);
         return ProductDto.builder()
-                .content(productPage.getContent())
-                .pageInfo(PaginatedResponse.from(productPage))
+                .content(page.getContent())
+                .pageInfo(PaginatedResponse.from(page))
                 .build();
     }
 
     @QueryMapping
-    public ProductDto productsByCategoryName(
-            @Argument String categoryName,
-            @Argument PageInput pagination) {
-        log.debug("GraphQL Query: productsByCategoryName(categoryName: {})", categoryName);
-
-        Pageable pageable = createPageable(pagination);
-        ProductFilterRequest filterRequest = ProductFilterRequest.builder()
+    public ProductDto productsByCategoryName(@Argument String categoryName,
+                                              @Argument PageInput pagination) {
+        log.info("GQL productsByCategoryName(categoryName={})", categoryName);
+        Pageable pageable = toPageable(pagination);
+        ProductFilterRequest filter = ProductFilterRequest.builder()
                 .categoryName(categoryName)
                 .build();
-        Page<ProductResponse> productPage = productService.findAll(filterRequest, pageable);
-
+        Page<ProductResponse> page = productService.findAll(filter, pageable);
         return ProductDto.builder()
-                .content(productPage.getContent())
-                .pageInfo(PaginatedResponse.from(productPage))
+                .content(page.getContent())
+                .pageInfo(PaginatedResponse.from(page))
                 .build();
     }
 
     @QueryMapping
-    public ProductDto productsByPriceRange(
-            @Argument BigDecimal minPrice,
-            @Argument BigDecimal maxPrice,
-            @Argument PageInput pagination) {
-        log.debug("GraphQL Query: productsByPriceRange(minPrice: {}, maxPrice: {})", minPrice, maxPrice);
-
-        Pageable pageable = createPageable(pagination);
-        ProductFilterRequest filterRequest = ProductFilterRequest.builder()
+    public ProductDto productsByPriceRange(@Argument BigDecimal minPrice,
+                                            @Argument BigDecimal maxPrice,
+                                            @Argument PageInput pagination) {
+        log.info("GQL productsByPriceRange(min={}, max={})", minPrice, maxPrice);
+        Pageable pageable = toPageable(pagination);
+        ProductFilterRequest filter = ProductFilterRequest.builder()
                 .minPrice(minPrice)
                 .maxPrice(maxPrice)
                 .build();
-        Page<ProductResponse> productPage = productService.findAll(filterRequest, pageable);
-
+        Page<ProductResponse> page = productService.findAll(filter, pageable);
         return ProductDto.builder()
-                .content(productPage.getContent())
-                .pageInfo(PaginatedResponse.from(productPage))
+                .content(page.getContent())
+                .pageInfo(PaginatedResponse.from(page))
                 .build();
     }
 
     @QueryMapping
-    public ProductDto searchProducts(
-            @Argument String keyword,
-            @Argument PageInput pagination) {
-        log.debug("GraphQL Query: searchProducts(keyword: {})", keyword);
-
-        Pageable pageable = createPageable(pagination);
-        ProductFilterRequest filterRequest = ProductFilterRequest.builder()
+    public ProductDto searchProducts(@Argument String keyword,
+                                      @Argument PageInput pagination) {
+        log.info("GQL searchProducts(keyword={})", keyword);
+        Pageable pageable = toPageable(pagination);
+        ProductFilterRequest filter = ProductFilterRequest.builder()
                 .keyword(keyword)
                 .build();
-        Page<ProductResponse> productPage = productService.findAll(filterRequest, pageable);
-
+        Page<ProductResponse> page = productService.findAll(filter, pageable);
         return ProductDto.builder()
-                .content(productPage.getContent())
-                .pageInfo(PaginatedResponse.from(productPage))
+                .content(page.getContent())
+                .pageInfo(PaginatedResponse.from(page))
                 .build();
     }
 
     @QueryMapping
-    public ProductDto productsByInventoryStatus(
-            @Argument InventoryStatus status,
-            @Argument PageInput pagination) {
-        log.debug("GraphQL Query: productsByInventoryStatus(status: {})", status);
+    public List<ProductResponse> popularProducts(@Argument int limit,
+                                                  @Argument UUID categoryId) {
+        log.info("GQL popularProducts(limit={}, categoryId={})", limit, categoryId);
+        return searchService.getPopularProducts(limit, categoryId);
+    }
 
-        Pageable pageable = createPageable(pagination);
-        ProductFilterRequest filterRequest = ProductFilterRequest.builder()
-                .inventoryStatus(status.name())
-                .build();
-        Page<ProductResponse> productPage = productService.findAll(filterRequest, pageable);
+    // =========================================================================
+    // SEARCH QUERIES
+    // =========================================================================
 
+    @QueryMapping
+    public SearchResponse search(@Argument SearchInput input) {
+        log.info("GQL search(q={})", input != null ? input.getQ() : null);
+        SearchRequest request = mapToSearchRequest(input);
+        return searchService.search(request);
+    }
+
+    @QueryMapping
+    public List<String> searchSuggestions(@Argument String query,
+                                           @Argument int limit) {
+        log.info("GQL searchSuggestions(query={})", query);
+        return searchService.getSuggestions(query, limit);
+    }
+
+    @QueryMapping
+    public List<String> trendingSearches(@Argument int limit) {
+        log.info("GQL trendingSearches");
+        return searchService.getTrending(limit, "week");
+    }
+
+    // =========================================================================
+    // ADMIN/SELLER PRODUCT QUERIES
+    // =========================================================================
+
+    @QueryMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ProductDto productsBySeller(@Argument UUID sellerId,
+                                        @Argument PageInput pagination) {
+        log.info("GQL productsBySeller(sellerId={})", sellerId);
+        Pageable pageable = toPageable(pagination);
+        Page<ProductResponse> page = productService.findBySellerId(sellerId, pageable);
         return ProductDto.builder()
-                .content(productPage.getContent())
-                .pageInfo(PaginatedResponse.from(productPage))
+                .content(page.getContent())
+                .pageInfo(PaginatedResponse.from(page))
                 .build();
     }
 
     @QueryMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ProductDto productsByInventoryStatus(@Argument String status,
+                                                  @Argument PageInput pagination) {
+        log.info("GQL productsByInventoryStatus(status={})", status);
+        Pageable pageable = toPageable(pagination);
+        ProductFilterRequest filter = ProductFilterRequest.builder()
+                .inventoryStatus(status)
+                .build();
+        Page<ProductResponse> page = productService.findAll(filter, pageable);
+        return ProductDto.builder()
+                .content(page.getContent())
+                .pageInfo(PaginatedResponse.from(page))
+                .build();
+    }
+
+    @QueryMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ProductDto productsNeedingReorder(@Argument PageInput pagination) {
-        log.debug("GraphQL Query: productsNeedingReorder");
-
-        Pageable pageable = createPageable(pagination);
-        ProductFilterRequest filterRequest = ProductFilterRequest.builder()
+        log.info("GQL productsNeedingReorder");
+        Pageable pageable = toPageable(pagination);
+        ProductFilterRequest filter = ProductFilterRequest.builder()
                 .needsReorderOnly(true)
                 .build();
-        Page<ProductResponse> productPage = productService.findAll(filterRequest, pageable);
-
+        Page<ProductResponse> page = productService.findAll(filter, pageable);
         return ProductDto.builder()
-                .content(productPage.getContent())
-                .pageInfo(PaginatedResponse.from(productPage))
+                .content(page.getContent())
+                .pageInfo(PaginatedResponse.from(page))
                 .build();
     }
 
     @QueryMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public List<ProductResponse> lowStockProducts() {
-        log.debug("GraphQL Query: lowStockProducts");
-        
-        ProductFilterRequest filterRequest = ProductFilterRequest.builder()
-                .inventoryStatus(InventoryStatus.LOW_STOCK.name())
+        log.info("GQL lowStockProducts");
+        ProductFilterRequest filter = ProductFilterRequest.builder()
+                .lowStockOnly(true)
                 .build();
-        
-        return productService.findAll(filterRequest, PageRequest.of(0, 50)).getContent();
+        return productService.findAll(filter, PageRequest.of(0, 50)).getContent();
     }
 
     @QueryMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public List<ProductResponse> outOfStockProducts() {
-        log.debug("GraphQL Query: outOfStockProducts");
-        
-        ProductFilterRequest filterRequest = ProductFilterRequest.builder()
-                .inventoryStatus(InventoryStatus.OUT_OF_STOCK.name())
+        log.info("GQL outOfStockProducts");
+        ProductFilterRequest filter = ProductFilterRequest.builder()
+                .outOfStockOnly(true)
                 .build();
-        
-        return productService.findAll(filterRequest, PageRequest.of(0, 50)).getContent();
+        return productService.findAll(filter, PageRequest.of(0, 50)).getContent();
     }
 
     @QueryMapping
-    public AdminProductStatsResponse productStatistics() {
-        log.debug("GraphQL Query: productStatistics");
+    @PreAuthorize("hasRole('ADMIN')")
+    public AdminProductStatsResponse adminProductStats() {
+        log.info("GQL adminProductStats");
         return productService.getAdminProductStats();
     }
 
-    // ==================== Mutations ====================
+    @QueryMapping
+    @PreAuthorize("hasRole('SELLER')")
+    public SellerProductStatsResponse sellerProductStats(@ContextValue UUID sellerId) {
+        log.info("GQL sellerProductStats(seller={})", sellerId);
+        return productService.getSellerProductStats(sellerId);
+    }
+
+    // =========================================================================
+    // PRODUCT CRUD MUTATIONS
+    // =========================================================================
 
     @MutationMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'SELLER')")
-    public ProductResponse createProduct(
-            @Argument CreateProductRequest input,
-            @ContextValue UUID sellerId) {
-        log.info("GraphQL Mutation: createProduct(name: {})", input.getName());
-        UUID resolvedSellerId = sellerId != null ? sellerId : UUID.fromString("00000000-0000-0000-0000-000000000001");
-        return productService.create(input, resolvedSellerId);
+    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    public ProductResponse createProduct(@Argument ProductCreateInput input,
+                                          @ContextValue UUID userId) {
+        log.info("GQL createProduct(name={}, user={})", input.getName(), userId);
+        CreateProductRequest request = CreateProductRequest.builder()
+                .name(input.getName())
+                .description(input.getDescription())
+                .brand(input.getBrand())
+                .sku(input.getSku())
+                .price(input.getPrice())
+                .originalPrice(input.getOriginalPrice())
+                .categoryId(input.getCategoryId())
+                .stock(input.getStock())
+                .images(input.getImages())
+                .build();
+        return productService.create(request, userId);
     }
 
     @MutationMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ProductResponse updateProduct(
-            @Argument UUID id,
-            @Argument UpdateProductRequest input) {
-        log.info("GraphQL Mutation: updateProduct(id: {})", id);
-        return productService.update(id, input);
+    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    public ProductResponse updateProduct(@Argument UUID id,
+                                          @Argument ProductUpdateInput input) {
+        log.info("GQL updateProduct(id={})", id);
+        UpdateProductRequest request = UpdateProductRequest.builder()
+                .name(input.getName())
+                .description(input.getDescription())
+                .brand(input.getBrand())
+                .sku(input.getSku())
+                .price(input.getPrice())
+                .originalPrice(input.getOriginalPrice())
+                .categoryId(input.getCategoryId())
+                .stock(input.getStock())
+                .images(input.getImages())
+                .build();
+        return productService.update(id, request);
     }
 
     @MutationMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public Boolean deleteProduct(@Argument UUID id) {
-        log.info("GraphQL Mutation: deleteProduct(id: {})", id);
+    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    public boolean deleteProduct(@Argument UUID id) {
+        log.info("GQL deleteProduct(id={})", id);
         productService.delete(id);
         return true;
     }
 
+    // =========================================================================
+    // STOCK MANAGEMENT MUTATIONS
+    // =========================================================================
+
     @MutationMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ProductResponse addStock(
-            @Argument UUID id,
-            @Argument Integer quantity) {
-        log.info("GraphQL Mutation: addStock(id: {}, quantity: {})", id, quantity);
+    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    public ProductResponse addStock(@Argument UUID id, @Argument int quantity) {
+        log.info("GQL addStock(id={}, quantity={})", id, quantity);
         return productService.addStock(id, quantity);
     }
 
     @MutationMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ProductResponse restoreStock(
-            @Argument UUID id,
-            @Argument Integer quantity) {
-        log.info("GraphQL Mutation: restoreStock(id: {}, quantity: {})", id, quantity);
-        return productService.restoreStock(id, quantity);
-    }
-
-    @MutationMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ProductResponse reserveStock(
-            @Argument UUID id,
-            @Argument Integer quantity) {
-        log.info("GraphQL Mutation: reserveStock(id: {}, quantity: {})", id, quantity);
-        return productService.reserveStock(id, quantity);
-    }
-
-    @MutationMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ProductResponse releaseReservedStock(
-            @Argument UUID id,
-            @Argument Integer quantity) {
-        log.info("GraphQL Mutation: releaseReservedStock(id: {}, quantity: {})", id, quantity);
-        return productService.releaseReservedStock(id, quantity);
-    }
-
-    @MutationMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ProductResponse reduceStock(
-            @Argument UUID id,
-            @Argument Integer quantity) {
-        log.info("GraphQL Mutation: reduceStock(id: {}, quantity: {})", id, quantity);
+    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    public ProductResponse reduceStock(@Argument UUID id, @Argument int quantity) {
+        log.info("GQL reduceStock(id={}, quantity={})", id, quantity);
         return productService.reduceStock(id, quantity);
     }
 
     @MutationMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public Boolean incrementViewCount(@Argument UUID id) {
-        log.info("GraphQL Mutation: incrementViewCount(id: {})", id);
-        return productService.incrementViewCount(id);
+    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    public ProductResponse reserveStock(@Argument UUID id, @Argument int quantity) {
+        log.info("GQL reserveStock(id={}, quantity={})", id, quantity);
+        return productService.reserveStock(id, quantity);
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    public ProductResponse releaseReservedStock(@Argument UUID id, @Argument int quantity) {
+        log.info("GQL releaseReservedStock(id={}, quantity={})", id, quantity);
+        return productService.releaseReservedStock(id, quantity);
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    public ProductResponse restoreStock(@Argument UUID id, @Argument int quantity) {
+        log.info("GQL restoreStock(id={}, quantity={})", id, quantity);
+        return productService.restoreStock(id, quantity);
+    }
+
+    // =========================================================================
+    // ADMIN MUTATIONS
+    // =========================================================================
+
+    @MutationMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ProductResponse approveProduct(@Argument UUID id) {
+        log.info("GQL approveProduct(id={})", id);
+        return productService.approveProduct(id);
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ProductResponse rejectProduct(@Argument UUID id, @Argument String reason) {
+        log.info("GQL rejectProduct(id={}, reason={})", id, reason);
+        return productService.rejectProduct(id, reason);
     }
 
     @MutationMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ProductResponse updateRating(
-            @Argument UUID id,
-            @Argument Float rating) {
-        log.info("GraphQL Mutation: updateRating(id: {}, rating: {})", id, rating);
-        return productService.updateRating(id, rating);
-    }
-
-    @MutationMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public Boolean bulkUpdateFeatured(
-            @Argument List<UUID> productIds,
-            @Argument Boolean featured) {
-        log.info("GraphQL Mutation: bulkUpdateFeatured(productIds: {}, featured: {})", productIds, featured);
+    public boolean bulkUpdateFeatured(@Argument List<UUID> productIds,
+                                       @Argument boolean featured) {
+        log.info("GQL bulkUpdateFeatured(productIds={}, featured={})", productIds, featured);
         for (UUID id : productIds) {
             try {
                 productService.updateProductStatus(id, featured ? ProductStatus.ACTIVE : ProductStatus.INACTIVE);
@@ -351,9 +358,9 @@ public class ProductResolver {
     }
 
     @MutationMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public Boolean bulkDelete(@Argument List<UUID> productIds) {
-        log.info("GraphQL Mutation: bulkDelete(productIds: {})", productIds);
+    @PreAuthorize("hasRole('ADMIN')")
+    public boolean bulkDelete(@Argument List<UUID> productIds) {
+        log.info("GQL bulkDelete(productIds={})", productIds);
         for (UUID id : productIds) {
             try {
                 productService.delete(id);
@@ -364,24 +371,41 @@ public class ProductResolver {
         return true;
     }
 
-    private Pageable createPageable(PageInput input) {
-        if (input == null) {
-            return PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "id"));
-        }
-        Sort.Direction direction = input.getDirection() == SortDirection.DESC
-                ? Sort.Direction.DESC
-                : Sort.Direction.ASC;
-        String sortBy = input.getSortBy() != null ? input.getSortBy() : "id";
-        int page = input.getPage();
-        int size = input.getSize();
-        return PageRequest.of(page, size, Sort.by(direction, sortBy));
+    // =========================================================================
+    // ANALYTICS MUTATIONS
+    // =========================================================================
+
+    @MutationMapping
+    public boolean incrementViewCount(@Argument UUID id) {
+        log.info("GQL incrementViewCount(id={})", id);
+        return productService.incrementViewCount(id);
     }
 
-    private SearchRequest mapToSearchRequest(ecommerce.graphql.input.SearchInput input) {
+    @MutationMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'SELLER')")
+    public ProductResponse updateRating(@Argument UUID id, @Argument float rating) {
+        log.info("GQL updateRating(id={}, rating={})", id, rating);
+        return productService.updateRating(id, rating);
+    }
+
+    // =========================================================================
+    // HELPERS
+    // =========================================================================
+
+    private Pageable toPageable(PageInput input) {
+        if (input == null) {
+            return PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
+        }
+        Sort sort = input.getDirection() == SortDirection.DESC
+                ? Sort.by(input.getSortBy()).descending()
+                : Sort.by(input.getSortBy()).ascending();
+        return PageRequest.of(input.getPage(), input.getSize(), sort);
+    }
+
+    private SearchRequest mapToSearchRequest(SearchInput input) {
         if (input == null) {
             return SearchRequest.builder().build();
         }
-
         return SearchRequest.builder()
                 .q(input.getQ())
                 .categoryId(input.getCategoryId() != null ? UUID.fromString(input.getCategoryId()) : null)
