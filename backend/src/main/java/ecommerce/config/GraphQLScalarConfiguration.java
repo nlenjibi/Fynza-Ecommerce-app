@@ -6,14 +6,12 @@ import graphql.schema.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.graphql.execution.RuntimeWiringConfigurer;
-import org.springframework.graphql.execution.TypeDefinitionConfigurer;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.List;
 
 /**
  * GraphQL Scalar Type Configuration
@@ -36,19 +34,6 @@ public class GraphQLScalarConfiguration {
                 .scalar(ExtendedScalars.UUID)
                 .scalar(ExtendedScalars.GraphQLLong)
                 .scalar(uploadScalar());
-    }
-
-    /**
-     * Removes the @oneOf directive from introspection.
-     * graphql-java-extended-scalars registers it but its args definition
-     * is malformed (missing 'args' field), causing Postman/GraphiQL
-     * introspection failures: "Introspection result missing directive args".
-     */
-    @Bean
-    public TypeDefinitionConfigurer oneOfDirectiveRemover() {
-        return registry -> {
-            registry.remove("oneOf");
-        };
     }
 
     /**
