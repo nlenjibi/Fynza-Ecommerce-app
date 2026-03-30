@@ -1,7 +1,8 @@
 package ecommerce.modules.auth.service.impl;
 
+import ecommerce.common.enums.PaymentMethod;
+import ecommerce.common.enums.Role;
 import ecommerce.common.enums.UserStatus;
-import ecommerce.modules.user.entity.Role;
 import ecommerce.exception.BadRequestException;
 import ecommerce.exception.DuplicateResourceException;
 import ecommerce.exception.InvalidTokenException;
@@ -55,6 +56,8 @@ public class AuthServiceImpl implements AuthService {
     @Value("${jwt.refresh-token.expiration:604800000}")
     private Long refreshTokenExpiration;
 
+
+
     @Override
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -71,6 +74,7 @@ public class AuthServiceImpl implements AuthService {
 
         User user = User.builder()
                 .email(request.getEmail())
+                .username(generateUsername(request.getEmail(), request.getFirstName(), request.getLastName()))
                 .password(passwordEncoder.encode(request.getPassword()))
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
@@ -245,5 +249,13 @@ public class AuthServiceImpl implements AuthService {
                 .refreshToken(refreshToken)
                 .expiresIn(accessTokenExpiration / 1000)
                 .build();
+    }
+    private String generateUsername(String email, String firstName, String lastName) {
+        String base = firstName != null && !firstName.isEmpty() ? firstName : email.split("@")[0];
+        if (lastName != null && !lastName.isEmpty()) {
+            base += "." + lastName;
+        }
+        String cleaned = base.toLowerCase().replaceAll("[^a-z0-9.]", "");
+        return cleaned + "_" + System.currentTimeMillis();
     }
 }

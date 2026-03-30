@@ -33,7 +33,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("api/v1/customers")
+@RequestMapping("/v1/customers")
 @RequiredArgsConstructor
 @Tag(name = "Customer Management", description = "Customer profile and address management endpoints")
 public class UserController {

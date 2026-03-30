@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/admin")
+@RequestMapping("/v1/admin")
 @RequiredArgsConstructor
 @Tag(name = "Admin Management", description = "Admin management endpoints")
 public class AdminController {

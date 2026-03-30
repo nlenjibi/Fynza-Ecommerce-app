@@ -1,10 +1,14 @@
 package ecommerce.modules.contact.entity;
 
 import ecommerce.common.base.BaseEntity;
+import ecommerce.common.enums.ContactCategory;
+import ecommerce.common.enums.ContactPriority;
+import ecommerce.common.enums.ContactStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "contact_messages", indexes = {
@@ -50,6 +54,9 @@ public class ContactMessage extends BaseEntity {
     @Builder.Default
     private ContactCategory category = ContactCategory.GENERAL_INQUIRY;
 
+    @Column(name = "assigned_to")
+    private UUID assignedTo;
+
     @Column(name = "admin_response", columnDefinition = "TEXT")
     private String adminResponse;
 
@@ -59,30 +66,4 @@ public class ContactMessage extends BaseEntity {
     @Column(name = "responded_by")
     private String respondedBy;
 
-    public enum ContactStatus {
-        OPEN,
-
-        NEW,
-        READ,
-        IN_PROGRESS,
-        RESPONDED,
-        CLOSED,
-        SPAM
-    }
-
-    public enum ContactPriority {
-        HIGH,
-        MEDIUM,
-        LOW
-    }
-
-    public enum ContactCategory {
-        ORDER_ISSUES,
-        SELLER_INQUIRY,
-        REFUNDS,
-        ACCOUNT,
-        SHIPPING,
-        GENERAL_INQUIRY,
-        OTHER
-    }
 }

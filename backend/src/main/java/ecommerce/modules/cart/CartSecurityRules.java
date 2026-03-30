@@ -11,6 +11,9 @@ public class CartSecurityRules implements SecurityRules {
     @Override
     public void configure(AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry registry) {
         registry
-                .requestMatchers(HttpMethod.GET, "/v1/carts/**").hasAnyRole("USER", "ADMIN");
+                // All cart endpoints require CUSTOMER role (class-level @PreAuthorize)
+                .requestMatchers( "/v1/cart").hasRole("CUSTOMER")
+                .requestMatchers( "/v1/cart/reservations/{reservationId}").hasRole("CUSTOMER")
+                .requestMatchers( "/v1/cart/**").hasRole("CUSTOMER");
     }
 }

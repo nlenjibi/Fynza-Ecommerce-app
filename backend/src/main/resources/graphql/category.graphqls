@@ -1,85 +1,104 @@
+# =============================================================================
 # Category GraphQL Schema
+# Covers: Public category browsing, Admin/Seller category management
+# =============================================================================
 
-extend type Query {
-    # Basic Queries
-    category(id: ID!): CategoryResponse
-    # List Queries
-    categories(pagination: PageInput): CategoryResponseDto!
-
-    # Filter Queries
-    advancedFilterCategories(filter: CategoryFilterInput!, pagination: PageInput): CategoryResponseDto!
-    filterCategoriesWithPredicate(filter: CategoryFilterInput, pagination: PageInput): CategoryResponseDto!
-    searchCategoriesWithPredicate(keyword: String, filter: CategoryFilterInput, pagination: PageInput): CategoryResponseDto!
-
-    # Product-Based Queries
-    getCategoriesWithMinProductCount(minProductCount: Int, pagination: PageInput): CategoryResponseDto!
-    getCategoriesBySubcategoryPresence(hasSubcategories: Boolean, pagination: PageInput): CategoryResponseDto!
-
-    # Date-Based Queries
-    getCategoriesByDateRange(startDate: DateTime, endDate: DateTime, type: String, pagination: PageInput): CategoryResponseDto!
-
-    # Root Categories
-    getRootCategories(featured: Boolean, pagination: PageInput): CategoryResponseDto!
-    getFeaturedRootCategories: [CategoryResponse!]!
-}
-
-extend type Mutation {
-    # Create & Update
-    createCategory(input: CategoryCreateRequest!): CategoryResponse!
-}
-
+# ─────────────────────────────────────────────────────────────────────────────
 # Types
+# ─────────────────────────────────────────────────────────────────────────────
 
-type CategoryResponse {
+type Category {
     id: ID!
-    slug: String!
     name: String!
+    slug: String!
     description: String
     parentCategoryId: ID
-    children: [CategoryResponse!]!
     image: String
-    isActive: Boolean!
     featured: Boolean!
+    isActive: Boolean!
+    children: [Category!]!
     createdAt: DateTime!
     updatedAt: DateTime!
+}
 
-  }
-
-type CategoryResponseDto {
-    content: [CategoryResponse!]!
+type CategoryPage {
+    content: [Category!]!
     pageInfo: PageInfo!
 }
 
-# Input Types
-
-input CategoryCreateRequest {
-    name: String!
-    description: String
-    imageUrl: String
-    featured: Boolean
-    isActive: Boolean
-    parentCategoryId: ID
+type CategoryStats {
+    totalCategories: Long!
+    activeCategories: Long!
+    featuredCategories: Long!
+    rootCategories: Long!
 }
 
-input CategoryUpdateRequest {
+# ─────────────────────────────────────────────────────────────────────────────
+# Inputs
+# ─────────────────────────────────────────────────────────────────────────────
+
+input CategoryCreateInput {
+    name: String!
+    description: String
+    parentCategoryId: ID
+    image: String
+    slug: String
+    featured: Boolean = false
+    isActive: Boolean = true
+}
+
+input CategoryUpdateInput {
     name: String
     description: String
-    imageUrl: String
-    displayOrder: Int
+    parentCategoryId: ID
+    image: String
+    slug: String
     featured: Boolean
-    icon: String
+    isActive: Boolean
 }
 
 input CategoryFilterInput {
-    # Basic filters
     name: String
     description: String
     isActive: Boolean
     featured: Boolean
     hasProducts: Boolean
-
-    # Order range filters
     minOrder: Int
     maxOrder: Int
 }
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Queries
+# ─────────────────────────────────────────────────────────────────────────────
+
+extend type Query {
+
+    # ── Public Category Queries ──────────────────────────────────────────
+    category(id: ID!): Category
+    categories(pagination: PageInput): CategoryPage!
+    activeCategories: [Category!]!
+    categoryTree: [Category!]!
+    featuredCategories: [Category!]!
+
+    # ── Filtered Category Queries ────────────────────────────────────────
+    filteredCategories(filter: CategoryFilterInput, pagination: PageInput): CategoryPage!
+    rootCategories(featured: Boolean, pagination: PageInput): CategoryPage!
+
+    # ── Admin Queries (ADMIN) ────────────────────────────────────────────
+    categoryStats: CategoryStats!
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Mutations
+# ─────────────────────────────────────────────────────────────────────────────
+
+extend type Mutation {
+
+    # ── Category CRUD (SELLER/ADMIN) ─────────────────────────────────────
+    createCategory(input: CategoryCreateInput!): Category!
+    updateCategory(id: ID!, input: CategoryUpdateInput!): Category!
+
+    # ── Admin Operations (ADMIN) ─────────────────────────────────────────
+    deleteCategory(id: ID!): Boolean!
+    updateCategoryStatus(id: ID!, isActive: Boolean!): Category!
+}

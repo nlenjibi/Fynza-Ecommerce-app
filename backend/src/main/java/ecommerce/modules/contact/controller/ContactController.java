@@ -6,10 +6,11 @@ import ecommerce.modules.contact.dto.ContactMessageRequest;
 import ecommerce.modules.contact.dto.ContactMessageResponse;
 import ecommerce.modules.contact.dto.ContactResponseRequest;
 import ecommerce.modules.contact.dto.ContactStats;
-import ecommerce.modules.contact.entity.ContactMessage.ContactCategory;
-import ecommerce.modules.contact.entity.ContactMessage.ContactPriority;
-import ecommerce.modules.contact.entity.ContactMessage.ContactStatus;
 import ecommerce.modules.contact.service.ContactService;
+import ecommerce.common.enums.ContactCategory;
+import ecommerce.common.enums.ContactPriority;
+import ecommerce.common.enums.ContactStatus;
+import ecommerce.security.UserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -20,12 +21,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @RestController
-@RequestMapping("/api/v1/contact")
+@RequestMapping("/v1/contact")
 @RequiredArgsConstructor
 @Tag(name = "Contact Management", description = "APIs for managing contact messages")
 public class ContactController {
@@ -66,6 +70,13 @@ public class ContactController {
         return ResponseEntity.ok(ApiResponse.success("Message retrieved successfully", message));
     }
 
+    @GetMapping("/{id}/status")
+    @Operation(summary = "Get message status", description = "Check contact message status - public endpoint")
+    public ResponseEntity<ApiResponse<ContactStatus>> getMessageStatus(@PathVariable UUID id) {
+        ContactMessageResponse message = contactService.getMessageById(id);
+        return ResponseEntity.ok(ApiResponse.success("Status retrieved successfully", message.getStatus()));
+    }
+
     @PutMapping("/{id}/respond")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Respond to message", description = "Admin responds to contact message - ADMIN only")
@@ -84,6 +95,16 @@ public class ContactController {
             @RequestParam ContactStatus status) {
         ContactMessageResponse response = contactService.updateMessageStatus(id, status);
         return ResponseEntity.ok(ApiResponse.success("Status updated successfully", response));
+    }
+
+    @PutMapping("/{id}/assign")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Assign message", description = "Assign contact message to admin - ADMIN only")
+    public ResponseEntity<ApiResponse<ContactMessageResponse>> assignMessage(
+            @PathVariable UUID id,
+            @RequestParam UUID assignedToId) {
+        ContactMessageResponse response = contactService.assignMessage(id, assignedToId);
+        return ResponseEntity.ok(ApiResponse.success("Message assigned successfully", response));
     }
 
     @PutMapping("/{id}/categorize")
@@ -117,6 +138,48 @@ public class ContactController {
         Page<ContactMessageResponse> messages = contactService.searchMessages(query, pageable);
 
         return ResponseEntity.ok(ApiResponse.success("Search results retrieved successfully", PaginatedResponse.from(messages)));
+    }
+
+    @GetMapping("/my-assigned")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get my assigned messages", description = "Get messages assigned to current admin - ADMIN only")
+    public ResponseEntity<ApiResponse<PaginatedResponse<ContactMessageResponse>>> getMyAssignedMessages(
+            @RequestParam(required = false) ContactStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDir,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        UUID currentAdminId = principal.getId();
+
+        Sort sort = sortDir.equalsIgnoreCase("ASC") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<ContactMessageResponse> messages;
+        if (status != null) {
+            messages = contactService.getMessagesByAssignedToAndStatus(currentAdminId, status, pageable);
+        } else {
+            messages = contactService.getMessagesByAssignedTo(currentAdminId, pageable);
+        }
+        
+        return ResponseEntity.ok(ApiResponse.success("My assigned messages retrieved successfully", PaginatedResponse.from(messages)));
+    }
+
+    @GetMapping("/unassigned")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get unassigned messages", description = "Get unassigned contact messages - ADMIN only")
+    public ResponseEntity<ApiResponse<PaginatedResponse<ContactMessageResponse>>> getUnassignedMessages(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDir) {
+
+        Sort sort = sortDir.equalsIgnoreCase("ASC") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<ContactMessageResponse> messages = contactService.getUnassignedMessages(pageable);
+        
+        return ResponseEntity.ok(ApiResponse.success("Unassigned messages retrieved successfully", PaginatedResponse.from(messages)));
     }
 
     @GetMapping("/stats")

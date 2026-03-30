@@ -2,12 +2,12 @@ package ecommerce.modules.user.repository;
 
 import com.querydsl.core.types.Predicate;
 import ecommerce.common.base.BaseRepository;
+import ecommerce.common.enums.PaymentMethod;
+import ecommerce.common.enums.Role;
 import ecommerce.common.enums.UserStatus;
-import ecommerce.modules.user.entity.Role;
 import ecommerce.modules.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

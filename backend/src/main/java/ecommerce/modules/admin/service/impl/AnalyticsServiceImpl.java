@@ -1,13 +1,13 @@
 package ecommerce.modules.admin.service.impl;
 
 import ecommerce.common.enums.OrderStatus;
+import ecommerce.common.enums.PaymentMethod;
+import ecommerce.common.enums.Role;
 import ecommerce.modules.admin.service.AnalyticsService;
 import ecommerce.modules.order.entity.Order;
 import ecommerce.modules.order.repository.OrderItemRepository;
 import ecommerce.modules.order.repository.OrderRepository;
-import ecommerce.modules.product.entity.Product;
 import ecommerce.modules.product.repository.ProductRepository;
-import ecommerce.modules.user.entity.Role;
 import ecommerce.modules.user.entity.User;
 import ecommerce.modules.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,7 +75,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
     @Override
     public List<SellerMetrics> getTopSellers(int limit) {
-        List<User> sellers = userRepository.findByRole(Role.SELLER, 
+        List<User> sellers = userRepository.findByRole(Role.SELLER,
                 org.springframework.data.domain.Pageable.ofSize(limit)).getContent();
         
         List<SellerMetrics> metrics = new ArrayList<>();

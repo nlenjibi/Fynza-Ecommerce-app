@@ -1,8 +1,9 @@
 package ecommerce.security;
 
+import ecommerce.common.enums.PaymentMethod;
+import ecommerce.common.enums.Role;
 import ecommerce.modules.auth.dto.AuthResponse;
 import ecommerce.modules.auth.service.AuthService;
-import ecommerce.modules.user.entity.Role;
 import ecommerce.modules.user.entity.User;
 import ecommerce.modules.user.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;

@@ -1,6 +1,7 @@
 package ecommerce.graphql.input;
 
-import ecommerce.modules.user.entity.Role;
+import ecommerce.common.enums.PaymentMethod;
+import ecommerce.common.enums.Role;
 import lombok.Data;
 
 import java.time.LocalDateTime;

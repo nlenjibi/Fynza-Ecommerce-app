@@ -28,7 +28,7 @@ import java.util.Map;
  * Class-level @PreAuthorize("hasRole('ADMIN')") covers every endpoint.
  */
 @RestController
-@RequestMapping("v1/performance")
+@RequestMapping("/v1/performance")
 @RequiredArgsConstructor
 @Slf4j
 @PreAuthorize("hasRole('ADMIN')")

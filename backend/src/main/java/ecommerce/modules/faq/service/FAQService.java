@@ -32,5 +32,9 @@ public interface FAQService {
     
     List<FAQResponse> getPublicFAQs();
     
+    List<HelpCategoryResponse> getHelpCategories();
+    
+    ContactOptionsResponse getContactOptions();
+    
     FAQResponse incrementViewCount(UUID id);
 }

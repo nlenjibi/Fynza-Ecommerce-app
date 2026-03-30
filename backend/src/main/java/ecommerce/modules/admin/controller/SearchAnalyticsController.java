@@ -20,7 +20,7 @@ import java.util.Map;
  * Controller for search analytics endpoints.
  */
 @RestController
-@RequestMapping("/api/v1/admin/search-analytics")
+@RequestMapping("/v1/admin/search-analytics")
 @RequiredArgsConstructor
 @Tag(name = "Search Analytics", description = "Search analytics endpoints")
 @PreAuthorize("hasRole('ADMIN')")

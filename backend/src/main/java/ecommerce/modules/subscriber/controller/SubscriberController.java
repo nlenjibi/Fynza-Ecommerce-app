@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/v1")
 @RequiredArgsConstructor
 @Tag(name = "Subscriber Management", description = "APIs for managing newsletter subscribers")
 public class SubscriberController {

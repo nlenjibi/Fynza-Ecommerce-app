@@ -17,14 +17,14 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("api/v1")
+@RequestMapping("/v1/categories")
 @RequiredArgsConstructor
 @Tag(name = "Category Management", description = "APIs for managing product categories")
 public class CategoryController {
 
     private final CategoryService categoryService;
 
-    @GetMapping("/categories")
+    @GetMapping
     @Operation(summary = "Get all categories", description = "Retrieve all categories - public endpoint")
     public ResponseEntity<ApiResponse<List<CategoryResponse>>> getAllCategories(
             @RequestParam(required = false) Boolean activeOnly) {
@@ -37,21 +37,21 @@ public class CategoryController {
         return ResponseEntity.ok(ApiResponse.success("Categories retrieved successfully", categories));
     }
 
-    @GetMapping("/categories/tree")
+    @GetMapping("/tree")
     @Operation(summary = "Get category tree", description = "Retrieve categories in a tree structure - public endpoint")
     public ResponseEntity<ApiResponse<List<CategoryResponse>>> getCategoryTree() {
         List<CategoryResponse> categories = categoryService.findTree();
         return ResponseEntity.ok(ApiResponse.success("Category tree retrieved successfully", categories));
     }
 
-    @GetMapping("/categories/{id}")
+    @GetMapping("/{id}")
     @Operation(summary = "Get category by ID", description = "Retrieve category details by ID - public endpoint")
     public ResponseEntity<ApiResponse<CategoryResponse>> getCategoryById(@PathVariable UUID id) {
         CategoryResponse category = categoryService.findById(id);
         return ResponseEntity.ok(ApiResponse.success("Category retrieved successfully", category));
     }
 
-    @GetMapping("/admin/categories/stats")
+    @GetMapping("/stats")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get category statistics", description = "Get category statistics - ADMIN only")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getCategoryStats() {
@@ -59,7 +59,7 @@ public class CategoryController {
         return ResponseEntity.ok(ApiResponse.success("Category statistics retrieved successfully", stats));
     }
 
-    @PostMapping("/categories")
+    @PostMapping
     @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
     @Operation(summary = "Create category", description = "Create a new category - SELLER/ADMIN only")
     public ResponseEntity<ApiResponse<CategoryResponse>> createCategory(
@@ -68,7 +68,7 @@ public class CategoryController {
         return ResponseEntity.ok(ApiResponse.success("Category created successfully", category));
     }
 
-    @PutMapping("/categories/{id}")
+    @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
     @Operation(summary = "Update category", description = "Update category details - SELLER/ADMIN only")
     public ResponseEntity<ApiResponse<CategoryResponse>> updateCategory(
@@ -78,7 +78,7 @@ public class CategoryController {
         return ResponseEntity.ok(ApiResponse.success("Category updated successfully", category));
     }
 
-    @DeleteMapping("/categories/{id}")
+    @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete category", description = "Delete category by ID - ADMIN only")
     public ResponseEntity<ApiResponse<Void>> deleteCategory(@PathVariable UUID id) {
@@ -86,7 +86,7 @@ public class CategoryController {
         return ResponseEntity.ok(ApiResponse.success("Category deleted successfully", null));
     }
 
-    @PatchMapping("/categories/{id}/status")
+    @PatchMapping("/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update category status", description = "Activate or deactivate category - ADMIN only")
     public ResponseEntity<ApiResponse<CategoryResponse>> updateCategoryStatus(

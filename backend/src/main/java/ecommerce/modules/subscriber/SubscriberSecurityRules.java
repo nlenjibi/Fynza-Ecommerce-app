@@ -1,26 +1,22 @@
 package ecommerce.modules.subscriber;
 
-/**
- * Security rules for Subscriber module.
- * Defines authorization expressions for subscriber management.
- */
-public class SubscriberSecurityRules {
+import ecommerce.security.SecurityRules;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer;
+import org.springframework.stereotype.Component;
 
-    /**
-     * Admin-only access for subscriber management.
-     */
-    public static final String ADMIN_ONLY = "hasRole('ADMIN')";
+@Component
+public class SubscriberSecurityRules implements SecurityRules {
+    @Override
+    public void configure(AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry registry) {
+        registry
+                // Public subscriber endpoints
+                .requestMatchers(HttpMethod.POST, "/v1/subscribers").permitAll()
+                .requestMatchers(HttpMethod.GET, "/v1/subscribers/unsubscribe/{id}").permitAll()
+                
+                // Admin subscriber management endpoints
+                .requestMatchers("/v1/admin/**").hasRole("ADMIN");
 
-    /**
-     * Public access for newsletter subscription.
-     */
-    public static final String PUBLIC_SUBSCRIBE = "permitAll()";
-
-    /**
-     * Rate limiting check for public endpoints.
-     */
-    public static final String RATE_LIMITED = "@rateLimitingAspect.checkRateLimit()";
-
-    private SubscriberSecurityRules() {
     }
 }

@@ -169,6 +169,41 @@ public class FAQServiceImpl implements FAQService {
     }
 
     @Override
+    @Cacheable(value = "faqs", key = "'help_categories'")
+    public List<HelpCategoryResponse> getHelpCategories() {
+        log.debug("Getting help categories");
+        
+        return faqRepository.findByIsActiveTrueOrderByDisplayOrderAsc().stream()
+                .collect(Collectors.groupingBy(FAQ::getCategory))
+                .entrySet().stream()
+                .map(entry -> {
+                    FAQCategory category = entry.getKey();
+                    List<FAQ> faqs = entry.getValue();
+                    
+                    return HelpCategoryResponse.builder()
+                            .name(category.name())
+                            .slug(category.name().toLowerCase().replace("_", "-"))
+                            .faqs(faqs.stream().map(this::toResponse).collect(Collectors.toList()))
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Cacheable(value = "faqs", key = "'contact_options'")
+    public ContactOptionsResponse getContactOptions() {
+        log.debug("Getting contact options");
+        
+        // Return default contact options - these could be configurable in the future
+        return ContactOptionsResponse.builder()
+                .liveChat("https://chat.example.com")
+                .emailSupport("support@example.com")
+                .phoneSupport("+1-800-123-4567")
+                .phoneHours("Mon-Fri 9AM-6PM EST")
+                .build();
+    }
+
+    @Override
     @Transactional
     public FAQResponse incrementViewCount(UUID id) {
         log.debug("Incrementing view count for FAQ: {}", id);
@@ -176,7 +211,7 @@ public class FAQServiceImpl implements FAQService {
         FAQ faq = faqRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("FAQ not found"));
         
-        faq.setViewCount(faq.getViewCount() + 1);
+        faq.setViewCount((faq.getViewCount() != null ? faq.getViewCount() : 0) + 1);
         FAQ saved = faqRepository.save(faq);
         
         return toResponse(saved);

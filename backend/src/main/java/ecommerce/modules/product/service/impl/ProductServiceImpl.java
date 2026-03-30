@@ -1,7 +1,9 @@
 package ecommerce.modules.product.service.impl;
 
 import ecommerce.common.enums.InventoryStatus;
+import ecommerce.common.enums.PaymentMethod;
 import ecommerce.common.enums.ProductStatus;
+import ecommerce.common.enums.Role;
 import ecommerce.exception.ResourceNotFoundException;
 import ecommerce.modules.category.entity.Category;
 import ecommerce.modules.category.repository.CategoryRepository;
@@ -11,7 +13,6 @@ import ecommerce.modules.product.entity.ProductVariant;
 import ecommerce.modules.product.repository.ProductRepository;
 import ecommerce.modules.product.repository.ProductVariantRepository;
 import ecommerce.modules.product.service.ProductService;
-import ecommerce.modules.user.entity.Role;
 import ecommerce.modules.user.entity.SellerProfile;
 import ecommerce.modules.user.entity.User;
 import ecommerce.modules.user.repository.SellerProfileRepository;
@@ -31,7 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j

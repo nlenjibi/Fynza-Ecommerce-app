@@ -1,6 +1,6 @@
 package ecommerce.modules.contact.dto;
 
-import ecommerce.modules.contact.entity.ContactMessage.ContactCategory;
+import ecommerce.common.enums.ContactCategory;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

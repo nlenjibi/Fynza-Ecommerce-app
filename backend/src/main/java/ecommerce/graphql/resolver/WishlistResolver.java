@@ -1,10 +1,11 @@
 package ecommerce.graphql.resolver;
 
 import ecommerce.common.response.PaginatedResponse;
-import ecommerce.graphql.dto.WishListItemResponseDto;
+import ecommerce.graphql.dto.WishlistItemPage;
+import ecommerce.graphql.input.AddToWishlistInput;
 import ecommerce.graphql.input.PageInput;
 import ecommerce.graphql.input.SortDirection;
-import ecommerce.modules.auth.service.SecurityService;
+import ecommerce.graphql.input.UpdateWishlistItemInput;
 import ecommerce.modules.wishlist.dto.AddToWishlistRequest;
 import ecommerce.modules.wishlist.dto.UpdateWishlistItemRequest;
 import ecommerce.modules.wishlist.dto.WishlistItemDto;
@@ -12,7 +13,6 @@ import ecommerce.modules.wishlist.dto.WishlistSummaryDto;
 import ecommerce.modules.wishlist.service.WishlistService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,152 +21,144 @@ import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.ContextValue;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 
 import java.util.List;
 import java.util.UUID;
 
-/**
- * GraphQL resolver for Wishlist queries and mutations.
- *
- * Security model
- * ──────────────
- * Every operation requires authentication — @RequestValidation with no roles
- * means any authenticated user is permitted.
- *
- * The authenticated user's ID is always sourced from @ContextValue (injected by
- * AuthenticationFilter from the validated token), never from a caller-supplied
- * argument. This prevents one user from reading or mutating another user's wishlist.
- * The WishlistService also enforces ownership as a second line of defence.
- */
 @Controller
 @RequiredArgsConstructor
 @Slf4j
-@CacheConfig(cacheNames = "wishlists")
-class WishlistResolver {
+@PreAuthorize("hasRole('CUSTOMER')")
+public class WishlistResolver {
 
     private final WishlistService wishlistService;
 
-
-    // ─────────────────────────────────────────────────────────────────────────
-    //  Queries – any authenticated user
-    // ─────────────────────────────────────────────────────────────────────────
+    // =========================================================================
+    // QUERIES
+    // =========================================================================
 
     @QueryMapping
-    
     public List<WishlistItemDto> myWishlist(@ContextValue UUID userId) {
-        log.info("GraphQL Query: myWishlist user={}", userId);
+        log.info("GQL myWishlist(user={})", userId);
         return wishlistService.getUserWishlist(userId);
     }
 
     @QueryMapping
-    
-    public WishListItemResponseDto myWishlistPaginated(
-            @Argument PageInput pagination,
-            @ContextValue UUID userId) {
-        log.info("GraphQL Query: myWishlistPaginated user={}", userId);
-        Page<WishlistItemDto> page = wishlistService.getUserWishlistPaginated(userId, buildPageable(pagination));
-        return WishListItemResponseDto.builder()
+    public WishlistItemPage myWishlistPaginated(@Argument PageInput pagination,
+                                                  @ContextValue UUID userId) {
+        log.info("GQL myWishlistPaginated(user={})", userId);
+        Pageable pageable = toPageable(pagination);
+        Page<WishlistItemDto> page = wishlistService.getUserWishlistPaginated(userId, pageable);
+        return WishlistItemPage.builder()
                 .content(page.getContent())
                 .pageInfo(PaginatedResponse.from(page))
                 .build();
     }
 
     @QueryMapping
-    
     public WishlistSummaryDto wishlistSummary(@ContextValue UUID userId) {
-        log.info("GraphQL Query: wishlistSummary user={}", userId);
+        log.info("GQL wishlistSummary(user={})", userId);
         return wishlistService.getWishlistSummary(userId);
     }
 
     @QueryMapping
-    
     public long wishlistCount(@ContextValue UUID userId) {
-        log.info("GraphQL Query: wishlistCount user={}", userId);
+        log.info("GQL wishlistCount(user={})", userId);
         return wishlistService.getWishlistCount(userId);
     }
 
     @QueryMapping
-    
-    public Boolean isInWishlist(@Argument UUID productId, @ContextValue UUID userId) {
-        log.info("GraphQL Query: isInWishlist productId={} user={}", productId, userId);
+    public boolean isInWishlist(@Argument UUID productId, @ContextValue UUID userId) {
+        log.info("GQL isInWishlist(productId={}, user={})", productId, userId);
         return wishlistService.isInWishlist(userId, productId);
     }
 
     @QueryMapping
-    
     public List<WishlistItemDto> wishlistItemsWithPriceDrops(@ContextValue UUID userId) {
-        log.info("GraphQL Query: wishlistItemsWithPriceDrops user={}", userId);
+        log.info("GQL wishlistItemsWithPriceDrops(user={})", userId);
         return wishlistService.getItemsWithPriceDrops(userId);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    //  Mutations – any authenticated user
-    // ─────────────────────────────────────────────────────────────────────────
+    // =========================================================================
+    // MUTATIONS
+    // =========================================================================
 
     @MutationMapping
-    
-    public WishlistItemDto addToWishlist(
-            @Argument AddToWishlistRequest input,
-            @ContextValue UUID userId) {
-        log.info("GraphQL Mutation: addToWishlist user={}", userId);
-        return wishlistService.addToWishlist(userId, input);
+    public WishlistItemDto addToWishlist(@Argument AddToWishlistInput input,
+                                          @ContextValue UUID userId) {
+        log.info("GQL addToWishlist(productId={}, user={})", input.getProductId(), userId);
+        AddToWishlistRequest request = AddToWishlistRequest.builder()
+                .productId(input.getProductId())
+                .priority(input.getPriority())
+                .notes(input.getNotes())
+                .desiredQuantity(input.getDesiredQuantity())
+                .targetPrice(input.getTargetPrice())
+                .notifyOnPriceDrop(input.getNotifyOnPriceDrop())
+                .notifyOnStock(input.getNotifyOnStock())
+                .isPublic(input.getIsPublic())
+                .collectionName(input.getCollectionName())
+                .build();
+        return wishlistService.addToWishlist(userId, request);
     }
 
     @MutationMapping
-    
-    public WishlistItemDto updateWishlistItem(
-            @Argument UUID productId,
-            @Argument UpdateWishlistItemRequest input,
-            @ContextValue UUID userId) {
-        log.info("GraphQL Mutation: updateWishlistItem productId={} user={}", productId, userId);
-        return wishlistService.updateWishlistItem(userId, productId, input);
+    public WishlistItemDto updateWishlistItem(@Argument UUID productId,
+                                               @Argument UpdateWishlistItemInput input,
+                                               @ContextValue UUID userId) {
+        log.info("GQL updateWishlistItem(productId={}, user={})", productId, userId);
+        UpdateWishlistItemRequest request = UpdateWishlistItemRequest.builder()
+                .priority(input.getPriority())
+                .notes(input.getNotes())
+                .desiredQuantity(input.getDesiredQuantity())
+                .targetPrice(input.getTargetPrice())
+                .notifyOnPriceDrop(input.getNotifyOnPriceDrop())
+                .notifyOnStock(input.getNotifyOnStock())
+                .isPublic(input.getIsPublic())
+                .build();
+        return wishlistService.updateWishlistItem(userId, productId, request);
     }
 
     @MutationMapping
-    
-    public Boolean removeFromWishlist(@Argument UUID productId, @ContextValue UUID userId) {
-        log.info("GraphQL Mutation: removeFromWishlist productId={} user={}", productId, userId);
+    public boolean removeFromWishlist(@Argument UUID productId, @ContextValue UUID userId) {
+        log.info("GQL removeFromWishlist(productId={}, user={})", productId, userId);
         wishlistService.removeFromWishlist(userId, productId);
         return true;
     }
 
     @MutationMapping
-    
-    public Boolean clearWishlist(@ContextValue UUID userId) {
-        log.info("GraphQL Mutation: clearWishlist user={}", userId);
+    public boolean clearWishlist(@ContextValue UUID userId) {
+        log.info("GQL clearWishlist(user={})", userId);
         wishlistService.clearWishlist(userId);
         return true;
     }
 
     @MutationMapping
-    
-    public WishlistItemDto markWishlistItemPurchased(
-            @Argument UUID productId,
-            @ContextValue UUID userId) {
-        log.info("GraphQL Mutation: markWishlistItemPurchased productId={} user={}", productId, userId);
+    public WishlistItemDto markWishlistItemPurchased(@Argument UUID productId,
+                                                      @ContextValue UUID userId) {
+        log.info("GQL markWishlistItemPurchased(productId={}, user={})", productId, userId);
         return wishlistService.markAsPurchased(userId, productId);
     }
 
     @MutationMapping
-    
-    public Boolean moveWishlistItemToCart(@Argument UUID productId, @ContextValue UUID userId) {
-        log.info("GraphQL Mutation: moveWishlistItemToCart productId={} user={}", productId, userId);
+    public boolean moveWishlistItemToCart(@Argument UUID productId, @ContextValue UUID userId) {
+        log.info("GQL moveWishlistItemToCart(productId={}, user={})", productId, userId);
         wishlistService.moveToCart(userId, productId);
         return true;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    //  Helpers
-    // ─────────────────────────────────────────────────────────────────────────
+    // =========================================================================
+    // HELPERS
+    // =========================================================================
 
-    private static Pageable buildPageable(PageInput input) {
+    private Pageable toPageable(PageInput input) {
         if (input == null) {
-            return PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
+            return PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "addedAt"));
         }
-        Sort.Direction dir = input.getDirection() == SortDirection.DESC
-                ? Sort.Direction.DESC : Sort.Direction.ASC;
-        String field = input.getSortBy() != null ? input.getSortBy() : "createdAt";
-        return PageRequest.of(input.getPage(), input.getSize(), Sort.by(dir, field));
+        Sort sort = input.getDirection() == SortDirection.DESC
+                ? Sort.by(input.getSortBy()).descending()
+                : Sort.by(input.getSortBy()).ascending();
+        return PageRequest.of(input.getPage(), input.getSize(), sort);
     }
 }

@@ -1,9 +1,8 @@
 package ecommerce.graphql.resolver;
 
-import ecommerce.graphql.dto.FollowStats;
-import ecommerce.graphql.dto.StoreFollow;
-import ecommerce.graphql.dto.StoreFollowConnection;
-import ecommerce.graphql.dto.UserPage;
+import ecommerce.common.response.PaginatedResponse;
+import ecommerce.graphql.dto.FollowedStoreConnection;
+import ecommerce.graphql.dto.FollowerPage;
 import ecommerce.graphql.input.FollowInput;
 import ecommerce.graphql.input.PageInput;
 import ecommerce.graphql.input.SortDirection;
@@ -18,6 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.graphql.data.method.annotation.Argument;
+import org.springframework.graphql.data.method.annotation.ContextValue;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,74 +32,106 @@ public class FollowResolver {
 
     private final FollowService followService;
 
+    // =========================================================================
+    // CUSTOMER QUERIES
+    // =========================================================================
+
     @QueryMapping
-    @PreAuthorize("isAuthenticated()")
-    public StoreFollowConnection myFollowing(@Argument PageInput pagination) {
-        log.info("GraphQL Query: myFollowing");
-        
-        Pageable pageable = createPageable(pagination);
-        Page<FollowedStoreResponse> followedStores = followService.getFollowedStores(null, pageable);
-        
-        return StoreFollowConnection.builder()
-                .content(followedStores.getContent())
-                .pageInfo(ecommerce.common.response.PaginatedResponse.from(followedStores))
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public FollowedStoreConnection myFollowedStores(@Argument PageInput pagination,
+                                                     @ContextValue UUID userId) {
+        log.info("GQL myFollowedStores(user={})", userId);
+        Pageable pageable = toPageable(pagination);
+        Page<FollowedStoreResponse> page = followService.getFollowedStores(userId, pageable);
+        return FollowedStoreConnection.builder()
+                .content(page.getContent())
+                .pageInfo(PaginatedResponse.from(page))
                 .build();
     }
 
     @QueryMapping
-    public boolean isFollowing(@Argument UUID sellerId) {
-        log.info("GraphQL Query: isFollowing(sellerId: {})", sellerId);
-        return followService.isFollowing(null, sellerId);
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public boolean isFollowingStore(@Argument UUID sellerId,
+                                     @ContextValue UUID userId) {
+        log.info("GQL isFollowingStore(user={}, seller={})", userId, sellerId);
+        return followService.isFollowing(userId, sellerId);
     }
 
     @QueryMapping
-    public FollowStats followStats(@Argument UUID sellerId) {
-        log.info("GraphQL Query: followStats(sellerId: {})", sellerId);
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public FollowStatsResponse myFollowStats(@ContextValue UUID userId) {
+        log.info("GQL myFollowStats(user={})", userId);
+        return followService.getCustomerFollowStats(userId);
+    }
+
+    // =========================================================================
+    // SELLER QUERIES
+    // =========================================================================
+
+    @QueryMapping
+    @PreAuthorize("hasRole('SELLER')")
+    public FollowerPage myFollowers(@Argument PageInput pagination,
+                                     @ContextValue UUID sellerId) {
+        log.info("GQL myFollowers(seller={})", sellerId);
+        Pageable pageable = toPageable(pagination);
+        Page<FollowerResponse> page = followService.getFollowers(sellerId, pageable);
+        return FollowerPage.builder()
+                .content(page.getContent())
+                .pageInfo(PaginatedResponse.from(page))
+                .build();
+    }
+
+    @QueryMapping
+    @PreAuthorize("hasRole('SELLER')")
+    public FollowStatsResponse sellerFollowerStats(@ContextValue UUID sellerId) {
+        log.info("GQL sellerFollowerStats(seller={})", sellerId);
+        return followService.getSellerFollowStats(sellerId);
+    }
+
+    // =========================================================================
+    // PUBLIC QUERIES
+    // =========================================================================
+
+    @QueryMapping
+    public Long storeFollowerCount(@Argument UUID sellerId) {
+        log.info("GQL storeFollowerCount(seller={})", sellerId);
         FollowStatsResponse stats = followService.getSellerFollowStats(sellerId);
-        
-        return FollowStats.builder()
-                .followerCount((int) stats.getTotalFollowers())
-                .followingCount(0)
-                .isFollowing(false)
-                .build();
+        return stats.getTotalFollowers();
     }
 
-    @QueryMapping
-    public UserPage storeFollowers(@Argument UUID sellerId, @Argument PageInput pagination) {
-        log.info("GraphQL Query: storeFollowers(sellerId: {})", sellerId);
-        
-        Pageable pageable = createPageable(pagination);
-        Page<FollowerResponse> followers = followService.getFollowers(sellerId, pageable);
-        
-        return UserPage.builder()
-                .content(followers.getContent())
-                .pageInfo(ecommerce.common.response.PaginatedResponse.from(followers))
-                .build();
-    }
+    // =========================================================================
+    // CUSTOMER MUTATIONS
+    // =========================================================================
 
     @MutationMapping
-    @PreAuthorize("isAuthenticated()")
-    public StoreFollow followStore(@Argument FollowInput input) {
-        log.info("GraphQL Mutation: followStore(sellerId: {})", input.getSellerId());
-        followService.followStore(null, input.getSellerId());
-        return StoreFollow.builder().build();
-    }
-
-    @MutationMapping
-    @PreAuthorize("isAuthenticated()")
-    public boolean unfollowStore(@Argument UUID sellerId) {
-        log.info("GraphQL Mutation: unfollowStore(sellerId: {})", sellerId);
-        followService.unfollowStore(null, sellerId);
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public boolean followStore(@Argument FollowInput input,
+                                @ContextValue UUID userId) {
+        log.info("GQL followStore(user={}, seller={})", userId, input.getSellerId());
+        followService.followStore(userId, input.getSellerId());
         return true;
     }
 
-    private Pageable createPageable(PageInput input) {
+    @MutationMapping
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public boolean unfollowStore(@Argument UUID sellerId,
+                                  @ContextValue UUID userId) {
+        log.info("GQL unfollowStore(user={}, seller={})", userId, sellerId);
+        followService.unfollowStore(userId, sellerId);
+        return true;
+    }
+
+    // =========================================================================
+    // HELPERS
+    // =========================================================================
+
+    private Pageable toPageable(PageInput input) {
         if (input == null) {
-            return PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
+            return PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "followedAt"));
         }
-        Sort.Direction direction = input.getDirection() == SortDirection.DESC 
-            ? Sort.Direction.DESC : Sort.Direction.ASC;
-        String sortBy = input.getSortBy() != null ? input.getSortBy() : "createdAt";
-        return PageRequest.of(input.getPage(), input.getSize(), Sort.by(direction, sortBy));
+        Sort sort = input.getDirection() == SortDirection.DESC
+                ? Sort.by(input.getSortBy()).descending()
+                : Sort.by(input.getSortBy()).ascending();
+        return PageRequest.of(input.getPage(), input.getSize(), sort);
     }
 }

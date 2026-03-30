@@ -1,5 +1,7 @@
 package ecommerce.modules.product.controller;
 
+import ecommerce.common.enums.PaymentMethod;
+import ecommerce.common.enums.Role;
 import ecommerce.common.response.ApiResponse;
 import ecommerce.common.response.PaginatedResponse;
 import ecommerce.modules.product.dto.CreateProductRequest;
@@ -27,7 +29,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/products")
+@RequestMapping("/v1/products")
 @RequiredArgsConstructor
 @Tag(name = "Product Management", description = "APIs for managing products")
 public class ProductController {
@@ -123,7 +125,7 @@ public class ProductController {
         ProductResponse existingProduct = productService.findById(id);
         boolean isOwner = existingProduct.getSeller() != null && 
                 existingProduct.getSeller().getId().toString().equals(principal.getId().toString());
-        boolean isAdmin = principal.getRole() == ecommerce.modules.user.entity.Role.ADMIN;
+        boolean isAdmin = principal.getRole() == Role.ADMIN;
         
         if (!isOwner && !isAdmin) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -144,7 +146,7 @@ public class ProductController {
         ProductResponse existingProduct = productService.findById(id);
         boolean isOwner = existingProduct.getSeller() != null && 
                 existingProduct.getSeller().getId().toString().equals(principal.getId().toString());
-        boolean isAdmin = principal.getRole() == ecommerce.modules.user.entity.Role.ADMIN;
+        boolean isAdmin = principal.getRole() == Role.ADMIN;
         
         if (!isOwner && !isAdmin) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -185,7 +187,7 @@ public class ProductController {
         ProductResponse existingProduct = productService.findById(id);
         boolean isOwner = existingProduct.getSeller() != null && 
                 existingProduct.getSeller().getId().toString().equals(principal.getId().toString());
-        boolean isAdmin = principal.getRole() == ecommerce.modules.user.entity.Role.ADMIN;
+        boolean isAdmin = principal.getRole() == Role.ADMIN;
         
         if (!isOwner && !isAdmin) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)

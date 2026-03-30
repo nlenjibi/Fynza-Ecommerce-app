@@ -15,6 +15,5 @@ public class FAQInput {
     private String question;
     private String answer;
     private FAQCategory category;
-    private Integer order;
-    private Boolean isPublic;
+    private Integer displayOrder;
 }

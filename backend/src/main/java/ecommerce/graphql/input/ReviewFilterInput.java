@@ -1,17 +1,18 @@
 package ecommerce.graphql.input;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/**
- * GraphQL Input for Review filtering using Specifications
- */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class ReviewFilterInput {
     private UUID productId;
-    private UUID userId;
+    private UUID customerId;
     private Integer rating;
     private Integer minRating;
     private Integer maxRating;

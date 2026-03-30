@@ -20,33 +20,6 @@ public class PerformanceResolver {
 
     @QueryMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ContentAnalytics contentAnalytics(@Argument ContentAnalyticsInput input) {
-        log.info("GraphQL Query: contentAnalytics(period: {}, contentType: {})", 
-                input.getPeriod(), input.getContentType());
-        
-        return ContentAnalytics.builder()
-                .totalPageViews(0L)
-                .totalClicks(0L)
-                .avgTimeOnPage("0:00")
-                .uniqueVisitors(0L)
-                .bounceRate("0%")
-                .articlesPublished(0)
-                .pageViewsChange("0%")
-                .clicksChange("0%")
-                .timeOnPageChange("0%")
-                .visitorsChange("0%")
-                .bounceRateChange("0%")
-                .articlesChange("0%")
-                .period(input.getPeriod() != null ? input.getPeriod() : "month")
-                .contentType(input.getContentType() != null ? input.getContentType() : "all")
-                .performanceTrend(List.of())
-                .engagementByCategory(List.of())
-                .topContent(List.of())
-                .build();
-    }
-
-    @QueryMapping
-    @PreAuthorize("hasRole('ADMIN')")
     public SystemMetrics systemMetrics() {
         log.info("GraphQL Query: systemMetrics");
         

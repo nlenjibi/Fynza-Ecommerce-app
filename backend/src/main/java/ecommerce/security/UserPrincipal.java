@@ -1,6 +1,7 @@
 package ecommerce.security;
 
-import ecommerce.modules.user.entity.Role;
+import ecommerce.common.enums.PaymentMethod;
+import ecommerce.common.enums.Role;
 import ecommerce.modules.user.entity.User;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;

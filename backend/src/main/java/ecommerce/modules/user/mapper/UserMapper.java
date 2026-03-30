@@ -2,10 +2,11 @@ package ecommerce.modules.user.mapper;
 
 
 
+import ecommerce.common.enums.PaymentMethod;
+import ecommerce.common.enums.Role;
 import ecommerce.modules.user.dto.UserCreateRequest;
 import ecommerce.modules.user.dto.UserDto;
 import ecommerce.modules.user.dto.UserUpdateRequest;
-import ecommerce.modules.user.entity.Role;
 import ecommerce.modules.user.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

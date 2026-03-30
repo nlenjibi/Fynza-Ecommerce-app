@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/sellers/promotions")
+@RequestMapping("/v1/sellers/promotions")
 @RequiredArgsConstructor
 @Tag(name = "Seller Promotions", description = "Seller promotion management endpoints")
 @PreAuthorize("hasRole('SELLER')")

@@ -1,6 +1,7 @@
 package ecommerce.modules.delivery.entity;
 
 import ecommerce.common.base.BaseEntity;
+import ecommerce.common.enums.DeliveryMethod;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -47,9 +48,5 @@ public class DeliveryFee extends BaseEntity {
     @Builder.Default
     private Boolean isActive = true;
 
-    public enum DeliveryMethod {
-        DIRECT_ADDRESS,
-        BUS_STATION,
-        SHIPPING
-    }
+
 }

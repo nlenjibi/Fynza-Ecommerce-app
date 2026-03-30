@@ -3,6 +3,8 @@ package ecommerce.modules.user.entity;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.Expressions;
+import ecommerce.common.enums.PaymentMethod;
+import ecommerce.common.enums.Role;
 
 import java.time.LocalDateTime;
 

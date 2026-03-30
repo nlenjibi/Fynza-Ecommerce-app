@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/admin/activity-logs")
+@RequestMapping("/v1/admin/activity-logs")
 @RequiredArgsConstructor
 @Tag(name = "Activity Logs", description = "Activity log management endpoints")
 @PreAuthorize("hasRole('ADMIN')")

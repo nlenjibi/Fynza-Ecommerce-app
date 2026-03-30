@@ -1,3 +1,12 @@
+# =============================================================================
+# User GraphQL Schema
+# Covers: User queries, Customer dashboard, Loyalty, Profile, Addresses
+# =============================================================================
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Enums
+# ─────────────────────────────────────────────────────────────────────────────
+
 enum Role {
     CUSTOMER
     SELLER
@@ -12,9 +21,16 @@ enum UserStatus {
     SUSPENDED
 }
 
-"""
-Security: No authentication required - Publicly accessible
-"""
+enum AddressType {
+    SHIPPING
+    BILLING
+    BOTH
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Core Types
+# ─────────────────────────────────────────────────────────────────────────────
+
 type User {
     id: ID!
     email: String!
@@ -33,14 +49,68 @@ type User {
     lastLoginAt: DateTime
 }
 
-"""
-Security: Requires AUTHENTICATION
-"""
 type UserPage {
     content: [User!]!
     pageInfo: PageInfo!
 }
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Address Types
+# ─────────────────────────────────────────────────────────────────────────────
+
+type Address {
+    id: ID!
+    label: String
+    addressType: AddressType!
+    streetAddress: String!
+    city: String!
+    state: String!
+    postalCode: String!
+    country: String!
+    isDefault: Boolean!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Customer Dashboard Types
+# ─────────────────────────────────────────────────────────────────────────────
+
+type CustomerDashboard {
+    totalOrders: Long!
+    wishlistItems: Long!
+    savedAddresses: Long!
+    loyaltyPoints: Int!
+    totalSpent: BigDecimal!
+    membershipStatus: String!
+    recentOrders: [CustomerRecentOrder!]!
+}
+
+type CustomerRecentOrder {
+    orderId: String!
+    orderNumber: String!
+    orderDate: String!
+    status: String!
+    totalAmount: BigDecimal!
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Loyalty Types
+# ─────────────────────────────────────────────────────────────────────────────
+
+type LoyaltyRedemption {
+    previousPoints: Int!
+    redeemedPoints: Int!
+    remainingPoints: Int!
+    discountAmount: BigDecimal!
+    rewardType: String!
+    couponCode: String
+    message: String!
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Inputs
+# ─────────────────────────────────────────────────────────────────────────────
 
 input UserCreateInput {
     email: String!
@@ -71,28 +141,6 @@ input UserFilterInput {
     name: String
 }
 
-# ==================== Address Types ====================
-
-enum AddressType {
-    SHIPPING
-    BILLING
-    BOTH
-}
-
-type Address {
-    id: ID!
-    label: String
-    addressType: AddressType!
-    streetAddress: String!
-    city: String!
-    state: String!
-    postalCode: String!
-    country: String!
-    isDefault: Boolean!
-    createdAt: DateTime!
-    updatedAt: DateTime!
-}
-
 input AddressInput {
     label: String
     addressType: AddressType
@@ -104,22 +152,52 @@ input AddressInput {
     isDefault: Boolean
 }
 
-# Security:
-# - user(id): Public
-# - users: ADMIN only
-# - currentUser: AUTHENTICATED only
-extend type Query {
-    user(id: ID!): User
-    users(pagination: PageInput, filter: UserFilterInput): UserPage!
-    currentUser: User
-    
-    # Address queries
-    myAddresses: [Address!]!
+input CustomerProfileUpdateInput {
+    email: String
+    username: String
+    firstName: String
+    lastName: String
+    phone: String
 }
 
+input LoyaltyRedeemInput {
+    pointsToRedeem: Int!
+    rewardType: String
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Queries
+# ─────────────────────────────────────────────────────────────────────────────
+
+extend type Query {
+    # ── Public User Queries ──────────────────────────────────────────────
+    user(id: ID!): User
+
+    # ── Admin User Queries (ADMIN/MANAGER) ───────────────────────────────
+    users(pagination: PageInput, filter: UserFilterInput): UserPage!
+
+    # ── Authenticated User Queries ───────────────────────────────────────
+    currentUser: User
+
+    # ── Customer Queries (CUSTOMER) ──────────────────────────────────────
+    customerDashboard: CustomerDashboard!
+    myAddresses: [Address!]!
+    loyaltyBalance: LoyaltyRedemption!
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Mutations
+# ─────────────────────────────────────────────────────────────────────────────
+
 extend type Mutation {
-    # Address mutations
+    # ── Customer Profile (CUSTOMER) ──────────────────────────────────────
+    updateCustomerProfile(input: CustomerProfileUpdateInput!): User!
+
+    # ── Customer Addresses (CUSTOMER) ────────────────────────────────────
     addAddress(input: AddressInput!): Address!
     updateAddress(id: ID!, input: AddressInput!): Address!
     deleteAddress(id: ID!): Boolean!
+
+    # ── Loyalty Points (CUSTOMER) ────────────────────────────────────────
+    redeemLoyaltyPoints(input: LoyaltyRedeemInput!): LoyaltyRedemption!
 }

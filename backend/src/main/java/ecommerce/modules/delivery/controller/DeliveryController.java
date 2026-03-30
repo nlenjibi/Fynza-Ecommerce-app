@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/v1")
 @RequiredArgsConstructor
 @Tag(name = "Delivery Management", description = "APIs for managing delivery regions and fees")
 public class DeliveryController {

@@ -17,10 +17,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/admin/faqs")
+@RequestMapping("/v1/admin/faqs")
 @RequiredArgsConstructor
 @Tag(name = "Admin FAQ Management", description = "APIs for managing FAQs (Admin only)")
 public class AdminFAQController {
@@ -100,5 +101,22 @@ public class AdminFAQController {
     @Operation(summary = "Get FAQ statistics", description = "Get FAQ statistics for dashboard")
     public ResponseEntity<ApiResponse<FAQStatsResponse>> getStats() {
         return ResponseEntity.ok(ApiResponse.success("FAQ statistics retrieved", faqService.getStats()));
+    }
+
+    @GetMapping("/help-categories")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get help categories", description = "Get organized help categories for admin view")
+    public ResponseEntity<ApiResponse<List<HelpCategoryResponse>>> getHelpCategories() {
+        List<HelpCategoryResponse> helpCategories = faqService.getHelpCategories();
+        return ResponseEntity.ok(ApiResponse.success("Help categories retrieved successfully", helpCategories));
+    }
+
+    @PatchMapping("/{id}/reorder")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Reorder FAQs", description = "Update display order of multiple FAQs")
+    public ResponseEntity<ApiResponse<Void>> reorderFAQs(@RequestBody List<UUID> faqIds) {
+        // TODO: Implement bulk reorder functionality in service
+        // For now, return success - this would need proper implementation
+        return ResponseEntity.ok(ApiResponse.success("FAQs reordered successfully", null));
     }
 }

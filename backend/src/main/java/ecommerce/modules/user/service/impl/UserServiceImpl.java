@@ -1,14 +1,12 @@
 package ecommerce.modules.user.service.impl;
 
-import ecommerce.common.enums.SellerStatus;
-import ecommerce.common.enums.UserStatus;
+import ecommerce.common.enums.*;
 import ecommerce.exception.DuplicateResourceException;
 import ecommerce.exception.ResourceNotFoundException;
 import ecommerce.modules.auth.service.SecurityService;
 import ecommerce.modules.notification.entity.Notification;
 import ecommerce.modules.notification.repository.NotificationRepository;
 import ecommerce.modules.user.dto.*;
-import ecommerce.modules.user.entity.Role;
 import ecommerce.modules.user.entity.User;
 import ecommerce.modules.user.entity.Address;
 import ecommerce.modules.user.entity.SellerProfile;
@@ -18,7 +16,6 @@ import ecommerce.modules.user.repository.UserRepository;
 import ecommerce.modules.user.repository.AddressRepository;
 import ecommerce.modules.user.repository.SellerProfileRepository;
 import ecommerce.modules.user.service.UserService;
-import ecommerce.common.enums.VerificationStatus;
 import ecommerce.services.TokenValidationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
